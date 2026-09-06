@@ -8,8 +8,6 @@ const FLOOR = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 
         <meshStandardMaterial color={0x1b2530} roughness={0.9} metalness={0.1} side={DoubleSide} />
       </mesh>
       {[0, 1, 2, 3, 4, 5].map((i) => {
-        // Lit panels on the wall, set between the capsules rather than behind
-        // them, so the gaps read as a room instead of a void.
         const angle = ((i + 0.5) / 6) * Math.PI * 2;
         return (
           <mesh
@@ -39,7 +37,6 @@ const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02,
       </mesh>`;
 
 const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
-        // Six capsules, evenly spaced around a circle of radius 4.2.
         const angle = (i / 6) * Math.PI * 2;
         const x = Math.cos(angle) * 4.2;
         const z = Math.sin(angle) * 4.2;
@@ -103,15 +100,11 @@ const HUD = `    <LabHud specimens={specimens} />`;
 
 const EFFECT = `    <EffectCanvas node={field} />`;
 
-const FIELD = `  // useMemo, because a TSL graph is built once, not once per render.
-  const field = useMemo(() => Fn(() => {
-    // uv is 0..1; the anchor is -1..1, so match it, then undo the aspect.
+const FIELD = `  const field = useMemo(() => Fn(() => {
     const p = uv().mul(2).sub(1).mul(vec2(screenAspect, float(1)));
     const a = anchorPos.mul(vec2(screenAspect, float(1)));
     const d = p.sub(a).length();
-    // A halo on whichever capsule the pointer is over.
     const halo = smoothstep(float(0.02), float(0.5), d).oneMinus().mul(anchorSeen);
-    // Scanlines drifting up the screen, the way a monitor feed reads.
     const scan = uv().y.mul(220).sub(time.mul(1.4)).sin().mul(0.5).add(0.5).mul(0.03);
     const glow = halo.mul(0.5).add(scan);
     return vec4(vec3(0.42, 0.86, 1.0).mul(glow), glow);

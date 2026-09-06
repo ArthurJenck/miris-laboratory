@@ -27,7 +27,7 @@ export default function Stage() {
 
 
   // miris:field-start
-  // Step 5.3 replaces this. A TSL graph is built once, not per frame.
+  // Step 5.3 goes here.
   const field = null;
   // miris:field-end
 
@@ -50,21 +50,17 @@ export default function Stage() {
       camera={{ position: [0, 1.7, 0.02], fov: 55 }}
       style={{ position: "fixed", inset: 0 }}
     >
-      {/* Sublevel 7 is dark. Almost everything you see is emissive geometry. */}
       <ambientLight intensity={0.5} color={0x8fb6cc} />
       <pointLight position={[0, 6, 0]} intensity={40} distance={26} color={0x9ec9ff} />
       <pointLight position={[0, 0.25, 0]} intensity={6} distance={7} color={0x3bd6fe} />
 
       {/* miris:scene-start */}
-      {/* Steps 2.1 to 2.4 go here, in that order. */}
+      {/* Steps 2.1 to 2.4 go here. */}
       {/* miris:scene-end */}
 
 
       <CapsuleProbe />
       <CapsuleFocus />
-      {/* The camera never leaves the middle of the room. Orbiting a target two
-          centimetres in front of it turns the view in place instead of flying
-          around the ring, and rotateSpeed is negative so a drag left looks left. */}
       <OrbitControls
         makeDefault
         target={[0, 1.7, 0]}
