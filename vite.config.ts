@@ -1,12 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { mirisDevApi } from "./miris/devApi";
+import { mirisSnapshot } from "./miris/snapshot";
 
 export default defineConfig(({ mode }) => {
   return {
     // The dev API reads FAL_KEY itself, per request, so it never reaches the
     // client and a key added mid-session needs no restart.
-    plugins: [react(), mirisDevApi(mode)],
+    plugins: [react(), mirisDevApi(mode), mirisSnapshot()],
     server: {
       port: 3000,
       // strictPort so the workshop's own instructions stay true: if 3000 is
