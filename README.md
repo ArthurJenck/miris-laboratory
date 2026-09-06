@@ -156,14 +156,26 @@ stage, and constructing a scene per mount leaked engine-registered scenes that
 kept streaming. Disposing them in effect cleanup is worse, because it runs while
 the scene still has children and fails three engine assertions.
 
-### The API is development-only
+### The API is development-only, and the build freezes its last answer
 
-`/api/miris` exists only as Vite dev middleware, so a production build has no
-such endpoint at all, and
-returns 403. Attendees publish this app and share the link at step 5.5, and
-commenting out the guide does not remove the route: without the gate, anyone
-with the link could spend their fal key or rewrite files. Verified against a
-production build.
+`/api/miris` is Vite dev middleware, so a published build has no endpoint
+behind it: nothing there can spend a fal key or rewrite a file, whether or not
+the guide is commented out. That is the security property, and it holds.
+
+What a published build *does* answer with is a static snapshot. The stage gates
+on `data.track`, which only ever arrived from that endpoint, so without one a
+deployed lab sat on `StageSkeleton` forever — the shared link showed nothing.
+`miris/snapshot.ts` runs at build time and freezes `data.json` into
+`dist/api/miris`, so the published lab renders exactly what the attendee built.
+
+The file is deliberately extensionless with no content-type rule.
+`Response.json()` parses on body alone, so the stage is happy; the guide
+decides "is the dev API here?" on content-type, so it still correctly reports
+that the workshop API is not running. One artifact, both readings right.
+
+Measured on a real bolt.host deploy: a missing path returns **200 and
+`text/html`** (the SPA fallback, not a 403 — that is what made `res.json()`
+throw), and the snapshot returns 200 with `text/plain` and a real body.
 
 ### Known risks
 
