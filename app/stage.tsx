@@ -7,6 +7,7 @@ import { ACESFilmicToneMapping, AdditiveBlending, DoubleSide } from "three";
 import { Fn, float, smoothstep, time, uv, vec2, vec3, vec4 } from "three/tsl";
 import Dossier from "../miris/Dossier";
 import LabHud, { CapsuleProbe } from "../miris/LabHud";
+import CapsuleFocus from "../miris/CapsuleFocus";
 import EffectCanvas, { anchorPos, anchorSeen, screenAspect } from "../miris/EffectCanvas";
 import { StageSkeleton } from "../miris/Skeleton";
 
@@ -60,6 +61,7 @@ export default function Stage() {
 
 
       <CapsuleProbe />
+      <CapsuleFocus />
       {/* The camera never leaves the middle of the room. Orbiting a target two
           centimetres in front of it turns the view in place instead of flying
           around the ring, and rotateSpeed is negative so a drag left looks left. */}

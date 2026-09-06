@@ -148,7 +148,7 @@ export const STEPS: Step[] = [
         num: "3.4",
         title: "Stand in the room",
         body:
-          "No button for this one. You are in the middle of the laboratory and you stay there: dragging turns you on the spot rather than flying you around the ring. Open app/stage.tsx and find the camera prop on Canvas. The middle number of position is your eye height, so 1.7 is standing and 0.9 is crouched beside the plinths. fov is how much you see at once: raise it to 70 and the room wraps around you, drop it to 35 and you are looking down a lens at one capsule.",
+          "No button for this one. You are in the middle of the laboratory: dragging turns you on the spot rather than flying you around the ring, and clicking a capsule walks you over to it. Open app/stage.tsx and find the camera prop on Canvas. The middle number of position is your eye height, so 1.7 is standing and 0.9 is crouched beside the plinths. fov is how much you see at once: raise it to 70 and the room wraps around you, drop it to 35 and you are looking down a lens at one capsule.",
         code: "camera={{ position: [0, 1.7, 0.02], fov: 55 }}",
         explain:
           "The camera sits at the origin and OrbitControls is aimed two centimetres in front of it. That is the whole trick: orbiting a target that close rotates the view in place instead of swinging it around the room, which is why panning and zooming are switched off and why rotateSpeed is negative. Drag left and you look left, the way you would expect standing in a room rather than holding a model in your hand.",
@@ -173,11 +173,11 @@ export const STEPS: Step[] = [
         num: "4.2",
         title: "Open it on click",
         body:
-          "One line puts the file on screen. Add it in the miris:card block, at the bottom of app/stage.tsx outside the Canvas, then click a capsule.",
+          "One line puts the file on screen. Add it in the miris:card block, at the bottom of app/stage.tsx outside the Canvas, then click a capsule: the camera walks over to it and its file opens. Click away, or press Escape, to come back.",
         fill: "card",
         check: "cardOverlay",
         explain:
-          "The dossier is HTML over the canvas rather than geometry in it, and that is a deliberate choice rather than the lazy one. A card standing in the scene turns edge-on as you look around, hides behind its own glass and gets clipped by the top of the frame, which is exactly what it did in the first version of this room. Anchored to the window it stays readable from every angle. What you give up is that it can never be occluded by the specimen, never streamed, and never appears in a screenshot of the canvas alone. Clicking is decided the same way hover is, from the pointer against the projected capsule boxes, so nothing in the scene needs a click handler.",
+          "The dossier is HTML over the canvas rather than geometry in it, and that is a deliberate choice rather than the lazy one. A card standing in the scene turns edge-on as you look around, hides behind its own glass and gets clipped by the top of the frame, which is exactly what it did in the first version of this room. Anchored to the window it stays readable from every angle. What you give up is that it can never be occluded by the specimen, never streamed, and never appears in a screenshot of the canvas alone. Clicking is decided the same way hover is, from the pointer against the projected capsule boxes, so nothing in the scene needs a click handler. The camera move is the other half of it: the same click hands a destination to CapsuleFocus, which eases the position and the orbit target together over about a second, slow at both ends so it reads as someone walking over rather than a machine sliding. When it arrives it stops touching the camera, so you can orbit the capsule yourself; closing the file walks you back to the middle facing the way you already were.",
       },
     ],
   },
