@@ -335,6 +335,10 @@ export default function MirisGuide() {
             alt=""
             aria-hidden="true"
             style={{ ["--focal-strip" as string]: track.focalStrip } as React.CSSProperties}
+            /* Dropped by WebContainer in bolt; the strip keeps its own ground. */
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
           />
           <span className="mw-bar-label">{track.label}</span>
           <button className="mw-bar-change" onClick={() => chooseTrack("")}>

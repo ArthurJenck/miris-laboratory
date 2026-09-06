@@ -1565,3 +1565,7 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
     linear-gradient(180deg, #05080b 0%, #0b1218 60%, #05080b 100%);
 }
 .mw-doors-one .mw-specimen img { background: transparent; }
+
+/* The strip and the logo both come from binary files WebContainer may drop.
+   Give the band its own ground so a missing photograph is not a bright hole. */
+.mw-bar { background: linear-gradient(90deg, #061016 0%, #0a1a22 50%, #061016 100%); }

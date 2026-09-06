@@ -51,6 +51,12 @@ export default function Start({
                 loading="eager"
                 decoding="async"
                 draggable={false}
+                /* WebContainer drops binary files on import, so in bolt this photograph
+                   may never arrive. Hide the broken image and let the plate's own
+                   gradient stand in, rather than showing alt text and an icon. */
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
               />
             </span>
 
