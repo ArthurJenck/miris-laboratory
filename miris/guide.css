@@ -1569,3 +1569,30 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 /* The strip and the logo both come from binary files WebContainer may drop.
    Give the band its own ground so a missing photograph is not a bright hole. */
 .mw-bar { background: linear-gradient(90deg, #061016 0%, #0a1a22 50%, #061016 100%); }
+
+/* The dossier panel, anchored to the right edge the way the reference does it,
+   opened by clicking a capsule. Not geometry: a card standing in the scene
+   turns edge-on, hides behind its own glass and clips off the top of frame. */
+.mw-dossier-panel {
+  /* Clear of the guide, which is pinned to the same edge and 408px wide.
+     When the guide is hidden the panel slides back out to the margin. */
+  position: fixed; top: 50%; right: calc(min(408px, 100vw) + 24px); transform: translateY(-50%);
+  z-index: 3; width: 340px;
+}
+.mw-dossier-panel .mw-dossier { width: 100%; }
+.mw-dossier-close {
+  position: absolute; top: 12px; right: 12px; z-index: 1;
+  width: 22px; height: 22px; padding: 0; line-height: 1;
+  background: none; border: 0; cursor: pointer;
+  color: #6f838d; font-size: 17px;
+}
+.mw-dossier-close:hover { color: #e8f4f8; }
+body:has(.mw-tab) .mw-dossier-panel { right: 24px; }
+
+.mw-dossier-foot {
+  display: flex; justify-content: space-between; margin: 0;
+  padding: 9px 20px; box-sizing: border-box;
+  background: #0d0e12; border: 1px solid #182329; border-top: 0;
+  font-family: ui-monospace, Menlo, monospace; font-size: 10px;
+  letter-spacing: 0.14em; text-transform: uppercase; color: #6f838d;
+}

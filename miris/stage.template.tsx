@@ -1,14 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Canvas, extend } from "@react-three/fiber";
-import { Billboard, OrbitControls } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
 import { MirisStream } from "@miris-inc/three";
 import { TINTS, VIEWER_KEY as DEMO_KEY } from "../miris/config";
 import { ACESFilmicToneMapping, AdditiveBlending, DoubleSide } from "three";
 import { Fn, float, smoothstep, time, uv, vec2, vec3, vec4 } from "three/tsl";
-import Card, { dossierHtml } from "../miris/Card";
+import Dossier from "../miris/Dossier";
 import LabHud, { CapsuleProbe } from "../miris/LabHud";
 import EffectCanvas, { anchorPos, anchorSeen, screenAspect } from "../miris/EffectCanvas";
-import useHtmlTexture from "../miris/htmlTexture";
 import { StageSkeleton } from "../miris/Skeleton";
 
 // A Miris stream is now a scene node: <mirisStream args={[{ uuid, viewerKey }]} />
@@ -25,11 +24,6 @@ export default function Stage() {
       .catch(() => setData({}));
   }, []);
 
-  // miris:label-start
-  // Step 5.3 replaces this placeholder. It stays above the return because it
-  // calls a React hook, and hooks run on every render.
-  const label = useHtmlTexture(false);
-  // miris:label-end
 
   // miris:field-start
   // Step 5.3 replaces this. A TSL graph is built once, not per frame.
@@ -64,9 +58,6 @@ export default function Stage() {
       {/* Steps 2.1 to 2.4 go here, in that order. */}
       {/* miris:scene-end */}
 
-      {/* miris:card-start */}
-      {/* Steps 5.2 and 5.4 go here. */}
-      {/* miris:card-end */}
 
       <CapsuleProbe />
       {/* The camera never leaves the middle of the room. Orbiting a target two
@@ -80,6 +71,10 @@ export default function Stage() {
         rotateSpeed={-0.35}
       />
     </Canvas>
+
+    {/* miris:card-start */}
+    {/* Step 4.2 goes here. */}
+    {/* miris:card-end */}
 
     {/* miris:hud-start */}
     {/* Step 5.1 goes here. */}

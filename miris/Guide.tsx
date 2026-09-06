@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState } from "react";
 import BuildTray, { useBuild } from "./Build";
-import { detect, getPath, subscribePath } from "./htmlInCanvas";
 import { STEPS, type Sub } from "./curriculum";
 import { transition } from "./transition";
 import { nextSub, stepOfSub } from "./progress";
@@ -41,27 +40,6 @@ async function readApi(res: Response): Promise<ApiResult> {
   return { ok: true, data };
 }
 
-/* Known from the first minute, not discovered at step 5: whether this browser
- * can draw HTML into a canvas. Nothing is blocked either way, since the SVG
- * fallback always renders, but a Chrome that could do the real thing deserves
- * the tip while there is still time to flip the flag. */
-function CapabilityLine() {
-  const path = useSyncExternalStore(subscribePath, getPath, getPath);
-  if (path === "drawElement" || path === "failed") return null;
-  const { flaggable } = detect();
-  return (
-    <p className="mw-capline l12">
-      {flaggable ? (
-        <>
-          Step 5 draws HTML into the canvas. Enable <code>chrome://flags/#canvas-draw-element</code> and
-          relaunch to do it natively; otherwise the SVG fallback runs.
-        </>
-      ) : (
-        <>Step 5 draws HTML into the canvas. This browser uses the SVG fallback, which still renders.</>
-      )}
-    </p>
-  );
-}
 
 export default function MirisGuide() {
   const [open, setOpen] = useState(true);
@@ -346,7 +324,6 @@ export default function MirisGuide() {
           </button>
         </div>
 
-        <CapabilityLine />
 
         <div className="mw-split">
           <Rail

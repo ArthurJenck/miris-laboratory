@@ -1,5 +1,3 @@
-import { Html } from "@react-three/drei";
-
 export interface Stat {
   label: string;
   value: number;
@@ -47,12 +45,4 @@ export function dossierHtml(d: Partial<CardData>): string {
     <p class="mw-d-head">Handler notes</p>
     <p class="mw-d-notes">${esc(d?.notes ?? "")}</p>
   </div>`;
-}
-
-export default function Card({ card, position = [-1.15, 1.2, 0] as [number, number, number] }) {
-  return (
-    <Html position={position} transform distanceFactor={1.6} occlude={false}>
-      <div dangerouslySetInnerHTML={{ __html: dossierHtml(card ?? {}) }} />
-    </Html>
-  );
 }

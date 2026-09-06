@@ -118,25 +118,9 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
 
   async cardOverlay() {
     const block = readMarker(await readFile(STAGE, "utf8"), "card");
-    return block.includes("<Card")
+    return block.includes("Dossier")
       ? null
-      : "The card is not over the canvas yet. Add the line to the miris:card block, or let the step do it.";
-  },
-
-  async labelHtml() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "label");
-    return block.includes("useHtmlTexture")
-      ? null
-      : "No useHtmlTexture call in the miris:label block yet. It goes above the return, or let the step do it.";
-  },
-
-  async labelMesh() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "card");
-    if (!block.includes("planeGeometry"))
-      return "No plane in the miris:card block yet. Swap the overlay for the mesh, or let the step do it.";
-    return block.includes("label.texture")
-      ? null
-      : "The plane is there but nothing maps the label texture onto it.";
+      : "No Dossier in the miris:card block yet. Add the line, or let the step do it.";
   },
 
 };

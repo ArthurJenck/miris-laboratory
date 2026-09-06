@@ -99,31 +99,6 @@ const STREAMS = `      {specimens.map((s, i) => {
       })}`;
 
 
-const CARD = `      {specimens.map((s, i) => {
-        if (!s.dossier) return null;
-        const angle = (i / 6) * Math.PI * 2;
-        return (
-          <Card
-            key={s.id}
-            card={s.dossier}
-            position={[Math.cos(angle) * 4.2, 3.9, Math.sin(angle) * 4.2]}
-          />
-        );
-      })}`;
-
-const LABEL_HTML = `  // Painted by ctx.drawElementImage() in Chrome, an SVG foreignObject elsewhere.
-  const active = data?.specimens?.[data?.active ?? 0];
-  const label = useHtmlTexture(active?.dossier && dossierHtml(active.dossier));`;
-
-const LABEL_MESH = `      {label.texture && (
-        <Billboard position={[0, 3.9, 4.2]}>
-          <mesh>
-            <planeGeometry args={[label.width, label.height]} />
-            <meshBasicMaterial map={label.texture} transparent toneMapped={false} />
-          </mesh>
-        </Billboard>
-      )}`;
-
 const HUD = `    <LabHud specimens={specimens} />`;
 
 const EFFECT = `    <EffectCanvas node={field} />`;
@@ -142,19 +117,17 @@ const FIELD = `  // useMemo, because a TSL graph is built once, not once per ren
     return vec4(vec3(0.42, 0.86, 1.0).mul(glow), glow);
   })(), []);`;
 
+const CARD_PANEL = `    <Dossier specimens={specimens} />`;
+
 export const SNIPPETS = {
   floor: FLOOR,
   walkway: `${FLOOR}\n${WALKWAY}`,
   capsules: `${FLOOR}\n${WALKWAY}\n${CAPSULES_SNIPPET}`,
   streams: `${FLOOR}\n${WALKWAY}\n${CAPSULES_SNIPPET}\n${STREAMS}`,
-  card: CARD,
-  labelHtml: LABEL_HTML,
-  // Shares the `card` marker deliberately, so the plane replaces step 4.2's
-  // overlay rather than adding a second dossier beside it.
-  labelMesh: LABEL_MESH,
   hud: HUD,
   effect: EFFECT,
   field: FIELD,
+  card: CARD_PANEL,
 };
 
 /* What each step actually adds. SNIPPETS is cumulative because the scene ones
@@ -166,12 +139,10 @@ export const PARTS = {
   walkway: WALKWAY,
   capsules: CAPSULES_SNIPPET,
   streams: STREAMS,
-  card: CARD,
-  labelHtml: LABEL_HTML,
-  labelMesh: LABEL_MESH,
   hud: HUD,
   effect: EFFECT,
   field: FIELD,
+  card: CARD_PANEL,
 };
 
 /* Clearing a step puts the block back to the step before it, not to empty.
@@ -179,26 +150,22 @@ export const PARTS = {
    a marker-wide clear at 2.2 took 2.1's pedestal with it. null means there is
    nothing before it and the block returns to the template's blank. */
 export const CLEARS_TO = {
+  card: null,
   floor: null,
   walkway: "floor",
   capsules: "walkway",
   streams: "capsules",
-  card: null,
-  labelHtml: null,
-  labelMesh: "card",
   hud: null,
   effect: null,
   field: null,
 };
 
 export const MARKER_FOR = {
+  card: "card",
   floor: "scene",
   walkway: "scene",
   capsules: "scene",
   streams: "scene",
-  card: "card",
-  labelHtml: "label",
-  labelMesh: "card",
   hud: "hud",
   effect: "effect",
   field: "field",

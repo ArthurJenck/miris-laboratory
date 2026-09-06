@@ -11,6 +11,7 @@ export interface Box {
    second and only two components care. */
 let boxes: (Box | null)[] = [null, null, null, null, null, null];
 let hover = -1;
+let selected = -1;
 let version = 0;
 const subs = new Set<() => void>();
 
@@ -21,6 +22,7 @@ export const subscribeLab = (f: () => void) => {
 export const labVersion = () => version;
 export const getBoxes = () => boxes;
 export const getHover = () => hover;
+export const getSelected = () => selected;
 
 const bump = () => {
   version++;
@@ -42,5 +44,12 @@ export const setBoxes = (next: (Box | null)[]) => {
 export const setHover = (i: number) => {
   if (i === hover) return;
   hover = i;
+  bump();
+};
+
+/** Which capsule's dossier is open. -1 closes it. */
+export const setSelected = (i: number) => {
+  if (i === selected) return;
+  selected = i;
   bump();
 };

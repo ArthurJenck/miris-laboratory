@@ -171,35 +171,13 @@ export const STEPS: Step[] = [
       },
       {
         num: "4.2",
-        title: "Float it over the canvas",
+        title: "Open it on click",
         body:
-          "The obvious way to label a 3D thing: absolutely-position a DOM element over the canvas and move it with the camera. Add this to the miris:card block and orbit until a capsule passes in front of the card.",
+          "One line puts the file on screen. Add it in the miris:card block, at the bottom of app/stage.tsx outside the Canvas, then click a capsule.",
         fill: "card",
         check: "cardOverlay",
         explain:
-          "drei's Html helper does the positioning: it projects a scene position into screen space every frame and moves a real DOM element to match. Notice what it cannot do: the card is OVER the canvas, not in it, so a capsule can never pass in front of it, it never refracts through the glass, and it vanishes from screenshots of the canvas. That is the ceiling of the overlay approach, and the next two steps go through it.",
-      },
-      {
-        num: "4.3",
-        title: "Paint it into the canvas",
-        body:
-          "Now the real thing. This goes in the miris:label block near the top of app/stage.tsx, above the return: write the dossier as plain HTML, and useHtmlTexture hands back a texture.",
-        fill: "labelHtml",
-        renderPath: true,
-        check: "labelHtml",
-        explain:
-          "HTML-in-Canvas is the new browser capability this step exists to teach: ctx.drawElementImage() draws a laid-out DOM element straight into a 2D canvas, pixels and all. Chrome ships it behind chrome://flags/#canvas-draw-element. Everywhere else, the same markup is serialised into an SVG foreignObject and drawn as an image, which is the fallback the badge below reports. Either way the canvas becomes an ordinary three.js CanvasTexture, and that is the whole trick: anything HTML can lay out, the scene can wear. A dossier with bars and chips is a much better argument for it than a name and a line of text.",
-      },
-      {
-        num: "4.4",
-        title: "Hang it on the glass",
-        body:
-          "Swap the overlay in the miris:card block for a plane that wears the texture, inside a Billboard so it turns to face you. Orbit again: the capsules now pass in front of the dossier, because the dossier is geometry.",
-        fill: "labelMesh",
-        renderPath: true,
-        check: "labelMesh",
-        explain:
-          "A plane with a meshBasicMaterial, nothing exotic. Billboard turns it to the camera every frame, the way every game nameplate works: without it, a plane is invisible edge-on and gone entirely from behind, because single-sided geometry culls its back face. transparent honours the rounded corners, toneMapped keeps the text out of the ACES curve, and label.width and height arrive already in scene units. Your HTML is now a surface in the world: occluded by the glass, screenshotted and streamed like everything else. Then try to select the text. You cannot, and that is the trade. HTML-in-Canvas normally keeps a drawn element selectable and readable by a screen reader, because the canvas showing it is the same canvas holding it. A Billboard gives it nothing to map: the plane turns to face you, hides behind a capsule and moves whenever you orbit. Step 4.2 was the other end of the same trade. Neither one is the right answer for every label.",
+          "The dossier is HTML over the canvas rather than geometry in it, and that is a deliberate choice rather than the lazy one. A card standing in the scene turns edge-on as you look around, hides behind its own glass and gets clipped by the top of the frame, which is exactly what it did in the first version of this room. Anchored to the window it stays readable from every angle. What you give up is that it can never be occluded by the specimen, never streamed, and never appears in a screenshot of the canvas alone. Clicking is decided the same way hover is, from the pointer against the projected capsule boxes, so nothing in the scene needs a click handler.",
       },
     ],
   },
