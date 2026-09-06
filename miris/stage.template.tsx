@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Canvas, extend } from "@react-three/fiber";
 import { Billboard, Environment, OrbitControls } from "@react-three/drei";
 import { MirisStream } from "@miris-inc/three";
-import { ACESFilmicToneMapping } from "three";
+import { TINTS, VIEWER_KEY as DEMO_KEY } from "../miris/config";
+import { ACESFilmicToneMapping, DoubleSide } from "three";
 import Card from "../miris/Card";
 import useHtmlTexture from "../miris/htmlTexture";
 import { StageSkeleton } from "../miris/Skeleton";
@@ -27,6 +28,8 @@ export default function Stage() {
   const label = useHtmlTexture(false);
   // miris:label-end
 
+  const specimens = data?.specimens ?? [];
+
   if (!data || !data.track) return <StageSkeleton />;
 
   return (
@@ -40,20 +43,23 @@ export default function Stage() {
         toneMapping: ACESFilmicToneMapping,
         toneMappingExposure: 1.1,
       }}
-      camera={{ position: [0, 1.5, 3.4], fov: 40 }}
+      camera={{ position: [0, 4.2, 12.5], fov: 42 }}
       style={{ position: "fixed", inset: 0 }}
     >
-      <hemisphereLight args={[0xffffff, 0x223044, 2.2]} />
+      {/* Sublevel 7 is dark. Almost everything you see is emissive geometry. */}
+      <ambientLight intensity={0.5} color={0x8fb6cc} />
+      <pointLight position={[0, 6, 0]} intensity={40} distance={26} color={0x9ec9ff} />
+      <pointLight position={[0, 0.25, 0]} intensity={6} distance={7} color={0x3bd6fe} />
 
       {/* miris:scene-start */}
-      {/* Steps 2.1, 2.2 and 2.4 go here, in that order. */}
+      {/* Steps 2.1 to 2.4 go here, in that order. */}
       {/* miris:scene-end */}
 
       {/* miris:card-start */}
       {/* Steps 5.2 and 5.4 go here. */}
       {/* miris:card-end */}
 
-      <OrbitControls makeDefault target={[0, 0.9, 0]} />
+      <OrbitControls makeDefault target={[0, 1.5, 0]} />
     </Canvas>
   );
 }

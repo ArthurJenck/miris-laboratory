@@ -18,10 +18,10 @@ export default function Start({
       </header>
 
       <div className="mw-ask">
-        <h1>What are you making?</h1>
+        <h1>Sublevel 7 is yours.</h1>
         <p>
-          Five steps. Describe what you want, watch it get built, then publish it streaming to anyone with the
-          link.
+          Six containment capsules stand empty around the walkway. Describe what grows in them, watch it get
+          built, then publish the whole laboratory streaming to anyone with the link.
         </p>
       </div>
 
@@ -31,7 +31,7 @@ export default function Start({
         </p>
       )}
 
-      <div className="mw-doors">
+      <div className="mw-doors mw-doors-one">
         {TRACKS.map((track, i) => (
           <button
             key={track.id}
@@ -64,7 +64,7 @@ export default function Start({
             <span className="mw-door-body">
               <b>{track.label}</b>
               <p>{track.blurb}</p>
-              <span className="mw-begin">Start with {track.label} &rarr;</span>
+              <span className="mw-begin">Enter the {track.label} &rarr;</span>
             </span>
           </button>
         ))}

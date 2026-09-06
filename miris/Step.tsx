@@ -92,6 +92,7 @@ const withNoun = (text: string, noun: string) => text.replaceAll("{noun}", noun)
 /* The snippets carry the indentation they need inside the marker block, which
    is six columns of it. Kept for the file, dropped for a 408px panel. */
 const dedent = (code: string) => {
+  if (!code) return "";
   const lines = code.replace(/\n+$/, "").split("\n");
   const indent = Math.min(
     ...lines.filter((l) => l.trim()).map((l) => l.match(/^ */)![0].length),
@@ -240,7 +241,7 @@ export default function StepPane({
 
             {sub.fill && (
               <>
-                <Snippet code={dedent(PARTS[sub.fill as keyof typeof PARTS])} />
+                <Snippet code={dedent(PARTS[sub.fill as keyof typeof PARTS] ?? "")} />
                 <div className="mw-row mw-autorow">
                   <button
                     className="btn btn-ghost btn-sm"

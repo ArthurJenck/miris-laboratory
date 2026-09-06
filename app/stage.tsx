@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Canvas, extend } from "@react-three/fiber";
 import { Billboard, Environment, OrbitControls } from "@react-three/drei";
 import { MirisStream } from "@miris-inc/three";
-import { ACESFilmicToneMapping } from "three";
+import { TINTS, VIEWER_KEY as DEMO_KEY } from "../miris/config";
+import { ACESFilmicToneMapping, DoubleSide } from "three";
 import Card from "../miris/Card";
 import useHtmlTexture from "../miris/htmlTexture";
 import { StageSkeleton } from "../miris/Skeleton";
@@ -22,16 +23,12 @@ export default function Stage() {
   }, []);
 
   // miris:label-start
-  // Painted by ctx.drawElementImage() in Chrome, an SVG foreignObject elsewhere.
-  const label = useHtmlTexture(
-    data?.card &&
-      `<div class="mw-plate">
-        <strong>${data.card.name}</strong>
-        <p>${data.card.description}</p>
-        <ul>${data.card.attributes.map((a) => `<li>${a}</li>`).join("")}</ul>
-      </div>`,
-  );
+  // Step 5.3 replaces this placeholder. It stays above the return because it
+  // calls a React hook, and hooks run on every render.
+  const label = useHtmlTexture(false);
   // miris:label-end
+
+  const specimens = data?.specimens ?? [];
 
   if (!data || !data.track) return <StageSkeleton />;
 
@@ -46,43 +43,23 @@ export default function Stage() {
         toneMapping: ACESFilmicToneMapping,
         toneMappingExposure: 1.1,
       }}
-      camera={{ position: [0, 1.5, 3.4], fov: 40 }}
+      camera={{ position: [0, 4.2, 12.5], fov: 42 }}
       style={{ position: "fixed", inset: 0 }}
     >
-      <hemisphereLight args={[0xffffff, 0x223044, 2.2]} />
+      {/* Sublevel 7 is dark. Almost everything you see is emissive geometry. */}
+      <ambientLight intensity={0.5} color={0x8fb6cc} />
+      <pointLight position={[0, 6, 0]} intensity={40} distance={26} color={0x9ec9ff} />
+      <pointLight position={[0, 0.25, 0]} intensity={6} distance={7} color={0x3bd6fe} />
 
       {/* miris:scene-start */}
-      <mesh position={[0, 0.25, 0]}>
-        <cylinderGeometry args={[0.9, 1.0, 0.5, 48]} />
-        <meshStandardMaterial color={0x111215} roughness={0.55} metalness={0.5} />
-      </mesh>
-      <mesh position={[0, 0.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.9, 0.015, 12, 64]} />
-        <meshBasicMaterial color={0xe8e9ed} />
-      </mesh>
-      <Environment files="/env/white-chapel.hdr" environmentIntensity={1.6} />
-      <mirisStream
-        position={[0.043, 0.64, 0.221]}
-        scale={0.138}
-        args={[{
-          uuid: "2b21e89f-ef5d-4175-bbdf-03e8649bcb76",
-          viewerKey: "4YIGMPUj5-fL8n0jkp1kQpJktss_UaBDMW9jwJb08f4",
-        }]}
-      />
+      {/* Steps 2.1 to 2.4 go here, in that order. */}
       {/* miris:scene-end */}
 
       {/* miris:card-start */}
-      {label.texture && (
-        <Billboard position={[-1.15, 1.2, 0]}>
-          <mesh>
-            <planeGeometry args={[label.width, label.height]} />
-            <meshBasicMaterial map={label.texture} transparent toneMapped={false} />
-          </mesh>
-        </Billboard>
-      )}
+      {/* Steps 5.2 and 5.4 go here. */}
       {/* miris:card-end */}
 
-      <OrbitControls makeDefault target={[0, 0.9, 0]} />
+      <OrbitControls makeDefault target={[0, 1.5, 0]} />
     </Canvas>
   );
 }

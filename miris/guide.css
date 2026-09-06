@@ -1461,3 +1461,11 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
   .mw-skel-bar::before { animation: none; opacity: 0.75; }
 }
 .mw-path[data-failed] { color: var(--mono-200); border-color: var(--mono-700); }
+
+/* One track, so the chooser is a single wide plate rather than a row of three.
+   The artwork is a lit photograph here, not a subject on black, so it does not
+   screen-blend the way the three-track renders did. */
+.mw-doors-one { grid-template-columns: minmax(0, 1fr); max-width: 980px; margin-inline: auto; }
+.mw-doors-one .mw-door { aspect-ratio: 16 / 7; }
+.mw-doors-one .mw-specimen { mix-blend-mode: normal; opacity: 0.85; }
+.mw-doors-one .mw-specimen img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal); }

@@ -1,26 +1,73 @@
-const PEDESTAL = `      <mesh position={[0, 0.25, 0]}>
-        <cylinderGeometry args={[0.9, 1.0, 0.5, 48]} />
-        <meshStandardMaterial color={0x111215} roughness={0.55} metalness={0.5} />
+const FLOOR = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+        <circleGeometry args={[18, 64]} />
+        <meshStandardMaterial color={0x0a0d11} roughness={0.85} metalness={0.2} />
       </mesh>
-      <mesh position={[0, 0.5, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.9, 0.015, 12, 64]} />
-        <meshBasicMaterial color={0xe8e9ed} />
+      <gridHelper args={[36, 36, 0x1d4c60, 0x123243]} position={[0, 0, 0]} />
+      <mesh position={[0, 4.4, 0]}>
+        <cylinderGeometry args={[16, 16, 9, 48, 1, true]} />
+        <meshStandardMaterial color={0x1b2530} roughness={0.9} metalness={0.1} side={DoubleSide} />
       </mesh>`;
 
-const ENVIRONMENT = `      <Environment files="/env/white-chapel.hdr" environmentIntensity={1.6} />`;
+const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+        <ringGeometry args={[2.8, 5.6, 64]} />
+        <meshStandardMaterial color={0x39454f} roughness={0.45} metalness={0.4} />
+      </mesh>
+      {[2.8, 5.6].map((r) => (
+        <mesh key={r} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
+          <torusGeometry args={[r, 0.022, 8, 128]} />
+          <meshBasicMaterial color={0x3bd6fe} toneMapped={false} />
+        </mesh>
+      ))}`;
 
-const STREAM = `      <mirisStream
-        position={[0.043, 0.64, 0.221]}
-        scale={0.138}
-        args={[{
-          uuid: "2b21e89f-ef5d-4175-bbdf-03e8649bcb76",
-          viewerKey: "4YIGMPUj5-fL8n0jkp1kQpJktss_UaBDMW9jwJb08f4",
-        }]}
-      />`;
+const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
+        // Six capsules, evenly spaced around a circle of radius 4.2.
+        const angle = (i / 6) * Math.PI * 2;
+        const x = Math.cos(angle) * 4.2;
+        const z = Math.sin(angle) * 4.2;
+        return (
+          <group key={s.id} position={[x, 0, z]}>
+            <mesh position={[0, 0.18, 0]}>
+              <cylinderGeometry args={[1.05, 1.18, 0.36, 32]} />
+              <meshStandardMaterial color={0x0b0d10} roughness={0.6} metalness={0.35} />
+            </mesh>
+            <mesh position={[0, 1.66, 0]}>
+              <cylinderGeometry args={[0.9, 0.9, 2.6, 40, 1, true]} />
+              <meshStandardMaterial
+                color={TINTS[i]}
+                emissive={TINTS[i]}
+                emissiveIntensity={0.5}
+                transparent
+                opacity={0.18}
+                roughness={0.2}
+                metalness={0.1}
+                depthWrite={false}
+                side={DoubleSide}
+              />
+            </mesh>
+            {[0.36, 2.96].map((y) => (
+              <mesh key={y} position={[0, y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+                <torusGeometry args={[0.9, 0.015, 8, 64]} />
+                <meshBasicMaterial color={0x9ef4ff} toneMapped={false} />
+              </mesh>
+            ))}
+          </group>
+        );
+      })}`;
 
-// pedestal, environment and stream share the `scene` marker, so each snippet
-// contains the ones before it. Writing them non-cumulatively would make step
-// 2.2 delete the pedestal that step 2.1 just added.
+const STREAMS = `      {specimens.map((s, i) => {
+        if (!s.uuid) return null;
+        const angle = (i / 6) * Math.PI * 2;
+        return (
+          <mirisStream
+            key={s.id}
+            position={[Math.cos(angle) * 4.2, 1.6, Math.sin(angle) * 4.2]}
+            scale={0.15}
+            args={[{ uuid: s.uuid, viewerKey: data.viewerKey || DEMO_KEY }]}
+          />
+        );
+      })}`;
+
+
 const LABEL_HTML = `  // Painted by ctx.drawElementImage() in Chrome, an SVG foreignObject elsewhere.
   const label = useHtmlTexture(
     data?.card &&
@@ -32,9 +79,10 @@ const LABEL_HTML = `  // Painted by ctx.drawElementImage() in Chrome, an SVG for
   );`;
 
 export const SNIPPETS = {
-  pedestal: PEDESTAL,
-  environment: `${PEDESTAL}\n${ENVIRONMENT}`,
-  stream: `${PEDESTAL}\n${ENVIRONMENT}\n${STREAM}`,
+  floor: FLOOR,
+  walkway: `${FLOOR}\n${WALKWAY}`,
+  capsules: `${FLOOR}\n${WALKWAY}\n${CAPSULES_SNIPPET}`,
+  streams: `${FLOOR}\n${WALKWAY}\n${CAPSULES_SNIPPET}\n${STREAMS}`,
   card: `      {data.card ? <Card card={data.card} /> : null}`,
   labelHtml: LABEL_HTML,
   // Shares the `card` marker deliberately, so the plane replaces step 5.2's
@@ -54,9 +102,10 @@ export const SNIPPETS = {
    the pedestal they already have. The Fill button writes the cumulative block;
    the card shows the part. */
 export const PARTS = {
-  pedestal: PEDESTAL,
-  environment: ENVIRONMENT,
-  stream: STREAM,
+  floor: FLOOR,
+  walkway: WALKWAY,
+  capsules: CAPSULES_SNIPPET,
+  streams: STREAMS,
   card: SNIPPETS.card,
   labelHtml: LABEL_HTML,
   labelMesh: SNIPPETS.labelMesh,
@@ -67,18 +116,20 @@ export const PARTS = {
    a marker-wide clear at 2.2 took 2.1's pedestal with it. null means there is
    nothing before it and the block returns to the template's blank. */
 export const CLEARS_TO = {
-  pedestal: null,
-  environment: "pedestal",
-  stream: "environment",
+  floor: null,
+  walkway: "floor",
+  capsules: "walkway",
+  streams: "capsules",
   card: null,
   labelHtml: null,
   labelMesh: "card",
 };
 
 export const MARKER_FOR = {
-  pedestal: "scene",
-  environment: "scene",
-  stream: "scene",
+  floor: "scene",
+  walkway: "scene",
+  capsules: "scene",
+  streams: "scene",
   card: "card",
   labelHtml: "label",
   labelMesh: "card",

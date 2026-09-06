@@ -1,5 +1,6 @@
 import { readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { emptyBank, normaliseBank } from "./specimens.mjs";
 
 export const DEFAULT_DATA = {
   track: "",
@@ -14,6 +15,9 @@ export const DEFAULT_DATA = {
   uuid: "",
   viewerKey: "",
   card: null,
+  // Which capsule the attendee is working on, 0-5.
+  active: 0,
+  specimens: emptyBank(),
 };
 
 const file = (dir) => join(dir, "data.json");
@@ -26,7 +30,10 @@ export async function readData(dir) {
     return { ...DEFAULT_DATA };
   }
   try {
-    return { ...DEFAULT_DATA, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    // The bank is merged slot by slot, never replaced wholesale: a short array
+    // from an older file would otherwise leave capsules missing their fields.
+    return { ...DEFAULT_DATA, ...parsed, specimens: normaliseBank(parsed.specimens) };
   } catch (e) {
     throw new Error(`data.json is corrupt and was not overwritten: ${e.message}`);
   }

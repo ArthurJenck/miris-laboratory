@@ -39,51 +39,57 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
   },
 
   async image() {
-    const { imageUrl } = await readData(MIRIS_DIR);
-    return imageUrl ? null : "No image yet. Write a prompt at step 1.2 and generate one.";
+    const { specimens, active } = await readData(MIRIS_DIR);
+    const slot = (specimens as any[])?.[Number(active) || 0];
+    return slot?.imageUrl ? null : "No render yet. Write a prompt at step 1.2 and grow one.";
   },
 
-  async pedestal() {
+  async floor() {
     const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes("cylinderGeometry")
+    return block.includes("gridHelper")
       ? null
-      : "The scene block in app/stage.tsx has no pedestal in it yet. Paste the snippet between the miris:scene comments, or let the step do it.";
+      : "The scene block in app/stage.tsx has no deck in it yet. Paste the snippet between the miris:scene comments, or let the step do it.";
   },
 
-  async environment() {
+  async walkway() {
     const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes("Environment")
+    return block.includes("ringGeometry")
       ? null
-      : "No Environment line in the scene block yet. Add it under the pedestal, or let the step do it.";
+      : "No walkway in the scene block yet. Add it under the deck, or let the step do it.";
   },
 
-  async stream() {
+  async capsules() {
+    const block = readMarker(await readFile(STAGE, "utf8"), "scene");
+    return block.includes("meshPhysicalMaterial")
+      ? null
+      : "No capsules in the scene block yet. Add them under the walkway, or let the step do it.";
+  },
+
+  async streams() {
     const block = readMarker(await readFile(STAGE, "utf8"), "scene");
     return block.includes("mirisStream")
       ? null
-      : "No mirisStream in the scene block yet. Add it under the Environment line, or let the step do it.";
+      : "Nothing is streaming into the capsules yet. Add the block under the capsules, or let the step do it.";
   },
 
-  async streamUuid() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    const uuid = block.match(/uuid:\s*"([^"]*)"/)?.[1];
-    if (!uuid) return "No uuid string in the mirisStream args yet. It went in at step 2.4.";
-    // A uuid pasted with surrounding text streams nothing and reports nothing.
+  async capsuleUuid() {
+    const { specimens, active } = await readData(MIRIS_DIR);
+    const slot = (specimens as any[])?.[Number(active) || 0];
+    const uuid = slot?.uuid ?? "";
+    if (!uuid) return "That capsule has no asset id yet. Paste your uuid and viewer key above.";
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid))
       return `That uuid does not look like one: "${uuid}". Copy just the id from the asset page.`;
     if (uuid === DEMO_UUID)
-      return "The stream still points at the demo asset. Replace the uuid string in app/stage.tsx with your asset id.";
-    const key = block.match(/viewerKey:\s*"([^"]*)"/)?.[1];
-    if (!key)
-      return "The viewerKey string is empty. Paste your key from the portal: the demo key cannot read your asset.";
+      return "That capsule still holds the demo specimen. Paste your own asset id from the portal.";
     return null;
   },
 
-  async card() {
-    const { card } = await readData(MIRIS_DIR);
-    return card && typeof card === "object" && (card as any).name
+  async dossier() {
+    const { specimens, active } = await readData(MIRIS_DIR);
+    const d = (specimens as any[])?.[Number(active) || 0]?.dossier;
+    return d && typeof d === "object" && d.name
       ? null
-      : "miris/data.json still has no card. Press Write the label.";
+      : "This capsule has no dossier yet. Press Write the dossier.";
   },
 
   async cardOverlay() {
