@@ -6,7 +6,8 @@ import { end as markerEnd, readMarker, replaceMarker, start as markerStart } fro
 import { readData, writeData } from "./store.mjs";
 import { CLEARS_TO, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
 import { normaliseBank } from "./specimens.mjs";
-import { DEMO_UUID, STATUSES, STAT_LABELS, IMAGE_FRAMING, IMAGE_MODEL, LABEL_LLM, LABEL_MODEL, MODEL_3D, VIEWER_KEY } from "./config";
+import { zipSync } from "./zip.mjs";
+import { DEMO_UUID, STAGES, STATUSES, STAT_LABELS, IMAGE_FRAMING, IMAGE_MODEL, LABEL_LLM, LABEL_MODEL, MODEL_3D, VIEWER_KEY } from "./config";
 import { TRACKS } from "./tracks";
 
 /* Dev only, by construction: configureServer has no production counterpart, so
@@ -15,6 +16,7 @@ import { TRACKS } from "./tracks";
 const ROOT = process.cwd();
 const MIRIS_DIR = join(ROOT, "miris");
 const STAGE = join(ROOT, "app", "stage.tsx");
+const ZIP = join(ROOT, "miris", "specimens.zip");
 const TEMPLATE = join(MIRIS_DIR, "stage.template.tsx");
 
 const MESHY_INPUT = {
@@ -39,10 +41,12 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
       : "No FAL_KEY yet. Create .env.local at the top level of the project, put your key in it, and save.";
   },
 
-  async image() {
-    const { specimens, active } = await readData(MIRIS_DIR);
-    const slot = (specimens as any[])?.[Number(active) || 0];
-    return slot?.imageUrl ? null : "No render yet. Write a prompt at step 1.2 and grow one.";
+  async series() {
+    const { specimens, zipReady } = await readData(MIRIS_DIR);
+    const grown = (specimens as any[])?.filter((s) => s.glb).length ?? 0;
+    if (grown === 0) return "Nothing grown yet. Describe your creature and press Grow the series.";
+    if (grown < STAGES) return `${grown} of ${STAGES} stages are built. The rest are still running in the tray.`;
+    return zipReady ? null : "All six are built but the archive is still being packed.";
   },
 
   async floor() {
@@ -181,6 +185,63 @@ const parseDossier = (raw: unknown) => {
   }
 };
 
+/* One concept becomes six bodies. The model is asked for a growth series
+   rather than six variations, because the capsules read left to right as a
+   life cycle and six unrelated creatures would say nothing. */
+const EMBRYOLOGIST =
+  "You plan the growth series of a single organism for a laboratory archive. " +
+  "Reply with ONLY a JSON array of exactly " + STAGES + " objects, no code fences, no commentary: " +
+  '[{"stage": "one or two words naming this point in its life", ' +
+  '"prompt": "one clause describing the whole body at this stage"}]. ' +
+  "Order them from earliest to most developed. Each prompt describes the same creature, " +
+  "changed by growth: proportions, plating, limbs, size and colour may all shift, but it stays " +
+  "recognisably the same animal. Do not mention other stages, ages, numbers or the word stage " +
+  "inside a prompt. Use no em dashes.";
+
+const parseStages = (raw: unknown) => {
+  if (typeof raw !== "string") return null;
+  const text = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try {
+    const list = JSON.parse(text);
+    if (!Array.isArray(list) || list.length !== STAGES) return null;
+    const out = list.map((x: any) => ({
+      stage: String(x?.stage ?? "").trim().slice(0, 24),
+      prompt: String(x?.prompt ?? "").trim(),
+    }));
+    return out.some((x) => !x.stage || !x.prompt) ? null : out;
+  } catch {
+    return null;
+  }
+};
+
+/* meshy answers with several formats, and `model_glb` has been observed
+   carrying an .fbx url. Trust the extension, not the field name: walk the whole
+   reply and take the first url that is actually a glb. */
+const findGlb = (node: unknown): string | null => {
+  if (typeof node === "string") return /\.glb(\?|$)/i.test(node) ? node : null;
+  if (Array.isArray(node)) {
+    for (const v of node) {
+      const hit = findGlb(v);
+      if (hit) return hit;
+    }
+    return null;
+  }
+  if (node && typeof node === "object") {
+    for (const v of Object.values(node as Record<string, unknown>)) {
+      const hit = findGlb(v);
+      if (hit) return hit;
+    }
+  }
+  return null;
+};
+
+/** glTF binary starts with the ascii magic. A mesh that does not is not one. */
+const isGlb = (buf: Buffer) => buf.length > 12 && buf.toString("ascii", 0, 4) === "glTF";
+
+/** A file name a person can read in a download folder, in growth order. */
+const stageFile = (i: number, stage: string) =>
+  `${String(i + 1).padStart(2, "0")}-${stage.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "stage"}.glb`;
+
 type Reply = { status: number; body: unknown };
 const ok = (body: unknown): Reply => ({ status: 200, body });
 const fail = (error: string, status = 400): Reply => ({ status, body: { error } });
@@ -310,63 +371,80 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       return ok({ dossier });
     }
 
-    case "image": {
+    case "hatch": {
       if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
       const stored = await readData(MIRIS_DIR);
       const track = TRACKS.find((t) => t.id === stored.track);
-      if (!track) return fail("No track chosen yet. Pick one on the chooser first.");
-      const out: any = await falRun(IMAGE_MODEL, {
-        prompt: `${track.style}: ${body.prompt}. ${IMAGE_FRAMING}`,
-        image_size: "square_hd",
-        num_images: 1,
-        quality: "medium",
-      });
-      const url = out?.images?.[0]?.url;
-      if (!url) return fail("fal returned no image", 502);
-      const bank = normaliseBank(stored.specimens as any[]);
-      const i = Number(stored.active) || 0;
-      // A new render invalidates the mesh and the record that described the old one.
-      bank[i] = { ...bank[i], prompt: body.prompt, imageUrl: url, status: "drawn", glb: "", uuid: "", dossier: null };
-      await writeData(MIRIS_DIR, { specimens: bank });
-      return ok({ url });
-    }
+      if (!track) return fail("No track chosen yet.");
+      const concept = String(body?.prompt ?? "").trim();
+      if (!concept) return fail("Describe the creature first.");
 
-    case "model": {
-      if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
-      const stored = await readData(MIRIS_DIR);
-      const track = TRACKS.find((t) => t.id === stored.track);
-      if (!track) return fail("No track chosen yet. Pick one on the chooser first.");
-      const i = Number(stored.active) || 0;
-
-      const mark = async (patch: Record<string, unknown>) => {
+      /* Each slot is patched on its own, read-modify-write inside the store's
+         queue, so six concurrent stages cannot clobber one another. */
+      const patchSlot = async (i: number, patch: Record<string, unknown>) => {
         const fresh = await readData(MIRIS_DIR);
-        const b2 = normaliseBank(fresh.specimens as any[]);
-        b2[i] = { ...b2[i], ...patch };
-        await writeData(MIRIS_DIR, { specimens: b2 });
+        const bank = normaliseBank(fresh.specimens as any[]);
+        bank[i] = { ...bank[i], ...patch };
+        await writeData(MIRIS_DIR, { specimens: bank });
       };
 
-      await mark({ status: "building", modelStartedAt: Date.now() });
-      let out: any;
-      try {
-        out = await falRun(MODEL_3D, {
-          image_url: body.imageUrl,
-          // Styled the same way the render was; the texture pass reads this.
-          texture_prompt: `${track.style}: ${body.prompt ?? ""}`,
-          ...MESHY_INPUT,
-        });
-      } catch (e) {
-        // The browser that asked may be gone: clearing the clock is how a
-        // resumed client learns the job died rather than waiting forever.
-        await mark({ status: "drawn", modelStartedAt: 0 });
-        throw e;
-      }
-      const url = out?.model_glb?.url;
-      if (!url) {
-        await mark({ status: "drawn", modelStartedAt: 0 });
-        return fail("fal returned no mesh", 502);
-      }
-      await mark({ glb: url, status: "ready", modelStartedAt: 0 });
-      return ok({ url });
+      const plan: any = await falRun(LABEL_MODEL, {
+        model: LABEL_LLM,
+        system_prompt: EMBRYOLOGIST,
+        prompt: `The creature: ${concept}.`,
+        temperature: 0.9,
+      });
+      const stages = parseStages(plan?.output);
+      if (!stages) return fail("The model did not return six stages. Press the button again.", 502);
+
+      const fresh = await readData(MIRIS_DIR);
+      const bank = normaliseBank(fresh.specimens as any[]);
+      stages.forEach((st, i) => {
+        bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "named", imageUrl: "", glb: "", dossier: null };
+      });
+      await writeData(MIRIS_DIR, { concept, specimens: bank, zipReady: false, hatchedAt: Date.now() });
+
+      /* Six renders and six meshes, all in flight at once. Run in series this
+         is half an hour; run together it is one mesh build plus change, which
+         is the only reason six stages fit a two hour session. */
+      const glbs = await Promise.all(
+        stages.map(async (st, i) => {
+          const shot: any = await falRun(IMAGE_MODEL, {
+            prompt: `${track.style}: ${st.prompt}. ${IMAGE_FRAMING}`,
+            image_size: "square_hd",
+            num_images: 1,
+            quality: "medium",
+          });
+          const imageUrl = shot?.images?.[0]?.url;
+          if (!imageUrl) throw new Error(`fal returned no render for ${st.stage}`);
+          await patchSlot(i, { imageUrl, status: "building", modelStartedAt: Date.now() });
+
+          const mesh: any = await falRun(MODEL_3D, {
+            image_url: imageUrl,
+            texture_prompt: `${track.style}: ${st.prompt}`,
+            ...MESHY_INPUT,
+          });
+          const glb = findGlb(mesh);
+          if (!glb) throw new Error(`fal returned no glb for ${st.stage}. It sometimes answers with fbx only; press the button again.`);
+          await patchSlot(i, { glb, status: "ready", modelStartedAt: 0 });
+          return { name: stageFile(i, st.stage), url: glb };
+        }),
+      );
+
+      const files = await Promise.all(
+        glbs.map(async (g) => {
+          const r = await fetch(g.url);
+          if (!r.ok) throw new Error(`could not fetch ${g.name}: ${r.status}`);
+          const data = Buffer.from(await r.arrayBuffer());
+          // Checked here rather than trusted: a mis-typed mesh only shows up
+          // as a failed upload in the portal, long after the workshop.
+          if (!isGlb(data)) throw new Error(`${g.name} came back as ${data.toString("ascii", 0, 4)}, not glTF. Press the button again.`);
+          return { name: g.name, data };
+        }),
+      );
+      await writeFile(ZIP, zipSync(files));
+      await writeData(MIRIS_DIR, { zipReady: true });
+      return ok({ stages: stages.map((s2) => s2.stage), files: files.map((f) => f.name) });
     }
 
     default:
@@ -419,7 +497,24 @@ export function mirisDevApi(mode: string): Plugin {
     configureServer(server) {
       server.middlewares.use("/api/miris", async (req, res, next) => {
         try {
-          if (req.method === "GET") return send(res, ok(await readData(MIRIS_DIR)));
+          if (req.method === "GET") {
+            // The six meshes leave as one file, so the same endpoint serves
+            // either the workshop state or the archive, by query.
+            if ((req.url ?? "").includes("download")) {
+              let zip: Buffer;
+              try {
+                zip = await readFile(ZIP);
+              } catch {
+                return send(res, fail("No archive yet. Grow the series first.", 404));
+              }
+              res.statusCode = 200;
+              res.setHeader("Content-Type", "application/zip");
+              res.setHeader("Content-Disposition", 'attachment; filename="specimens.zip"');
+              res.setHeader("Content-Length", String(zip.length));
+              return res.end(zip);
+            }
+            return send(res, ok(await readData(MIRIS_DIR)));
+          }
 
           if (req.method === "POST") {
             let body: any;

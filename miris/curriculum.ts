@@ -55,9 +55,11 @@ export const STEPS: Step[] = [
         num: "1.2",
         title: "Describe your {noun}",
         body:
-          "One organism, whole body, on a plain backdrop. This is what grows in your first capsule. Or press the dice.",
+          "One creature, in one sentence. Everything in the room grows out of this: a model reads it and plans six points in the animal's life, then renders and builds all six at once. Four to six minutes, running in the tray. Or press the dice.",
         panel: true,
-        check: "image",
+        check: "series",
+        explain:
+          "Six meshes in series would be half an hour, which is why this used to be one specimen and five empty capsules. They run together instead, so the wall clock is one mesh build and change. What the model is asked for is a growth series rather than six variations: same animal, changed by growth, ordered from earliest to most developed. That is the difference between a row of six creatures and a life cycle you can read left to right.",
       },
     ],
   },
@@ -99,7 +101,7 @@ export const STEPS: Step[] = [
         num: "2.4",
         title: "Make your Miris account",
         body:
-          "You are one step from streaming, and streaming needs an account. Sign up at app.miris.com now, while the mesh builds; when the tray says Model ready, download the .glb and upload it there. Processing takes a few minutes of its own, so the earlier it starts the better. You need two things from the portal afterwards, at step 3.1: the asset uuid and a viewer key.",
+          "Streaming needs an account, and your six meshes need somewhere to live. Sign up at app.miris.com while the series grows. When the tray offers the archive, download it: six .glb files, numbered in growth order. Upload all six, then come back. Processing takes a few minutes of its own, so start early.",
         link: { href: PORTAL_URL, label: "Open Miris" },
       },
       {
@@ -122,14 +124,14 @@ export const STEPS: Step[] = [
         num: "3.1",
         title: "Upload your specimen",
         body:
-          "You started this at step 2.4. Back in the Miris portal, check your upload has finished processing, then copy two values: the asset uuid from the asset page, and a viewer key from your account settings. The viewer key is what lets a browser read your asset without logging anyone in.",
+          "You started this at step 2.4. Back in the Miris portal, check all six uploads have finished processing. You need seven values in total: the asset uuid from each of the six asset pages, and one viewer key from your account settings. The viewer key is what lets a browser read your assets without logging anyone in, and the same one works for all six.",
         link: { href: PORTAL_URL, label: "Open Miris" },
       },
       {
         num: "3.2",
         title: "Put it in the glass",
         body:
-          "Press the button and paste your asset uuid and viewer key. It goes into the capsule you are working on, and that capsule starts streaming your specimen instead of the demo.",
+          "Pick a capsule, paste the uuid for that stage, and seal it. Work along the row in growth order so the life cycle reads round the room. The viewer key only needs pasting once.",
         capsuleUuid: true,
         check: "capsuleUuid",
         explain:

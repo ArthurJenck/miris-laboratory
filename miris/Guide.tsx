@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import BuildTray, { useBuild } from "./Build";
+import HatchTray, { useHatch } from "./Build";
 import { STEPS, type Sub } from "./curriculum";
 import { transition } from "./transition";
 import { nextSub, stepOfSub } from "./progress";
@@ -154,7 +154,7 @@ export default function MirisGuide() {
 
   // Above the steps, so the tray survives an advance: the mesh takes four to
   // six minutes and later steps send attendees away from 1.2 while it runs.
-  const build = useBuild(track, data?.active ?? 0);
+  const hatch = useHatch(track);
 
   // Swapping between the chooser and the panel is a view transition: the
   // chooser leaves, then the panel arrives from its edge. The artwork is not
@@ -297,7 +297,7 @@ export default function MirisGuide() {
 
   return (
     <>
-      <BuildTray build={build} />
+      <HatchTray hatch={hatch} />
       <aside className="mw-panel" style={trackVars}>
         <header className="mw-head">
           <b className="b14">Spatial streaming</b>
@@ -349,7 +349,7 @@ export default function MirisGuide() {
               track={track}
               busy={busy}
               problems={problems}
-              build={build}
+              hatch={hatch}
               openSubNum={openSubNum}
               actions={actions}
             />

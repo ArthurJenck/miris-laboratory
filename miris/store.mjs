@@ -15,7 +15,13 @@ export const DEFAULT_DATA = {
   uuid: "",
   viewerKey: "",
   card: null,
-  // Which capsule the attendee is working on, 0-5.
+  // The one sentence the whole laboratory grows from.
+  concept: "",
+  // Epoch ms when the growth series was last started, 0 otherwise.
+  hatchedAt: 0,
+  // Whether miris/specimens.zip is on disk and matches the current series.
+  zipReady: false,
+  // Which capsule the dossier and the uuid form are pointed at, 0-5.
   active: 0,
   specimens: emptyBank(),
 };

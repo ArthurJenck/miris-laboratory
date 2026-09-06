@@ -1500,3 +1500,34 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 /* The strip and the logo both come from binary files WebContainer may drop.
    Give the band its own ground so a missing photograph is not a bright hole. */
 .mw-bar { background: linear-gradient(90deg, #061016 0%, #0a1a22 50%, #061016 100%); }
+
+/* The growth series: six rows that fill in as the workflow lands each stage. */
+.mw-tray-head {
+  display: flex; align-items: center; gap: 10px;
+  padding-bottom: 12px; border-bottom: 1px solid var(--mono-800);
+}
+.mw-tray-head .l12 { display: flex; align-items: center; gap: 8px; color: var(--mono-200); }
+.mw-tray-head .mw-elapsed { margin-left: auto; font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--mono-500); font-variant-numeric: tabular-nums; }
+.mw-tray-fold {
+  width: 22px; height: 22px; padding: 0; line-height: 1;
+  background: none; border: 1px solid var(--mono-700); border-radius: 4px;
+  color: var(--mono-400); cursor: pointer;
+}
+.mw-tray-fold:hover { color: var(--mono-000); border-color: var(--mono-600); }
+.mw-dot-live, .mw-dot-done { width: 7px; height: 7px; border-radius: 50%; background: var(--track); display: inline-block; }
+.mw-dot-live { animation: mw-pulse 1.4s ease-in-out infinite; }
+.mw-dot-done { background: var(--mono-600); }
+@keyframes mw-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+.mw-stages { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 1px; background: var(--mono-800); border: 1px solid var(--mono-800); }
+.mw-stage {
+  display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; align-items: center;
+  padding: 9px 11px; background: var(--surface-raised);
+  font-size: 13px; color: var(--mono-400);
+}
+.mw-stage-n { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--mono-600); font-variant-numeric: tabular-nums; }
+.mw-stage-name { color: var(--mono-200); }
+.mw-stage-state { font-family: ui-monospace, Menlo, monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--mono-500); }
+.mw-stage.is-building .mw-stage-state { color: var(--track); }
+.mw-stage.is-ready .mw-stage-state, .mw-stage.is-live .mw-stage-state { color: var(--mono-200); }
+.mw-dl { display: inline-flex; align-items: center; justify-content: center; margin-top: 14px; text-decoration: none; }

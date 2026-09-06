@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import { useState } from "react";
 import type { Step, Sub } from "./curriculum";
 import type { Track } from "./tracks";
-import { BuildInput, CapsuleForm, CapsulePicker, type BuildState } from "./Build";
+import { CapsuleForm, CapsulePicker, ConceptField, type HatchState } from "./Build";
 import Chevron from "./Chevron";
 import Code from "./highlight";
 import { PARTS } from "./snippets.mjs";
@@ -40,7 +40,7 @@ export interface StepPaneProps {
   /** What the last Done click found wrong, keyed by substep number. */
   problems: Record<string, string>;
   /** Owned by Guide so the tray outlives step 1.2. */
-  build: BuildState;
+  hatch: HatchState;
   /** The substep whose card is open. Usually the progress pointer, but a
    *  finished substep can be opened to re-read it. */
   openSubNum: string;
@@ -137,7 +137,7 @@ export default function StepPane({
   track,
   busy,
   problems,
-  build,
+  hatch,
   openSubNum,
   actions,
 }: StepPaneProps) {
@@ -229,8 +229,8 @@ export default function StepPane({
               </a>
             )}
 
-            {(sub.panel || sub.capsuleUuid) && <CapsulePicker data={data} onDone={actions.reload} />}
-            {sub.panel && <BuildInput build={build} />}
+            {sub.capsuleUuid && <CapsulePicker data={data} onDone={actions.reload} />}
+            {sub.panel && <ConceptField hatch={hatch} />}
             {sub.capsuleUuid && <CapsuleForm data={data} onDone={actions.reload} />}
 
             {sub.label && (

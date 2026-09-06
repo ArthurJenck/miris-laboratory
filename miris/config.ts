@@ -27,3 +27,8 @@ export const TINTS = [0x3bd6fe, 0x2fc0aa, 0x5f7fd0, 0xc4443f, 0x3bd6fe, 0x7f68c0
    colour of the dot beside it, and stats of varying length cannot be laid out. */
 export const STATUSES = ["STABLE", "DORMANT", "VOLATILE", "BREACHED"] as const;
 export const STAT_LABELS = ["VITALITY", "AGGRESSION", "BIOELECTRIC", "COHESION"] as const;
+
+/* One creature, six stages. The names are the model's to invent, but the count
+   is fixed: six capsules, six stages, and a card that cannot be laid out if the
+   count moves. */
+export const STAGES = 6;

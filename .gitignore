@@ -6,6 +6,7 @@ dist/
 public/models/
 .superpowers/
 miris/data.json
+miris/specimens.zip
 .playwright-mcp/
 tsconfig.tsbuildinfo
 

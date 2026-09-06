@@ -4,8 +4,11 @@ export const CAPSULES = 6;
 
 export const emptySpecimen = (id) => ({
   id,
-  // empty -> drawn -> building -> ready -> live. `live` means a uuid is in the
-  // stage file and the capsule is actually streaming.
+  // What this stage of the creature is called, e.g. "Larval". Written by the
+  // hatch workflow, not by the attendee.
+  stage: "",
+  // empty -> named -> drawn -> building -> ready -> live. `live` means a uuid
+  // is in the stage file and the capsule is actually streaming.
   status: "empty",
   prompt: "",
   imageUrl: "",
