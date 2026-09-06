@@ -68,33 +68,41 @@ const STREAMS = `      {specimens.map((s, i) => {
       })}`;
 
 
+const CARD = `      {specimens.map((s, i) => {
+        if (!s.dossier) return null;
+        const angle = (i / 6) * Math.PI * 2;
+        return (
+          <Card
+            key={s.id}
+            card={s.dossier}
+            position={[Math.cos(angle) * 4.2, 3.9, Math.sin(angle) * 4.2]}
+          />
+        );
+      })}`;
+
 const LABEL_HTML = `  // Painted by ctx.drawElementImage() in Chrome, an SVG foreignObject elsewhere.
-  const label = useHtmlTexture(
-    data?.card &&
-      \`<div class="mw-plate">
-        <strong>\${data.card.name}</strong>
-        <p>\${data.card.description}</p>
-        <ul>\${data.card.attributes.map((a) => \`<li>\${a}</li>\`).join("")}</ul>
-      </div>\`,
-  );`;
+  const active = data?.specimens?.[data?.active ?? 0];
+  const label = useHtmlTexture(active?.dossier && dossierHtml(active.dossier));`;
+
+const LABEL_MESH = `      {label.texture && (
+        <Billboard position={[0, 3.9, 4.2]}>
+          <mesh>
+            <planeGeometry args={[label.width, label.height]} />
+            <meshBasicMaterial map={label.texture} transparent toneMapped={false} />
+          </mesh>
+        </Billboard>
+      )}`;
 
 export const SNIPPETS = {
   floor: FLOOR,
   walkway: `${FLOOR}\n${WALKWAY}`,
   capsules: `${FLOOR}\n${WALKWAY}\n${CAPSULES_SNIPPET}`,
   streams: `${FLOOR}\n${WALKWAY}\n${CAPSULES_SNIPPET}\n${STREAMS}`,
-  card: `      {data.card ? <Card card={data.card} /> : null}`,
+  card: CARD,
   labelHtml: LABEL_HTML,
-  // Shares the `card` marker deliberately, so the plane replaces step 5.2's
-  // overlay rather than adding a second card beside it.
-  labelMesh: `      {label.texture && (
-        <Billboard position={[-1.15, 1.2, 0]}>
-          <mesh>
-            <planeGeometry args={[label.width, label.height]} />
-            <meshBasicMaterial map={label.texture} transparent toneMapped={false} />
-          </mesh>
-        </Billboard>
-      )}`,
+  // Shares the `card` marker deliberately, so the plane replaces step 4.2's
+  // overlay rather than adding a second dossier beside it.
+  labelMesh: LABEL_MESH,
 };
 
 /* What each step actually adds. SNIPPETS is cumulative because the scene ones
@@ -106,9 +114,9 @@ export const PARTS = {
   walkway: WALKWAY,
   capsules: CAPSULES_SNIPPET,
   streams: STREAMS,
-  card: SNIPPETS.card,
+  card: CARD,
   labelHtml: LABEL_HTML,
-  labelMesh: SNIPPETS.labelMesh,
+  labelMesh: LABEL_MESH,
 };
 
 /* Clearing a step puts the block back to the step before it, not to empty.

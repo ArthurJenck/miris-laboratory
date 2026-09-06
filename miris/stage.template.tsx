@@ -4,7 +4,7 @@ import { Billboard, Environment, OrbitControls } from "@react-three/drei";
 import { MirisStream } from "@miris-inc/three";
 import { TINTS, VIEWER_KEY as DEMO_KEY } from "../miris/config";
 import { ACESFilmicToneMapping, DoubleSide } from "three";
-import Card from "../miris/Card";
+import Card, { dossierHtml } from "../miris/Card";
 import useHtmlTexture from "../miris/htmlTexture";
 import { StageSkeleton } from "../miris/Skeleton";
 

@@ -1469,3 +1469,41 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 .mw-doors-one .mw-door { aspect-ratio: 16 / 7; }
 .mw-doors-one .mw-specimen { mix-blend-mode: normal; opacity: 0.85; }
 .mw-doors-one .mw-specimen img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal); }
+
+/* The dossier, laid out from the reference: a code line, the name, a status
+   row, four stat bars, trait chips and handler notes. Used twice, once as a
+   DOM overlay at step 4.2 and once painted into the canvas at step 4.3, so it
+   has to survive being drawn by drawElementImage with no cascade of its own. */
+.mw-dossier {
+  width: 340px; padding: 18px 20px 16px; box-sizing: border-box;
+  background: #0d0e12; border: 1px solid #182329; border-radius: 4px;
+  color: #c8d4da; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 12px; line-height: 1.5;
+}
+.mw-d-code { margin: 0; color: #41d0f8; letter-spacing: 0.14em; font-size: 11px; }
+.mw-dossier h3 {
+  margin: 6px 0 2px; font-size: 22px; letter-spacing: 0.1em; font-weight: 600;
+  color: #f2f7f9; font-family: inherit;
+}
+.mw-d-class { margin: 0 0 12px; font-style: italic; color: #8fa3ad; }
+.mw-d-state {
+  display: flex; gap: 10px; align-items: center; margin: 0 0 14px; padding: 9px 0;
+  border-top: 1px solid #182329; border-bottom: 1px solid #182329;
+  letter-spacing: 0.1em; font-size: 11px; color: #8fa3ad;
+}
+.mw-d-state b { font-weight: 500; color: #64dba1; }
+.mw-d-state b::before { content: "● "; }
+.mw-d-state b[data-status="VOLATILE"] { color: #ffa14a; }
+.mw-d-state b[data-status="BREACHED"] { color: #ff5f6d; }
+.mw-d-state b[data-status="DORMANT"] { color: #8fa3ad; }
+.mw-d-state em { font-style: normal; color: #41d0f8; }
+.mw-d-stats { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; }
+.mw-d-stats li { display: grid; grid-template-columns: 92px 1fr 26px; gap: 8px; align-items: center; }
+.mw-d-stats span { letter-spacing: 0.08em; font-size: 10px; color: #8fa3ad; }
+.mw-d-stats span:last-child { text-align: right; color: #c8d4da; }
+.mw-d-stats i { display: block; height: 6px; background: #182329; }
+.mw-d-stats i b { display: block; height: 100%; background: #41d0f8; }
+.mw-d-head { margin: 0 0 6px; letter-spacing: 0.14em; font-size: 10px; color: #6f838d; text-transform: uppercase; }
+.mw-d-traits { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
+.mw-d-traits span { padding: 4px 8px; border: 1px solid #24424e; color: #a9d8e8; font-size: 11px; }
+.mw-d-notes { margin: 0; color: #9fb0b8; }

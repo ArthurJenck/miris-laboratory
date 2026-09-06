@@ -1,27 +1,58 @@
 import { Html } from "@react-three/drei";
 
-export interface CardData {
-  name: string;
-  description: string;
-  attributes: string[];
+export interface Stat {
+  label: string;
+  value: number;
 }
 
-export default function Card({ card }: { card: Partial<CardData> }) {
-  // Written by an agent editing data.json by hand, so nothing here is trusted:
-  // a string instead of an array used to blank the whole canvas at step 5.1,
-  // immediately before the attendee publishes.
-  const attributes = Array.isArray(card?.attributes) ? card.attributes : [];
+export interface CardData {
+  designation: string;
+  series: string;
+  name: string;
+  classification: string;
+  status: string;
+  generation: number;
+  viability: number;
+  stats: Stat[];
+  traits: string[];
+  notes: string;
+}
+
+/** The dossier's markup, shared by the DOM overlay at step 4.2 and the canvas
+ *  texture at step 4.3, so the two steps compare like for like. */
+export function dossierHtml(d: Partial<CardData>): string {
+  // Written by a model and then by an agent editing data.json, so nothing here
+  // is trusted: a string where an array belongs used to blank the whole canvas.
+  const stats = Array.isArray(d?.stats) ? d.stats : [];
+  const traits = Array.isArray(d?.traits) ? d.traits : [];
+  const esc = (v: unknown) =>
+    String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+  return `<div class="mw-dossier">
+    <p class="mw-d-code">${esc(d?.designation ?? "SP-00")} / ${esc(d?.series ?? "ARC")}</p>
+    <h3>${esc(d?.name ?? "UNNAMED")}</h3>
+    <p class="mw-d-class">${esc(d?.classification ?? "")}</p>
+    <p class="mw-d-state">
+      <b data-status="${esc(d?.status ?? "STABLE")}">${esc(d?.status ?? "STABLE")}</b>
+      <span>GEN ${String(d?.generation ?? 1).padStart(2, "0")}</span>
+      <span>VIA <em>${esc(d?.viability ?? 0)}%</em></span>
+    </p>
+    <ul class="mw-d-stats">${stats
+      .map(
+        (s) =>
+          `<li><span>${esc(s?.label)}</span><i><b style="width:${Math.max(0, Math.min(100, Number(s?.value) || 0))}%"></b></i><span>${esc(s?.value)}</span></li>`,
+      )
+      .join("")}</ul>
+    <p class="mw-d-head">Expressed traits</p>
+    <p class="mw-d-traits">${traits.map((t) => `<span>${esc(t)}</span>`).join("")}</p>
+    <p class="mw-d-head">Handler notes</p>
+    <p class="mw-d-notes">${esc(d?.notes ?? "")}</p>
+  </div>`;
+}
+
+export default function Card({ card, position = [-1.15, 1.2, 0] as [number, number, number] }) {
   return (
-    <Html position={[-1.15, 1.2, 0]} transform distanceFactor={1.35} occlude={false}>
-      <div className="mw-plate">
-        <strong>{card?.name ?? "Untitled"}</strong>
-        <p>{card?.description ?? ""}</p>
-        <ul>
-          {attributes.map((a) => (
-            <li key={String(a)}>{String(a)}</li>
-          ))}
-        </ul>
-      </div>
+    <Html position={position} transform distanceFactor={1.6} occlude={false}>
+      <div dangerouslySetInnerHTML={{ __html: dossierHtml(card ?? {}) }} />
     </Html>
   );
 }

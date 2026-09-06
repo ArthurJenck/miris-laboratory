@@ -81,17 +81,21 @@ export function useBuild(track: Track) {
     fetch("/api/miris")
       .then((r) => r.json())
       .then((d) => {
-        if (d?.prompt) setPrompt(d.prompt);
-        if (d?.glb) {
-          setImage(d.imageUrl ?? "");
-          setGlb(d.glb);
+        // The tray follows the capsule the attendee is working on, not the
+        // file as a whole: every specimen has its own render and its own mesh.
+        const slot = d?.specimens?.[d?.active ?? 0];
+        if (!slot) return;
+        if (slot.prompt) setPrompt(slot.prompt);
+        if (slot.glb) {
+          setImage(slot.imageUrl ?? "");
+          setGlb(slot.glb);
           setPhase("done");
-        } else if (d?.imageUrl && d?.falRequestId && d?.modelStartedAt && Date.now() - d.modelStartedAt < RESUME_WINDOW) {
-          setImage(d.imageUrl);
-          setStartedAt(d.modelStartedAt);
+        } else if (slot.imageUrl && slot.modelStartedAt && Date.now() - slot.modelStartedAt < RESUME_WINDOW) {
+          setImage(slot.imageUrl);
+          setStartedAt(slot.modelStartedAt);
           setPhase("model");
-        } else if (d?.imageUrl) {
-          setImage(d.imageUrl);
+        } else if (slot.imageUrl) {
+          setImage(slot.imageUrl);
           setPhase("review");
         }
       })
@@ -115,12 +119,13 @@ export function useBuild(track: Track) {
     const t = setInterval(async () => {
       try {
         const d = await (await fetch("/api/miris")).json();
-        if (d?.glb) {
-          setGlb(d.glb);
-          setImage(d.imageUrl ?? "");
+        const slot = d?.specimens?.[d?.active ?? 0];
+        if (slot?.glb) {
+          setGlb(slot.glb);
+          setImage(slot.imageUrl ?? "");
           setPhase("done");
           setSmall(false);
-        } else if (!d?.modelStartedAt) {
+        } else if (!slot?.modelStartedAt) {
           // The server clears this when fal reports failure.
           setError("The build failed on fal. Submit again.");
           setPhase("review");

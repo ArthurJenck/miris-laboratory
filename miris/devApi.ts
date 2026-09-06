@@ -5,7 +5,8 @@ import { loadEnv, type Plugin } from "vite";
 import { end as markerEnd, readMarker, replaceMarker, start as markerStart } from "./markers.mjs";
 import { readData, writeData } from "./store.mjs";
 import { CLEARS_TO, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
-import { DEMO_UUID, IMAGE_FRAMING, IMAGE_MODEL, LABEL_LLM, LABEL_MODEL, MODEL_3D, VIEWER_KEY } from "./config";
+import { normaliseBank } from "./specimens.mjs";
+import { DEMO_UUID, STATUSES, STAT_LABELS, IMAGE_FRAMING, IMAGE_MODEL, LABEL_LLM, LABEL_MODEL, MODEL_3D, VIEWER_KEY } from "./config";
 import { TRACKS } from "./tracks";
 
 /* Dev only, by construction: configureServer has no production counterpart, so
@@ -120,23 +121,54 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
 /* The register that used to live in miris/skills/curator.md, when writing the
  * label meant pasting that file into a coding agent. Same rules, smaller
  * ceremony: one button, one model call on the attendee's own fal key. */
-const CURATOR =
-  "You write the label for a single object in a collection. " +
+/* The register that turns one sentence into an archive record. Everything the
+   dossier panel draws comes from here, which is why the shape is pinned: four
+   stats and nothing else can be laid out as bars. */
+const REGISTRAR =
+  "You are the registrar of a genetics laboratory, writing the file for one specimen. " +
   "Reply with ONLY a JSON object, no code fences, no commentary: " +
-  '{"name": "two or three words", "description": "one sentence, under twenty words", "attributes": ["three or four short phrases"]}. ' +
-  "Match the object rather than a house style: a creature gets an epithet, an ability and a line of lore; " +
-  "a product gets materials, a price and an edition; an artifact gets a date, a place and a provenance. " +
-  "Write as though the object has always existed. Never mention that it was generated, never use the word digital, " +
-  'do not hedge with "appears to be", and use no em dashes.';
+  '{"designation": "two letters, a dash, two digits", "series": "one word in caps", ' +
+  '"name": "one invented word, caps", "classification": "two or three latinate words, sentence case", ' +
+  '"status": "one of STABLE, DORMANT, VOLATILE, BREACHED", "generation": 1-12, "viability": 0-100 with one decimal, ' +
+  '"stats": [{"label": "VITALITY", "value": 0-100}, {"label": "AGGRESSION", "value": 0-100}, ' +
+  '{"label": "BIOELECTRIC", "value": 0-100}, {"label": "COHESION", "value": 0-100}], ' +
+  '"traits": ["three entries, two or three words each"], ' +
+  '"notes": "three or four sentences of handler observation"}. ' +
+  "The four stats appear in exactly that order. The notes read as a working scientist's file: " +
+  "specific incidents, a containment detail, a behaviour under a named condition. " +
+  "Write as though the specimen has always existed. Never mention that it was generated, " +
+  "never use the word digital, and use no em dashes.";
 
-const parseCard = (raw: unknown) => {
+const clamp = (n: unknown, lo: number, hi: number, fallback: number) => {
+  const v = Number(n);
+  return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
+};
+
+const parseDossier = (raw: unknown) => {
   if (typeof raw !== "string") return null;
   // Models fence JSON out of habit however firmly they are told not to.
   const text = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   try {
-    const c = JSON.parse(text);
-    if (typeof c?.name !== "string" || typeof c?.description !== "string" || !Array.isArray(c?.attributes)) return null;
-    return { name: c.name, description: c.description, attributes: c.attributes.map(String).slice(0, 4) };
+    const d = JSON.parse(text);
+    if (typeof d?.name !== "string" || !d.name.trim()) return null;
+    if (typeof d?.notes !== "string" || !d.notes.trim()) return null;
+    const status = String(d?.status ?? "").toUpperCase();
+    const byLabel = new Map(
+      (Array.isArray(d?.stats) ? d.stats : []).map((x: any) => [String(x?.label ?? "").toUpperCase(), x?.value]),
+    );
+    return {
+      designation: String(d?.designation ?? "SP-00").trim().toUpperCase().slice(0, 8),
+      series: String(d?.series ?? "ARC").trim().toUpperCase().slice(0, 10),
+      name: d.name.trim().toUpperCase().slice(0, 24),
+      classification: String(d?.classification ?? "").trim().slice(0, 60),
+      status: (STATUSES as readonly string[]).includes(status) ? status : "STABLE",
+      generation: Math.round(clamp(d?.generation, 1, 12, 1)),
+      viability: Math.round(clamp(d?.viability, 0, 100, 90) * 10) / 10,
+      // Always the four labels, in order, whatever the model returned.
+      stats: STAT_LABELS.map((label) => ({ label, value: Math.round(clamp(byLabel.get(label), 0, 100, 50)) })),
+      traits: (Array.isArray(d?.traits) ? d.traits : []).map((t: any) => String(t).trim()).filter(Boolean).slice(0, 3),
+      notes: d.notes.trim(),
+    };
   } catch {
     return null;
   }
@@ -237,26 +269,26 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
       const stored = await readData(MIRIS_DIR);
       const track = TRACKS.find((t) => t.id === stored.track);
-      if (!track) return fail("No track chosen yet. Pick one on the chooser first.");
-      if (!stored.prompt) return fail("No prompt to write from. Step 1.2 is where it comes from.");
+      if (!track) return fail("No track chosen yet.");
+      const bank = normaliseBank(stored.specimens as any[]);
+      const i = Number(stored.active) || 0;
+      if (!bank[i]?.prompt) return fail("This capsule has no prompt yet. Step 1.2 is where it comes from.");
       const out: any = await falRun(LABEL_MODEL, {
         model: LABEL_LLM,
-        system_prompt: CURATOR,
-        prompt: `The object: ${stored.prompt}. Its kind: ${track.noun}.`,
+        system_prompt: REGISTRAR,
+        prompt: `The specimen: ${bank[i].prompt}.`,
         temperature: 0.9,
       });
-      const card = parseCard(out?.output);
-      if (!card) return fail("The model wrote something that is not a card. Press the button again.", 502);
-      await writeData(MIRIS_DIR, { card });
-      return ok({ card });
+      const dossier = parseDossier(out?.output);
+      if (!dossier) return fail("The model wrote something that is not a dossier. Press the button again.", 502);
+      bank[i] = { ...bank[i], dossier };
+      await writeData(MIRIS_DIR, { specimens: bank });
+      return ok({ dossier });
     }
 
     case "image": {
       if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
       const stored = await readData(MIRIS_DIR);
-      /* Strict, unlike trackById: that falls back to TRACKS[0], which is summon,
-       * so an unset track quietly rendered every attendee a creature in the
-       * monster-taming style whichever door they had picked. */
       const track = TRACKS.find((t) => t.id === stored.track);
       if (!track) return fail("No track chosen yet. Pick one on the chooser first.");
       const out: any = await falRun(IMAGE_MODEL, {
@@ -267,7 +299,11 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       });
       const url = out?.images?.[0]?.url;
       if (!url) return fail("fal returned no image", 502);
-      await writeData(MIRIS_DIR, { prompt: body.prompt, imageUrl: url });
+      const bank = normaliseBank(stored.specimens as any[]);
+      const i = Number(stored.active) || 0;
+      // A new render invalidates the mesh and the record that described the old one.
+      bank[i] = { ...bank[i], prompt: body.prompt, imageUrl: url, status: "drawn", glb: "", uuid: "", dossier: null };
+      await writeData(MIRIS_DIR, { specimens: bank });
       return ok({ url });
     }
 
@@ -276,33 +312,36 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       const stored = await readData(MIRIS_DIR);
       const track = TRACKS.find((t) => t.id === stored.track);
       if (!track) return fail("No track chosen yet. Pick one on the chooser first.");
+      const i = Number(stored.active) || 0;
+
+      const mark = async (patch: Record<string, unknown>) => {
+        const fresh = await readData(MIRIS_DIR);
+        const b2 = normaliseBank(fresh.specimens as any[]);
+        b2[i] = { ...b2[i], ...patch };
+        await writeData(MIRIS_DIR, { specimens: b2 });
+      };
+
+      await mark({ status: "building", modelStartedAt: Date.now() });
       let out: any;
       try {
-        out = await falRun(
-          MODEL_3D,
-          {
-            image_url: body.imageUrl,
-            // Styled the same way the image was. The mesh takes its look from
-            // the image, but the texture pass reads this, and it was the one
-            // call in the workflow the track never reached.
-            texture_prompt: `${track.style}: ${body.prompt ?? ""}`,
-            ...MESHY_INPUT,
-          },
-          MIRIS_DIR,
-        );
+        out = await falRun(MODEL_3D, {
+          image_url: body.imageUrl,
+          // Styled the same way the render was; the texture pass reads this.
+          texture_prompt: `${track.style}: ${body.prompt ?? ""}`,
+          ...MESHY_INPUT,
+        });
       } catch (e) {
-        // The browser that asked may be gone: a Fill reloads the page, and the
-        // client resumes "building" off modelStartedAt. Clearing it is how a
+        // The browser that asked may be gone: clearing the clock is how a
         // resumed client learns the job died rather than waiting forever.
-        await writeData(MIRIS_DIR, { modelStartedAt: 0 });
+        await mark({ status: "drawn", modelStartedAt: 0 });
         throw e;
       }
       const url = out?.model_glb?.url;
       if (!url) {
-        await writeData(MIRIS_DIR, { modelStartedAt: 0 });
+        await mark({ status: "drawn", modelStartedAt: 0 });
         return fail("fal returned no mesh", 502);
       }
-      await writeData(MIRIS_DIR, { glb: url });
+      await mark({ glb: url, status: "ready", modelStartedAt: 0 });
       return ok({ url });
     }
 
