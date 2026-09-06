@@ -1,7 +1,8 @@
 # Spatial Streaming
 
-A two hour workshop. You describe a thing, it becomes a 3D model, you upload it
-to Miris, and it streams onto a pedestal in a page you publish and share.
+A two hour workshop. You describe an organism, it becomes a 3D model, you upload
+it to Miris, and it streams inside a containment capsule in a laboratory you
+publish and share.
 
 ```
 npm install

@@ -372,7 +372,7 @@ a:hover { text-decoration: underline; }
 
 /* Anchored against the guide, not centred over the stage. The stage is the
    thing being built, so a centred dialog covers the subject; a tray flush to
-   the panel's left edge reads as an extension of it and leaves the pedestal
+   the panel's left edge reads as an extension of it and leaves the capsules
    visible. */
 .mw-tray {
   position: fixed;

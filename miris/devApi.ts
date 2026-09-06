@@ -61,7 +61,7 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
 
   async capsules() {
     const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes("meshPhysicalMaterial")
+    return block.includes("TINTS")
       ? null
       : "No capsules in the scene block yet. Add them under the walkway, or let the step do it.";
   },

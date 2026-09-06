@@ -124,9 +124,9 @@ export const SNIPPETS = {
 };
 
 /* What each step actually adds. SNIPPETS is cumulative because the scene ones
-   share a marker, so showing an attendee SNIPPETS.environment would show them
-   the pedestal they already have. The Fill button writes the cumulative block;
-   the card shows the part. */
+   share a marker, so showing an attendee SNIPPETS.capsules would show them the
+   walkway they already have. The Fill button writes the cumulative block; the
+   card shows the part. */
 export const PARTS = {
   floor: FLOOR,
   walkway: WALKWAY,
@@ -139,8 +139,8 @@ export const PARTS = {
 };
 
 /* Clearing a step puts the block back to the step before it, not to empty.
-   Three steps share the `scene` marker because the snippets are cumulative, so
-   a marker-wide clear at 2.2 took 2.1's pedestal with it. null means there is
+   Four steps share the `scene` marker because the snippets are cumulative, so
+   a marker-wide clear at 2.2 would take 2.1's deck with it. null means there is
    nothing before it and the block returns to the template's blank. */
 export const CLEARS_TO = {
   card: null,

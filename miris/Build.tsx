@@ -45,7 +45,7 @@ function DotWave() {
  * card, which unmounted the moment anyone advanced: step 2.3 tells attendees to
  * make their Miris account while the model builds, so the four minute job lost
  * its entire UI at exactly the point the curriculum sends them away from it. */
-export function useBuild(track: Track) {
+export function useBuild(track: Track, active = 0) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [prompt, setPrompt] = useState("");
   const [image, setImage] = useState("");
@@ -83,9 +83,10 @@ export function useBuild(track: Track) {
       .then((d) => {
         // The tray follows the capsule the attendee is working on, not the
         // file as a whole: every specimen has its own render and its own mesh.
-        const slot = d?.specimens?.[d?.active ?? 0];
+        const slot = d?.specimens?.[active];
         if (!slot) return;
-        if (slot.prompt) setPrompt(slot.prompt);
+        setPrompt(slot.prompt ?? "");
+        setError("");
         if (slot.glb) {
           setImage(slot.imageUrl ?? "");
           setGlb(slot.glb);
@@ -97,10 +98,18 @@ export function useBuild(track: Track) {
         } else if (slot.imageUrl) {
           setImage(slot.imageUrl);
           setPhase("review");
+        } else {
+          // An empty capsule starts empty. Without this the tray keeps the
+          // previous capsule's finished state and never offers a prompt again.
+          setPrompt("");
+          setImage("");
+          setGlb("");
+          setStartedAt(null);
+          setPhase("idle");
         }
       })
       .catch(() => {});
-  }, []);
+  }, [active]);
 
   useEffect(() => {
     if (phase !== "model" && phase !== "image") return;
@@ -119,7 +128,7 @@ export function useBuild(track: Track) {
     const t = setInterval(async () => {
       try {
         const d = await (await fetch("/api/miris")).json();
-        const slot = d?.specimens?.[d?.active ?? 0];
+        const slot = d?.specimens?.[active];
         if (slot?.glb) {
           setGlb(slot.glb);
           setImage(slot.imageUrl ?? "");
@@ -135,7 +144,7 @@ export function useBuild(track: Track) {
       }
     }, 5000);
     return () => clearInterval(t);
-  }, [phase]);
+  }, [phase, active]);
 
   const call = async (action: string, extra: object) => {
     const res = await fetch("/api/miris", {
