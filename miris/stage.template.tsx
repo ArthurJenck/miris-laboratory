@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Canvas, extend } from "@react-three/fiber";
 import { Billboard, Environment, OrbitControls } from "@react-three/drei";
 import { MirisStream } from "@miris-inc/three";
 import { TINTS, VIEWER_KEY as DEMO_KEY } from "../miris/config";
-import { ACESFilmicToneMapping, DoubleSide } from "three";
+import { ACESFilmicToneMapping, AdditiveBlending, DoubleSide } from "three";
+import { Fn, float, smoothstep, time, uv, vec2, vec3, vec4 } from "three/tsl";
 import Card, { dossierHtml } from "../miris/Card";
+import LabHud, { CapsuleProbe } from "../miris/LabHud";
+import EffectCanvas, { anchorPos, anchorSeen, screenAspect } from "../miris/EffectCanvas";
 import useHtmlTexture from "../miris/htmlTexture";
 import { StageSkeleton } from "../miris/Skeleton";
 
@@ -28,11 +31,17 @@ export default function Stage() {
   const label = useHtmlTexture(false);
   // miris:label-end
 
+  // miris:field-start
+  // Step 5.3 replaces this. A TSL graph is built once, not per frame.
+  const field = null;
+  // miris:field-end
+
   const specimens = data?.specimens ?? [];
 
   if (!data || !data.track) return <StageSkeleton />;
 
   return (
+    <>
     <Canvas
       linear
       dpr={[1, 1.5]}
@@ -59,7 +68,17 @@ export default function Stage() {
       {/* Steps 5.2 and 5.4 go here. */}
       {/* miris:card-end */}
 
+      <CapsuleProbe />
       <OrbitControls makeDefault target={[0, 1.5, 0]} />
     </Canvas>
+
+    {/* miris:hud-start */}
+    {/* Step 5.1 goes here. */}
+    {/* miris:hud-end */}
+
+    {/* miris:effect-start */}
+    {/* Step 5.2 goes here. */}
+    {/* miris:effect-end */}
+    </>
   );
 }

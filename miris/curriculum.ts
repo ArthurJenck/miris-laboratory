@@ -79,11 +79,11 @@ export const STEPS: Step[] = [
         num: "2.2",
         title: "The walkway",
         body:
-          "A ring you stand on, with a lit edge on each side. Add it under the deck, inside the same miris:scene block.",
+          "A ring you stand on, with a lit edge on each side and a strip of light down the middle. Add it under the deck, inside the same miris:scene block.",
         fill: "walkway",
         check: "walkway",
         explain:
-          "ringGeometry is an annulus: an inner radius, an outer radius and nothing in the middle. That is the walkway. The two glowing edges are torus rings laid flat at those same radii, and their material is meshBasicMaterial with toneMapped false. Basic means it ignores every light in the scene, and toneMapped false keeps it out of the ACES curve, so it stays at full brightness instead of being rolled off with the rest of the image. That pairing is how you fake a light strip without a bloom pass.",
+          "ringGeometry is an annulus: an inner radius, an outer radius and nothing in the middle. That is the walkway. The two glowing edges are torus rings laid flat at those same radii, and their material is meshBasicMaterial with toneMapped false. Basic means it ignores every light in the scene, and toneMapped false keeps it out of the ACES curve, so it stays at full brightness instead of being rolled off with the rest of the image. That pairing is how you fake a light strip without a bloom pass, and the white band down the centre of the walkway is the same trick at eighty-five percent opacity.",
       },
       {
         num: "2.3",
@@ -93,7 +93,7 @@ export const STEPS: Step[] = [
         fill: "capsules",
         check: "capsules",
         explain:
-          "The circle is three lines of trigonometry, written out rather than hidden in a helper, because it is the one bit of maths worth reading: an angle of i over six turns, then cosine for x and sine for z. Each capsule is a plinth, a glass cylinder and two rings. The cylinder is open-ended and drawn on both sides, which is what makes you see the far wall of the glass through the near one. The glass is a standard material at sixteen percent opacity with a faint emissive of its own, and depthWrite is off so the near wall never hides the far one. That last prop is the one people miss: without it, transparent surfaces punch holes in each other depending on the order they happen to be drawn.",
+          "The circle is three lines of trigonometry, written out rather than hidden in a helper, because it is the one bit of maths worth reading: an angle of i over six turns, then cosine for x and sine for z. Each capsule is a plinth, a glass cylinder, a cone of light and two rings. The cone is the cheapest volumetric there is: an open cone, drawn on both sides at four percent opacity with additive blending, so wherever it overlaps itself it brightens. It writes no depth, which keeps it from cutting a hole in the glass behind it. The cylinder is open-ended and drawn on both sides, which is what makes you see the far wall of the glass through the near one. The glass is a standard material at sixteen percent opacity with a faint emissive of its own, and depthWrite is off so the near wall never hides the far one. That last prop is the one people miss: without it, transparent surfaces punch holes in each other depending on the order they happen to be drawn.",
       },
       {
         num: "2.4",
@@ -203,10 +203,46 @@ export const STEPS: Step[] = [
   },
   {
     num: "05",
-    title: "Ship it",
+    title: "The readout",
     subs: [
       {
         num: "5.1",
+        title: "Wake the instruments",
+        body:
+          "One line adds the laboratory's own readout: the header, the capsule count, and four corner brackets on whichever capsule your pointer is over. It goes in the miris:hud block, at the bottom of the file outside the Canvas.",
+        fill: "hud",
+        check: "hud",
+        explain:
+          "Two things are happening here and only one is obvious. The brackets are DOM, drawn over the canvas by drei's fullscreen Html layer, positioned from the eight corners of a capsule's bounds projected into screen space every frame. Projecting the centre alone would give a point with no size to bracket, which is why it is eight corners and not one. Notice where the line goes: outside the Canvas, not in it. A fixed element rendered inside the canvas layer anchors to that layer's transform and ends up floating in the scene rather than pinned to the window, which is exactly what happened the first time this was built. Hover is decided from the pointer against those same projected boxes, so the glass you wrote never has to carry an event handler.",
+      },
+      {
+        num: "5.2",
+        title: "Add the overlay",
+        body:
+          "TSL cannot share a canvas with a stream, so the containment field gets its own. Add this line at the bottom of app/stage.tsx, outside the Canvas, in the miris:effect block.",
+        fill: "effect",
+        check: "overlay",
+        explain:
+          "Splats render through raw GLSL shader materials the SDK builds itself. TSL compiles through a node builder that cannot read those, so putting both in one canvas gives you no splats and a console full of compile errors. A second transparent canvas sidesteps it entirely: the field is screen space, so it never needed the room's depth buffer in the first place. It sits on top, ignores pointer events, and the main canvas feeds it one thing, where the hovered capsule is on screen.",
+      },
+      {
+        num: "5.3",
+        title: "Write the field",
+        body:
+          "Now the shader. This goes in the miris:field block near the top of app/stage.tsx, above the return. It is JavaScript that builds a shader graph, not a string of shader source.",
+        fill: "field",
+        check: "field",
+        explain:
+          "TSL is three.js's node shading language. Every call here is a node, not a value: uv() is the pixel's position, time counts up on its own, and sub, mul and length build a graph rather than doing arithmetic now. The whole graph compiles once, to GLSL on this backend, and then runs per pixel per frame. That is also why it is wrapped in useMemo: build it again on every render and you rebuild the renderer with it. Two things are drawn. A halo that follows the capsule under your pointer, and scanlines drifting up the screen. Change the numbers and save: smoothstep's two edges are where the halo ends and where it is strongest, 220 is how many scanlines fit the screen, and the vec3 is the colour of the whole field.",
+      },
+    ],
+  },
+  {
+    num: "06",
+    title: "Ship it",
+    subs: [
+      {
+        num: "6.1",
         title: "Ship it",
         body:
           "The last step does two things, because the first one makes this panel disappear. Comment out the MirisGuide line in app/main.tsx: the guide goes, your laboratory stays exactly as you built it, and the Miris styling stays too, since index.html loads it. Then press Deploy in Bolt, wait for your link, and send it to someone. What they load is not a model file, it is six specimens streaming to them at whatever detail their screen and connection justify.",

@@ -9,15 +9,19 @@ const FLOOR = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 
       </mesh>`;
 
 const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-        <ringGeometry args={[2.8, 5.6, 64]} />
+        <ringGeometry args={[2.6, 3.8, 64]} />
         <meshStandardMaterial color={0x39454f} roughness={0.45} metalness={0.4} />
       </mesh>
-      {[2.8, 5.6].map((r) => (
+      {[2.6, 3.8].map((r) => (
         <mesh key={r} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
           <torusGeometry args={[r, 0.022, 8, 128]} />
           <meshBasicMaterial color={0x3bd6fe} toneMapped={false} />
         </mesh>
-      ))}`;
+      ))}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
+        <ringGeometry args={[3.12, 3.28, 64]} />
+        <meshBasicMaterial color={0xffffff} toneMapped={false} transparent opacity={0.85} />
+      </mesh>`;
 
 const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
         // Six capsules, evenly spaced around a circle of radius 4.2.
@@ -42,6 +46,18 @@ const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
                 metalness={0.1}
                 depthWrite={false}
                 side={DoubleSide}
+              />
+            </mesh>
+            <mesh position={[0, 4.6, 0]}>
+              <coneGeometry args={[1.5, 5.2, 28, 1, true]} />
+              <meshBasicMaterial
+                color={0xbcd9ea}
+                transparent
+                opacity={0.045}
+                side={DoubleSide}
+                depthWrite={false}
+                blending={AdditiveBlending}
+                toneMapped={false}
               />
             </mesh>
             {[0.36, 2.96].map((y) => (
@@ -93,6 +109,24 @@ const LABEL_MESH = `      {label.texture && (
         </Billboard>
       )}`;
 
+const HUD = `    <LabHud specimens={specimens} />`;
+
+const EFFECT = `    <EffectCanvas node={field} />`;
+
+const FIELD = `  // useMemo, because a TSL graph is built once, not once per render.
+  const field = useMemo(() => Fn(() => {
+    // uv is 0..1; the anchor is -1..1, so match it, then undo the aspect.
+    const p = uv().mul(2).sub(1).mul(vec2(screenAspect, float(1)));
+    const a = anchorPos.mul(vec2(screenAspect, float(1)));
+    const d = p.sub(a).length();
+    // A halo on whichever capsule the pointer is over.
+    const halo = smoothstep(float(0.02), float(0.5), d).oneMinus().mul(anchorSeen);
+    // Scanlines drifting up the screen, the way a monitor feed reads.
+    const scan = uv().y.mul(220).sub(time.mul(1.4)).sin().mul(0.5).add(0.5).mul(0.03);
+    const glow = halo.mul(0.5).add(scan);
+    return vec4(vec3(0.42, 0.86, 1.0).mul(glow), glow);
+  })(), []);`;
+
 export const SNIPPETS = {
   floor: FLOOR,
   walkway: `${FLOOR}\n${WALKWAY}`,
@@ -103,6 +137,9 @@ export const SNIPPETS = {
   // Shares the `card` marker deliberately, so the plane replaces step 4.2's
   // overlay rather than adding a second dossier beside it.
   labelMesh: LABEL_MESH,
+  hud: HUD,
+  effect: EFFECT,
+  field: FIELD,
 };
 
 /* What each step actually adds. SNIPPETS is cumulative because the scene ones
@@ -117,6 +154,9 @@ export const PARTS = {
   card: CARD,
   labelHtml: LABEL_HTML,
   labelMesh: LABEL_MESH,
+  hud: HUD,
+  effect: EFFECT,
+  field: FIELD,
 };
 
 /* Clearing a step puts the block back to the step before it, not to empty.
@@ -131,6 +171,9 @@ export const CLEARS_TO = {
   card: null,
   labelHtml: null,
   labelMesh: "card",
+  hud: null,
+  effect: null,
+  field: null,
 };
 
 export const MARKER_FOR = {
@@ -141,4 +184,7 @@ export const MARKER_FOR = {
   card: "card",
   labelHtml: "label",
   labelMesh: "card",
+  hud: "hud",
+  effect: "effect",
+  field: "field",
 };

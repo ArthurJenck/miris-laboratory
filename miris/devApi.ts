@@ -93,6 +93,29 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
       : "This capsule has no dossier yet. Press Write the dossier.";
   },
 
+  async hud() {
+    const block = readMarker(await readFile(STAGE, "utf8"), "hud");
+    return block.includes("LabHud")
+      ? null
+      : "No LabHud in the miris:hud block yet. Add the line, or let the step do it.";
+  },
+
+  async overlay() {
+    const block = readMarker(await readFile(STAGE, "utf8"), "effect");
+    return block.includes("EffectCanvas")
+      ? null
+      : "No EffectCanvas in the miris:effect block yet. Add the line, or let the step do it.";
+  },
+
+  async field() {
+    const src = await readFile(STAGE, "utf8");
+    if (!readMarker(src, "effect").includes("EffectCanvas"))
+      return "No EffectCanvas yet. Step 5.2 puts it there.";
+    return readMarker(src, "field").includes("Fn(")
+      ? null
+      : "The overlay is mounted but the field is still null. Write the TSL, or let the step do it.";
+  },
+
   async cardOverlay() {
     const block = readMarker(await readFile(STAGE, "utf8"), "card");
     return block.includes("<Card")
