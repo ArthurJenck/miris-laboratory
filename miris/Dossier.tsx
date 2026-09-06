@@ -1,5 +1,6 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { dossierHtml } from "./Card";
+import "./lab.css";
 import { getBoxes, getSelected, labVersion, setSelected, subscribeLab } from "./labState";
 
 /** The specimen file, anchored to the right edge of the window and opened by

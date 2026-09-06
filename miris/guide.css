@@ -1470,44 +1470,6 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 .mw-doors-one .mw-specimen { mix-blend-mode: normal; opacity: 0.85; }
 .mw-doors-one .mw-specimen img { width: 100%; height: 100%; object-fit: cover; object-position: var(--focal); }
 
-/* The dossier, laid out from the reference: a code line, the name, a status
-   row, four stat bars, trait chips and handler notes. Used twice, once as a
-   DOM overlay at step 4.2 and once painted into the canvas at step 4.3, so it
-   has to survive being drawn by drawElementImage with no cascade of its own. */
-.mw-dossier {
-  width: 340px; padding: 18px 20px 16px; box-sizing: border-box;
-  background: #0d0e12; border: 1px solid #182329; border-radius: 4px;
-  color: #c8d4da; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
-  font-size: 12px; line-height: 1.5;
-}
-.mw-d-code { margin: 0; color: #41d0f8; letter-spacing: 0.14em; font-size: 11px; }
-.mw-dossier h3 {
-  margin: 6px 0 2px; font-size: 22px; letter-spacing: 0.1em; font-weight: 600;
-  color: #f2f7f9; font-family: inherit;
-}
-.mw-d-class { margin: 0 0 12px; font-style: italic; color: #8fa3ad; }
-.mw-d-state {
-  display: flex; gap: 10px; align-items: center; margin: 0 0 14px; padding: 9px 0;
-  border-top: 1px solid #182329; border-bottom: 1px solid #182329;
-  letter-spacing: 0.1em; font-size: 11px; color: #8fa3ad;
-}
-.mw-d-state b { font-weight: 500; color: #64dba1; }
-.mw-d-state b::before { content: "● "; }
-.mw-d-state b[data-status="VOLATILE"] { color: #ffa14a; }
-.mw-d-state b[data-status="BREACHED"] { color: #ff5f6d; }
-.mw-d-state b[data-status="DORMANT"] { color: #8fa3ad; }
-.mw-d-state em { font-style: normal; color: #41d0f8; }
-.mw-d-stats { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; }
-.mw-d-stats li { display: grid; grid-template-columns: 92px 1fr 26px; gap: 8px; align-items: center; }
-.mw-d-stats span { letter-spacing: 0.08em; font-size: 10px; color: #8fa3ad; }
-.mw-d-stats span:last-child { text-align: right; color: #c8d4da; }
-.mw-d-stats i { display: block; height: 6px; background: #182329; }
-.mw-d-stats i b { display: block; height: 100%; background: #41d0f8; }
-.mw-d-head { margin: 0 0 6px; letter-spacing: 0.14em; font-size: 10px; color: #6f838d; text-transform: uppercase; }
-.mw-d-traits { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
-.mw-d-traits span { padding: 4px 8px; border: 1px solid #24424e; color: #a9d8e8; font-size: 11px; }
-.mw-d-notes { margin: 0; color: #9fb0b8; }
-
 /* Which of the six capsules a step is about to write into. */
 .mw-capsules { display: flex; gap: 6px; margin: 10px 0 0; }
 .mw-cap {
@@ -1524,37 +1486,6 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
   color: var(--mono-000); font-family: ui-monospace, Menlo, monospace; font-size: 12px;
 }
 
-/* The laboratory's readout, painted over the canvas. Monospace and heavily
-   letterspaced, dim enough to read as instrumentation rather than interface. */
-.mw-hud {
-  /* Fixed, not absolute: drei's fullscreen layer is offset from the viewport,
-     which pushed the bottom two lines off the screen entirely. */
-  position: fixed; inset: 0; pointer-events: none;
-  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
-  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: #6f838d;
-}
-.mw-hud-tl { position: absolute; top: 20px; left: 22px; display: grid; gap: 4px; }
-.mw-hud-tl b { color: #c8d4da; font-weight: 500; letter-spacing: 0.22em; }
-.mw-hud-bl { position: absolute; bottom: 20px; left: 22px; }
-.mw-hud-br { position: absolute; bottom: 20px; right: 22px; }
-
-/* Four corner marks on the hovered capsule, drawn as borders on one box so
-   there is no arithmetic to get wrong when the camera moves. */
-.mw-brackets { position: absolute; }
-.mw-brackets i {
-  position: absolute; width: 16px; height: 16px;
-  border: 1px solid #e8f4f8; opacity: 0.85;
-}
-.mw-brackets i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; }
-.mw-brackets i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; }
-.mw-brackets i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; }
-.mw-brackets i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; }
-.mw-brackets em {
-  position: absolute; left: 0; top: -20px; font-style: normal;
-  color: #e8f4f8; letter-spacing: 0.2em;
-}
-
 /* WebContainer drops binary files on import, so an attendee in bolt.new may
    never receive the door photograph. The plate paints its own lit-capsule
    gradient underneath, so a missing image reads as art direction, not a hole. */
@@ -1569,30 +1500,3 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 /* The strip and the logo both come from binary files WebContainer may drop.
    Give the band its own ground so a missing photograph is not a bright hole. */
 .mw-bar { background: linear-gradient(90deg, #061016 0%, #0a1a22 50%, #061016 100%); }
-
-/* The dossier panel, anchored to the right edge the way the reference does it,
-   opened by clicking a capsule. Not geometry: a card standing in the scene
-   turns edge-on, hides behind its own glass and clips off the top of frame. */
-.mw-dossier-panel {
-  /* Clear of the guide, which is pinned to the same edge and 408px wide.
-     When the guide is hidden the panel slides back out to the margin. */
-  position: fixed; top: 50%; right: calc(min(408px, 100vw) + 24px); transform: translateY(-50%);
-  z-index: 3; width: 340px;
-}
-.mw-dossier-panel .mw-dossier { width: 100%; }
-.mw-dossier-close {
-  position: absolute; top: 12px; right: 12px; z-index: 1;
-  width: 22px; height: 22px; padding: 0; line-height: 1;
-  background: none; border: 0; cursor: pointer;
-  color: #6f838d; font-size: 17px;
-}
-.mw-dossier-close:hover { color: #e8f4f8; }
-body:has(.mw-tab) .mw-dossier-panel { right: 24px; }
-
-.mw-dossier-foot {
-  display: flex; justify-content: space-between; margin: 0;
-  padding: 9px 20px; box-sizing: border-box;
-  background: #0d0e12; border: 1px solid #182329; border-top: 0;
-  font-family: ui-monospace, Menlo, monospace; font-size: 10px;
-  letter-spacing: 0.14em; text-transform: uppercase; color: #6f838d;
-}

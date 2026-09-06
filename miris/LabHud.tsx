@@ -2,6 +2,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useSyncExternalStore } from "react";
 import { Vector3 } from "three";
 import { anchor } from "./anchor";
+import "./lab.css";
 import { type Box, getBoxes, getHover, labVersion, setBoxes, setHover, subscribeLab } from "./labState";
 
 const RING = 4.2; // where the capsules stand
