@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import { useState } from "react";
 import type { Step, Sub } from "./curriculum";
 import type { Track } from "./tracks";
-import { BuildInput, type BuildState } from "./Build";
+import { BuildInput, CapsuleForm, CapsulePicker, type BuildState } from "./Build";
 import Chevron from "./Chevron";
 import Code from "./highlight";
 import { PARTS } from "./snippets.mjs";
@@ -15,6 +15,8 @@ export interface StepActions {
   clear: (snippetId: string) => void | Promise<void>;
   /** Asks a model on the attendee's fal key to write the card. */
   writeLabel: (num: string) => void | Promise<void>;
+  /** Re-reads data.json, for the parts of a step that write it themselves. */
+  reload: () => void;
   /** Verifies the substep actually happened, then moves the progress pointer
    *  if it did, or reports what is missing if it did not. */
   done: (sub: Sub) => void | Promise<void>;
@@ -31,7 +33,7 @@ export interface StepPaneProps {
   step: Step;
   /** data.step, the persisted progress pointer. */
   currentSubNum: string;
-  data: { uuid?: string; viewerKey?: string };
+  data: any;
   track: Track;
   /** Substep number currently being written or checked, or "". */
   busy: string;
@@ -227,7 +229,9 @@ export default function StepPane({
               </a>
             )}
 
+            {(sub.panel || sub.capsuleUuid) && <CapsulePicker data={data} onDone={actions.reload} />}
             {sub.panel && <BuildInput build={build} />}
+            {sub.capsuleUuid && <CapsuleForm data={data} onDone={actions.reload} />}
 
             {sub.label && (
               <button

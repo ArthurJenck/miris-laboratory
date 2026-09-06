@@ -290,6 +290,76 @@ export function BuildInput({ build }: { build: BuildState }) {
   );
 }
 
+/** Step 3.2's card. Two strings, which is the whole Miris integration. */
+export function CapsuleForm({ data, onDone }: { data: any; onDone: () => void }) {
+  const i = data?.active ?? 0;
+  const slot = data?.specimens?.[i];
+  const [uuid, setUuid] = useState(slot?.uuid ?? "");
+  const [key, setKey] = useState(data?.viewerKey ?? "");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  const save = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch("/api/miris", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "capsule", index: i, uuid: uuid.trim(), viewerKey: key.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error ?? `request failed: ${res.status}`);
+      onDone();
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mw-build mw-capsule">
+      <p className="l12">Capsule {slot?.id ?? "01"}</p>
+      <input value={uuid} onChange={(e) => setUuid(e.target.value)} placeholder="asset uuid" spellCheck={false} />
+      <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="viewer key" spellCheck={false} />
+      <button className="btn btn-primary btn-sm" disabled={busy || !uuid.trim()} onClick={save}>
+        {busy ? "Sealing" : "Seal the capsule"}
+      </button>
+      {error && <p className="mw-error">{error}</p>}
+    </div>
+  );
+}
+
+/** Which capsule the attendee is filling. Shown wherever a step writes into
+ *  one, so it is always obvious which of the six is about to change. */
+export function CapsulePicker({ data, onDone }: { data: any; onDone: () => void }) {
+  const specimens: any[] = data?.specimens ?? [];
+  const active = data?.active ?? 0;
+  const pick = async (i: number) => {
+    await fetch("/api/miris", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "save", patch: { active: i } }),
+    });
+    onDone();
+  };
+  return (
+    <div className="mw-capsules" role="group" aria-label="Choose a capsule">
+      {specimens.map((s, i) => (
+        <button
+          key={s.id}
+          className={`mw-cap${i === active ? " is-active" : ""}${s.uuid ? " is-full" : ""}`}
+          onClick={() => pick(i)}
+          title={s.dossier?.name ?? (s.uuid ? "Streaming" : "Empty")}
+        >
+          {s.id}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function BuildTray({ build }: { build: BuildState }) {
   const { track, phase, image, glb, error, elapsed, again, setAgain, small, setSmall, makeModel, reset } = build;
   if (phase === "idle") return null;

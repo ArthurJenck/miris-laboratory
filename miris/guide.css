@@ -1507,3 +1507,19 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 .mw-d-traits { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
 .mw-d-traits span { padding: 4px 8px; border: 1px solid #24424e; color: #a9d8e8; font-size: 11px; }
 .mw-d-notes { margin: 0; color: #9fb0b8; }
+
+/* Which of the six capsules a step is about to write into. */
+.mw-capsules { display: flex; gap: 6px; margin: 10px 0 0; }
+.mw-cap {
+  flex: 1; padding: 7px 0; background: none; cursor: pointer; color: var(--mono-500);
+  border: 1px solid var(--mono-700); border-radius: 4px;
+  font-family: ui-monospace, Menlo, monospace; font-size: 11px; letter-spacing: 0.08em;
+}
+.mw-cap.is-full { color: var(--mono-200); border-color: var(--mono-600); }
+.mw-cap.is-active { border-color: var(--track); color: var(--track); }
+.mw-capsule { display: grid; gap: 8px; }
+.mw-capsule input {
+  width: 100%; box-sizing: border-box; padding: 8px 10px;
+  background: var(--mono-800); border: 1px solid var(--mono-700); border-radius: 4px;
+  color: var(--mono-000); font-family: ui-monospace, Menlo, monospace; font-size: 12px;
+}

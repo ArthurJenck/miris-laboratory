@@ -297,6 +297,7 @@ export default function MirisGuide() {
       setViewing("");
       await advance(subNum);
     },
+    reload: () => { void load(); },
     backToProgress: () => setSelected(null),
   };
 

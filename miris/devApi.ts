@@ -265,6 +265,23 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       return ok({ done: !problem, problem });
     }
 
+    case "capsule": {
+      const stored = await readData(MIRIS_DIR);
+      const bank = normaliseBank(stored.specimens as any[]);
+      const i = Number(body?.index);
+      if (!Number.isInteger(i) || i < 0 || i >= bank.length) return fail(`No such capsule: ${body?.index}`);
+      const uuid = String(body?.uuid ?? "").trim();
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid))
+        return fail(`That uuid does not look like one: "${uuid}". Copy just the id from the asset page.`);
+      bank[i] = { ...bank[i], uuid, status: "live" };
+      const patch: Record<string, unknown> = { specimens: bank };
+      // One key reads every capsule, so it lives beside the bank, not inside it.
+      const key = String(body?.viewerKey ?? "").trim();
+      if (key) patch.viewerKey = key;
+      await writeData(MIRIS_DIR, patch);
+      return ok({ ok: true, index: i });
+    }
+
     case "label": {
       if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
       const stored = await readData(MIRIS_DIR);
