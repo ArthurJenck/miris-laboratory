@@ -6,7 +6,22 @@ const FLOOR = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 
       <mesh position={[0, 4.4, 0]}>
         <cylinderGeometry args={[16, 16, 9, 48, 1, true]} />
         <meshStandardMaterial color={0x1b2530} roughness={0.9} metalness={0.1} side={DoubleSide} />
-      </mesh>`;
+      </mesh>
+      {[0, 1, 2, 3, 4, 5].map((i) => {
+        // Lit panels on the wall, set between the capsules rather than behind
+        // them, so the gaps read as a room instead of a void.
+        const angle = ((i + 0.5) / 6) * Math.PI * 2;
+        return (
+          <mesh
+            key={i}
+            position={[Math.cos(angle) * 9.4, 2.1, Math.sin(angle) * 9.4]}
+            rotation={[0, -angle + Math.PI / 2, 0]}
+          >
+            <planeGeometry args={[2.6, 3.4]} />
+            <meshBasicMaterial color={0x0d5eb1} toneMapped={false} transparent opacity={0.5} side={DoubleSide} />
+          </mesh>
+        );
+      })}`;
 
 const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
         <ringGeometry args={[2.6, 3.8, 64]} />

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Canvas, extend } from "@react-three/fiber";
-import { Billboard, Environment, OrbitControls } from "@react-three/drei";
+import { Billboard, OrbitControls } from "@react-three/drei";
 import { MirisStream } from "@miris-inc/three";
 import { TINTS, VIEWER_KEY as DEMO_KEY } from "../miris/config";
 import { ACESFilmicToneMapping, AdditiveBlending, DoubleSide } from "three";
@@ -52,7 +52,7 @@ export default function Stage() {
         toneMapping: ACESFilmicToneMapping,
         toneMappingExposure: 1.1,
       }}
-      camera={{ position: [0, 4.2, 12.5], fov: 42 }}
+      camera={{ position: [0, 1.7, 0.02], fov: 55 }}
       style={{ position: "fixed", inset: 0 }}
     >
       {/* Sublevel 7 is dark. Almost everything you see is emissive geometry. */}
@@ -69,7 +69,16 @@ export default function Stage() {
       {/* miris:card-end */}
 
       <CapsuleProbe />
-      <OrbitControls makeDefault target={[0, 1.5, 0]} />
+      {/* The camera never leaves the middle of the room. Orbiting a target two
+          centimetres in front of it turns the view in place instead of flying
+          around the ring, and rotateSpeed is negative so a drag left looks left. */}
+      <OrbitControls
+        makeDefault
+        target={[0, 1.7, 0]}
+        enablePan={false}
+        enableZoom={false}
+        rotateSpeed={-0.35}
+      />
     </Canvas>
 
     {/* miris:hud-start */}

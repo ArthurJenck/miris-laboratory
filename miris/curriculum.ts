@@ -73,7 +73,7 @@ export const STEPS: Step[] = [
         fill: "floor",
         check: "floor",
         explain:
-          "Three nodes and nothing clever. A circle lying flat for the deck, gridHelper, which is three.js's built-in ruled grid, and one open-ended cylinder turned inside out for the wall. The wall earns its place: without something behind them, the near capsules sit against pure black, and dark glass over black is invisible: it exists to give a dark room a sense of scale, and here it is doing the same job as the faint floor lines in a film set. The room is deliberately almost black. Nearly everything you are about to see is emissive geometry rather than lit surfaces, which is why the lighting above the scene block is so dim.",
+          "Four nodes and nothing clever. A circle lying flat for the deck, gridHelper, which is three.js's built-in ruled grid, one open-ended cylinder turned inside out for the wall, and six lit panels set into it. The wall earns its place: without something behind them, the capsules sit against pure black, and dark glass over black is invisible. The panels sit between the capsules rather than behind them, on the half-step of the same circle, so the gaps you look through read as a room: it exists to give a dark room a sense of scale, and here it is doing the same job as the faint floor lines in a film set. The room is deliberately almost black. Nearly everything you are about to see is emissive geometry rather than lit surfaces, which is why the lighting above the scene block is so dim.",
       },
       {
         num: "2.2",
@@ -146,10 +146,12 @@ export const STEPS: Step[] = [
       },
       {
         num: "3.4",
-        title: "Walk the room",
+        title: "Stand in the room",
         body:
-          "No button for this one. Open app/stage.tsx and find the camera prop on Canvas. position is [x, y, z] in world units and the capsules stand on a circle of radius 4.2, so [0, 4.2, 12.5] is outside the ring looking in. Try [0, 1.6, 0] to stand in the middle of the walkway with capsules all around you, or drop fov from 42 to 30 for a longer lens. Save and the page reloads with your change; your progress is kept.",
-        code: "camera={{ position: [0, 4.2, 12.5], fov: 42 }}",
+          "No button for this one. You are in the middle of the laboratory and you stay there: dragging turns you on the spot rather than flying you around the ring. Open app/stage.tsx and find the camera prop on Canvas. The middle number of position is your eye height, so 1.7 is standing and 0.9 is crouched beside the plinths. fov is how much you see at once: raise it to 70 and the room wraps around you, drop it to 35 and you are looking down a lens at one capsule.",
+        code: "camera={{ position: [0, 1.7, 0.02], fov: 55 }}",
+        explain:
+          "The camera sits at the origin and OrbitControls is aimed two centimetres in front of it. That is the whole trick: orbiting a target that close rotates the view in place instead of swinging it around the room, which is why panning and zooming are switched off and why rotateSpeed is negative. Drag left and you look left, the way you would expect standing in a room rather than holding a model in your hand.",
       },
     ],
   },

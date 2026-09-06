@@ -1554,3 +1554,14 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
   position: absolute; left: 0; top: -20px; font-style: normal;
   color: #e8f4f8; letter-spacing: 0.2em;
 }
+
+/* WebContainer drops binary files on import, so an attendee in bolt.new may
+   never receive the door photograph. The plate paints its own lit-capsule
+   gradient underneath, so a missing image reads as art direction, not a hole. */
+.mw-doors-one .mw-door {
+  background:
+    radial-gradient(60% 90% at 22% 55%, rgba(59, 214, 254, 0.20), transparent 70%),
+    radial-gradient(55% 85% at 78% 55%, rgba(196, 68, 63, 0.16), transparent 70%),
+    linear-gradient(180deg, #05080b 0%, #0b1218 60%, #05080b 100%);
+}
+.mw-doors-one .mw-specimen img { background: transparent; }
