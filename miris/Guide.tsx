@@ -22,11 +22,11 @@ const NOT_DEV =
  * failure that mattered was an unguarded res.json(): WebKit rejects it with
  * "The string did not match the expected pattern", which tells an attendee
  * nothing at all. */
-type ApiResult = { ok: boolean; data: any; problem?: string };
+type ApiResult = { ok: boolean; data: any; problem?: string; absent?: boolean };
 
 async function readApi(res: Response): Promise<ApiResult> {
   const type = res.headers.get("content-type") ?? "";
-  if (!type.includes("json")) return { ok: false, data: {}, problem: NOT_DEV };
+  if (!type.includes("json")) return { ok: false, data: {}, problem: NOT_DEV, absent: true };
 
   let data: any;
   try {
@@ -34,7 +34,7 @@ async function readApi(res: Response): Promise<ApiResult> {
   } catch {
     // JSON content type but an unparseable or empty body. Nothing the dev
     // server does looks like this, so treat it as the API not being there.
-    return { ok: false, data: {}, problem: `${NOT_DEV} (empty reply, status ${res.status})` };
+    return { ok: false, data: {}, problem: `${NOT_DEV} (empty reply, status ${res.status})`, absent: true };
   }
   if (!res.ok) return { ok: false, data, problem: data.error ?? `The workshop API returned ${res.status}.` };
   return { ok: true, data };
@@ -43,6 +43,10 @@ async function readApi(res: Response): Promise<ApiResult> {
 
 export default function MirisGuide() {
   const [open, setOpen] = useState(true);
+  /* A published laboratory has no dev API, and a guide whose every button
+     fails is worse than no guide. Step 6.1 removes it by hand; this is what
+     covers the attendee who deploys before getting that far. */
+  const [absent, setAbsent] = useState(false);
   const [data, setData] = useState<any>({ step: "1.1" });
   /* Separate from `data` because the seed above has no track, which is
      indistinguishable from "no track chosen yet". Without this the chooser
@@ -85,6 +89,7 @@ export default function MirisGuide() {
   const load = useCallback(async () => {
     try {
       const r = await readApi(await fetch("/api/miris"));
+      if (r.absent) return setAbsent(true);
       // A 500 body is still valid JSON, so without this check the guide would
       // quietly render an error object as its state.
       if (!r.ok) return setNote(r.problem!);
@@ -278,6 +283,7 @@ export default function MirisGuide() {
     backToProgress: () => setSelected(null),
   };
 
+  if (absent) return null;
   if (!loaded) return <PanelSkeleton />;
   if (!data.track) return <Start onChoose={chooseTrack} note={note} />;
 
