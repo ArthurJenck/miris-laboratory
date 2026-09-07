@@ -81,6 +81,8 @@ export default function useHtmlTexture(html: string | false | null | undefined):
       }
       if (!alive) return;
         const texture = new CanvasTexture(target);
+        // The default, stated: a canvas is top-down and three's UVs are not.
+        texture.flipY = true;
         // A 2D canvas draws in sRGB, so say so and let three decode it. This
         // was tagged linear back when the stage rendered with <Canvas linear>
         // and nothing re-encoded on output; both halves of that went together.

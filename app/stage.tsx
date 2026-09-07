@@ -67,7 +67,15 @@ export default function Stage() {
       <pointLight position={[0, 0.3, 0]} intensity={4} distance={9} decay={2} color={0x3bd6fe} />
 
       {/* miris:scene-start */}
-      {/* Steps 2.1 to 2.4 go here. */}
+      <fog attach="fog" args={[0x02050a, 20, 50]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+        <circleGeometry args={[46, 96]} />
+        <meshStandardMaterial {...floor} roughness={1} metalness={1} normalScale={[0.9, 0.9]} />
+      </mesh>
+      <mesh position={[0, 6.9, 0]}>
+        <cylinderGeometry args={[46, 46, 14, 64, 1, false]} />
+        <meshStandardMaterial color={0x04070b} roughness={1} metalness={0} side={DoubleSide} />
+      </mesh>
       {/* miris:scene-end */}
 
 

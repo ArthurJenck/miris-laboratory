@@ -10,10 +10,10 @@ const MIDDLE = 1.66;
 /* How far to the side of the glass the card stands, from wherever the camera
    is. Outside the glass, which is what kept the first in-scene card hidden
    behind its own capsule. */
-const BESIDE = 1.5;
+const BESIDE = 1.55;
 /* The markup is 340px wide, which the shared px-to-units ratio makes as tall
    as the glass. Smaller reads as a label on the tank rather than a second tank. */
-const SCALE = 0.72;
+const SCALE = 0.95;
 const UP = new Vector3(0, 1, 0);
 const toGlass = new Vector3();
 const across = new Vector3();
@@ -44,7 +44,9 @@ export default function DossierCard({ specimens = [] as any[] }) {
     toGlass.set(cx - camera.position.x, 0, cz - camera.position.z).normalize();
     across.crossVectors(toGlass, UP).normalize();
     m.position.set(cx + across.x * BESIDE, MIDDLE, cz + across.z * BESIDE);
-    m.lookAt(camera.position);
+    // Face the camera by taking its rotation, not by lookAt: lookAt on a plane
+    // can roll it, and the file came up upside down from some angles.
+    m.quaternion.copy(camera.quaternion);
   });
 
   if (i < 0 || !texture) return null;
