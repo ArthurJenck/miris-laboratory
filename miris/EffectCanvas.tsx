@@ -7,6 +7,8 @@ import { anchor } from "./anchor";
    level, because the node graph is built before this canvas exists. */
 export const anchorPos = uniform(new Vector2(0, 0));
 export const anchorSeen = uniform(0);
+/* Half width and half height of the hovered glass on screen. */
+export const anchorSize = uniform(new Vector2(0, 0));
 /* Width over height. Without it a round field reads as an ellipse. */
 export const screenAspect = uniform(1);
 
@@ -38,15 +40,21 @@ export default function EffectCanvas({ node }: { node: any }) {
       if (!live) return void r.dispose();
       renderer = r;
 
+      // Sized from the element, not the window: the sidebar takes a strip of
+      // the window and the overlay has to stop where the stage stops.
       const resize = () => {
+        const w = canvas.clientWidth || innerWidth;
+        const h = canvas.clientHeight || innerHeight;
         r.setPixelRatio(Math.min(devicePixelRatio, 2));
-        r.setSize(innerWidth, innerHeight, false);
-        screenAspect.value = innerWidth / innerHeight;
+        r.setSize(w, h, false);
+        screenAspect.value = w / h;
       };
       resize();
       // Nothing clears to black here, or the overlay hides the splats.
       r.setClearColor(0x000000, 0);
       addEventListener("resize", resize);
+      const ro = new ResizeObserver(resize);
+      ro.observe(canvas);
 
       const scene = new Scene();
       const cam = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
@@ -58,6 +66,7 @@ export default function EffectCanvas({ node }: { node: any }) {
       const loop = () => {
         if (!live) return;
         anchorPos.value.set(anchor.x, anchor.y);
+        anchorSize.value.set(anchor.w, anchor.h);
         anchorSeen.value = anchor.seen ? 1 : 0;
         r.renderAsync(scene, cam);
         raf = requestAnimationFrame(loop);
@@ -66,6 +75,7 @@ export default function EffectCanvas({ node }: { node: any }) {
 
       cleanup = () => {
         removeEventListener("resize", resize);
+        ro.disconnect();
         matRef.current = null;
         mat.dispose();
       };
@@ -91,7 +101,7 @@ export default function EffectCanvas({ node }: { node: any }) {
   return (
     <canvas
       ref={ref}
-      style={{ position: "fixed", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 1 }}
+      style={{ position: "fixed", top: 0, left: 0, width: "calc(100vw - var(--mw-side, 0px))", height: "100vh", pointerEvents: "none", zIndex: 1 }}
     />
   );
 }

@@ -43,6 +43,17 @@ async function readApi(res: Response): Promise<ApiResult> {
 
 export default function MirisGuide() {
   const [open, setOpen] = useState(true);
+
+  /* The stage gives the sidebar its width rather than sitting under it: the
+     canvas, the effect overlay and the HUD all read --mw-side. Zero on narrow
+     screens, where the panel is a bottom sheet instead. */
+  useEffect(() => {
+    const root = document.documentElement;
+    const apply = () => root.style.setProperty("--mw-side", open && window.innerWidth > 720 ? "408px" : "0px");
+    apply();
+    window.addEventListener("resize", apply);
+    return () => window.removeEventListener("resize", apply);
+  }, [open]);
   /* A published laboratory has no dev API, and a guide whose every button
      fails is worse than no guide. Step 6.1 removes it by hand; this is what
      covers the attendee who deploys before getting that far. */

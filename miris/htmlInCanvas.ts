@@ -119,6 +119,37 @@ export const cardCss = (accent: string): string => `
   margin-top: 4px;
 }`;
 
+/* ── the dossier's styles, lifted live ────────────────────
+ * cardCss above mirrors the old .mw-plate label by hand. The dossier has
+ * nineteen rules in lab.css and they change, so mirroring them would drift:
+ * instead the rules that mention its classes are read out of the live
+ * stylesheets at paint time. Custom properties do not cross into a
+ * foreignObject, so var() is resolved against :root first. Font faces have no
+ * selector and are skipped, which is why the fallback card sets in the system
+ * face rather than Geist. */
+function liveCssFor(needles: string[]): string {
+  const root = getComputedStyle(document.documentElement);
+  const resolve = (css: string) =>
+    css.replace(/var\((--[\w-]+)(?:\s*,\s*([^)]+))?\)/g, (_m, name: string, fb?: string) => {
+      const v = root.getPropertyValue(name).trim();
+      return v || (fb ?? "").trim() || "initial";
+    });
+  const out: string[] = [];
+  for (const sheet of Array.from(document.styleSheets)) {
+    let rules: CSSRuleList;
+    try {
+      rules = sheet.cssRules;
+    } catch {
+      continue; // cross-origin sheet
+    }
+    for (const r of Array.from(rules)) {
+      const sr = r as CSSStyleRule;
+      if (sr.selectorText && needles.some((n) => sr.selectorText.includes(n))) out.push(resolve(sr.cssText));
+    }
+  }
+  return out.join("\n");
+}
+
 /* ── the two backends ─────────────────────────────────── */
 
 async function drawViaForeignObject(
@@ -137,7 +168,7 @@ async function drawViaForeignObject(
     `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">` +
     `<foreignObject x="0" y="0" width="${w}" height="${h}">` +
     `<div xmlns="http://www.w3.org/1999/xhtml">` +
-    `<style>${cardCss(accent)}</style>${markup}</div>` +
+    `<style>${cardCss(accent)}\n${liveCssFor([".mw-dossier", ".mw-d-"])}</style>${markup}</div>` +
     `</foreignObject></svg>`;
 
   const img = new Image();

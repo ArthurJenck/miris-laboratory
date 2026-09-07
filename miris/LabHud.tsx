@@ -11,6 +11,38 @@ const TOP = 3.1;
 const BOTTOM = 0.3;
 
 const v = new Vector3();
+const toGlass = new Vector3();
+const across = new Vector3();
+const UP = new Vector3(0, 1, 0);
+
+/** The glass alone, as the camera sees it: its two silhouette edges, which lie
+ *  perpendicular to the line of sight, at the top and bottom of the cylinder.
+ *  boxOf below brackets the square footprint's corners instead, which is right
+ *  for a hit target and wrong for a glow meant to hug the glass: seen at an
+ *  angle those corners sit up to forty percent outside the silhouette. */
+function glassOf(i: number, camera: any, w: number, h: number): Box | null {
+  const a = (i / 6) * Math.PI * 2;
+  const cx = Math.cos(a) * RING;
+  const cz = Math.sin(a) * RING;
+  toGlass.set(cx - camera.position.x, 0, cz - camera.position.z).normalize();
+  across.crossVectors(toGlass, UP).normalize();
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  let ahead = false;
+  for (const side of [-0.9, 0.9]) {
+    for (const y of [0.36, 2.96]) {
+      v.set(cx + across.x * side, y, cz + across.z * side).project(camera);
+      if (v.z < 1) ahead = true;
+      minX = Math.min(minX, (v.x * 0.5 + 0.5) * w);
+      maxX = Math.max(maxX, (v.x * 0.5 + 0.5) * w);
+      minY = Math.min(minY, (-v.y * 0.5 + 0.5) * h);
+      maxY = Math.max(maxY, (-v.y * 0.5 + 0.5) * h);
+    }
+  }
+  return ahead ? { x: minX, y: minY, w: maxX - minX, h: maxY - minY } : null;
+}
 
 /** Screen box of one capsule, from the eight corners of its bounds. Projecting
  *  the centre alone would give a point with no size to bracket. */
@@ -49,11 +81,17 @@ export function CapsuleProbe() {
       anchor.seen = false;
       return;
     }
-    const a = (i / 6) * Math.PI * 2;
-    v.set(Math.cos(a) * RING, 1.7, Math.sin(a) * RING).project(camera);
-    anchor.x = v.x;
-    anchor.y = v.y;
-    anchor.seen = v.z < 1;
+    const b = glassOf(i, camera, size.width, size.height);
+    if (!b) {
+      anchor.seen = false;
+      return;
+    }
+    // Centre in NDC, extents in overlay units: half the screen height is 1.
+    anchor.x = ((b.x + b.w / 2) / size.width) * 2 - 1;
+    anchor.y = 1 - ((b.y + b.h / 2) / size.height) * 2;
+    anchor.w = b.w / size.height;
+    anchor.h = b.h / size.height;
+    anchor.seen = true;
   });
   return null;
 }

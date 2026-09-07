@@ -1,12 +1,10 @@
 import { useEffect, useSyncExternalStore } from "react";
-import { dossierHtml } from "./Card";
 import "./lab.css";
 import { getBoxes, getSelected, labVersion, setSelected, subscribeLab } from "./labState";
 
-/** The specimen file, anchored to the right edge of the window and opened by
- *  clicking a capsule. It is HTML over the canvas, not geometry in it: the
- *  panel has to stay readable at any camera angle, and a card standing in the
- *  scene turns edge-on and hides behind the glass. */
+/** Click to open a capsule's file, Escape or click away to close it. Lives
+ *  outside the canvas because it reads the pointer against projected boxes;
+ *  the card it opens is drawn in the scene by DossierCard. */
 export default function Dossier({ specimens = [] as any[] }) {
   useSyncExternalStore(subscribeLab, labVersion, labVersion);
   const i = getSelected();
@@ -51,19 +49,9 @@ export default function Dossier({ specimens = [] as any[] }) {
     };
   }, []);
 
-  const d = i >= 0 ? specimens[i]?.dossier : null;
-  if (!d) return null;
-
-  return (
-    <div className="mw-dossier-panel" role="dialog" aria-label={`Specimen ${d.name}`}>
-      <button className="mw-dossier-close" onClick={() => setSelected(-1)} aria-label="Close dossier">
-        ×
-      </button>
-      <div dangerouslySetInnerHTML={{ __html: dossierHtml(d) }} />
-      <p className="mw-dossier-foot">
-        <span>Containment nominal</span>
-        <span>&#9679; Rec</span>
-      </p>
-    </div>
-  );
+  // The card itself is drawn in the scene by DossierCard; this only decides
+  // which capsule is open.
+  void specimens;
+  void i;
+  return null;
 }

@@ -8,10 +8,11 @@ import { Fn, float, smoothstep, time, uv, vec2, vec3, vec4 } from "three/tsl";
 import Dossier from "../miris/Dossier";
 import LabHud, { CapsuleProbe } from "../miris/LabHud";
 import CapsuleFocus from "../miris/CapsuleFocus";
+import DossierCard from "../miris/DossierCard";
 import FitInGlass from "../miris/FitInGlass";
-import { FloorGlow, LightShaft, Pulse } from "../miris/CapsuleFx";
+import { FloorGlow, LightShaft, Pulse, RadialGlow } from "../miris/CapsuleFx";
 import { floorMaps, walkwayTexture, wearMap } from "../miris/textures";
-import EffectCanvas, { anchorPos, anchorSeen, screenAspect } from "../miris/EffectCanvas";
+import EffectCanvas, { anchorPos, anchorSeen, anchorSize, screenAspect } from "../miris/EffectCanvas";
 import { StageSkeleton } from "../miris/Skeleton";
 
 // A Miris stream is now a scene node: <mirisStream args={[{ uuid, viewerKey }]} />
@@ -59,7 +60,7 @@ export default function Stage() {
         toneMapping: NoToneMapping,
       }}
       camera={{ position: [0, 1.7, 0.02], fov: 55 }}
-      style={{ position: "fixed", inset: 0 }}
+      style={{ position: "fixed", top: 0, left: 0, width: "calc(100vw - var(--mw-side, 0px))", height: "100vh" }}
     >
       <hemisphereLight args={[0x7ea8c4, 0x0c141c, 0.45]} />
       {/* Strong enough to reach the deck at the walls. The scan is dark teal, and
@@ -74,6 +75,7 @@ export default function Stage() {
 
       <CapsuleProbe />
       <CapsuleFocus />
+      <DossierCard specimens={specimens} />
       <OrbitControls
         makeDefault
         target={[0, 1.7, 0]}

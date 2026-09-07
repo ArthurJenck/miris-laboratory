@@ -77,7 +77,7 @@
 
 .mw-hud-bl { position: absolute; bottom: 20px; left: 22px; }
 
-.mw-hud-br { position: absolute; bottom: 20px; right: 22px; }
+.mw-hud-br { position: absolute; bottom: 20px; right: calc(22px + var(--mw-side, 0px)); }
 
 /* Four corner marks on the hovered capsule, drawn as borders on one box so
    there is no arithmetic to get wrong when the camera moves. */

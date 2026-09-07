@@ -5,11 +5,11 @@ import { getSelected } from "./labState";
 
 const RING = 4.2;
 const EYE = 1.7;
-/* Where the camera comes to rest. A capsule is 2.6 tall, so about three units
-   back is what fits all of it in a 55 degree lens. The aim is nudged sideways
-   so the capsule lands left of centre, clear of the dossier panel. */
-const STANDOFF = 1.2;
-const SIDESTEP = 0.9;
+/* Where the camera comes to rest: far enough back that the glass and the file
+   standing beside it both fit, with the sidebar taking a strip of the frame. */
+const STANDOFF = 0.5;
+/* The capsule interior runs y 0.36 to 2.96; this is its middle. */
+const GLASS_MIDDLE = 1.66;
 const TRAVEL = 0.9; // seconds
 
 const home = new Vector3(0, EYE, 0);
@@ -51,9 +51,9 @@ export default function CapsuleFocus() {
         const cx = Math.cos(a);
         const cz = Math.sin(a);
         toPos.set(cx * STANDOFF, EYE, cz * STANDOFF);
-        // Perpendicular to the line out to the capsule: aiming past it on one
-        // side swings the capsule to the other side of the frame.
-        toTarget.set(cx * RING - cz * SIDESTEP, EYE, cz * RING + cx * SIDESTEP);
+        // Aim at the middle of the glass, so orbiting once arrived turns
+        // around the specimen rather than around a point beside it.
+        toTarget.set(cx * RING, GLASS_MIDDLE, cz * RING);
       }
       last.current = i;
       t.current = 0;

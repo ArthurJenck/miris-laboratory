@@ -40,8 +40,13 @@ const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02,
         </mesh>
         <mesh position={[0, 1.8, 0.31]}>
           <planeGeometry args={[2.7, 3.3]} />
-          <meshBasicMaterial color={0x6db6ff} toneMapped={false} />
+          <meshBasicMaterial color={0x1f5aa8} toneMapped={false} />
         </mesh>
+        <group position={[0, 1.65, 0.33]} scale={[1, 1.35, 1]}>
+          <RadialGlow radius={2.9} color={0x3f8fe0} opacity={0.85} />
+          <RadialGlow radius={1.7} color={0x7fbaff} opacity={0.9} />
+          <RadialGlow radius={0.85} color={0xe2f2ff} opacity={1} />
+        </group>
         <pointLight position={[0, 1.2, 1.6]} intensity={110} distance={24} decay={2} color={0x7cc0ff} />
         <group position={[0, 0, 2.6]}>
           <FloorGlow radius={3.6} color={0x9ad4ff} opacity={0.95} />
@@ -107,10 +112,12 @@ const EFFECT = `    <EffectCanvas node={field} />`;
 const FIELD = `  const field = useMemo(() => Fn(() => {
     const p = uv().mul(2).sub(1).mul(vec2(screenAspect, float(1)));
     const a = anchorPos.mul(vec2(screenAspect, float(1)));
-    const d = p.sub(a).length();
-    const halo = smoothstep(float(0.02), float(0.5), d).oneMinus().mul(anchorSeen);
+    const q = p.sub(a).abs().sub(anchorSize);
+    const edge = q.x.max(q.y);
+    const outside = q.max(vec2(0, 0)).length();
+    const rim = smoothstep(float(-0.03), float(0), edge).mul(smoothstep(float(0), float(0.16), outside).oneMinus()).mul(anchorSeen);
     const scan = uv().y.mul(220).sub(time.mul(1.4)).sin().mul(0.5).add(0.5).mul(0.03);
-    const glow = halo.mul(0.5).add(scan);
+    const glow = rim.mul(0.55).add(scan);
     return vec4(vec3(0.42, 0.86, 1.0).mul(glow), glow);
   })(), []);`;
 

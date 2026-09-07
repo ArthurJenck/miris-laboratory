@@ -159,13 +159,13 @@ export function Pulse({ radius = 0.86, height = 2.5, color = 0xd8f2ff, seed = Ma
   );
 }
 
-/* Where the beam lands. A radial decal just above the deck, so the light has
-   somewhere to end instead of stopping in mid air at the base of the cone. */
-export function FloorGlow({ radius = 2.1, color = 0x8fd4ef, opacity = 0.5 }) {
-  // Shared between all six capsules, so no need to memoise per instance.
-  const map = glowTexture();
+/* A soft radial glow on a plane facing +Z: bright at the middle, gone at the
+   edge, additive so it reads as light rather than paint. The one primitive
+   behind both the pool a beam leaves on the deck and the lit panel of a door. */
+export function RadialGlow({ radius = 1, color = 0x8fd4ef, opacity = 0.5 }) {
+  const map = useMemo(() => glowTexture(), []);
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+    <mesh>
       <planeGeometry args={[radius * 2, radius * 2]} />
       <meshBasicMaterial
         map={map}
@@ -177,5 +177,15 @@ export function FloorGlow({ radius = 2.1, color = 0x8fd4ef, opacity = 0.5 }) {
         toneMapped={false}
       />
     </mesh>
+  );
+}
+
+/* Where the beam lands: the same glow laid flat just above the deck, so the
+   light has somewhere to end instead of stopping in mid air. */
+export function FloorGlow({ radius = 2.1, color = 0x8fd4ef, opacity = 0.5 }) {
+  return (
+    <group rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+      <RadialGlow radius={radius} color={color} opacity={opacity} />
+    </group>
   );
 }
