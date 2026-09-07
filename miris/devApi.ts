@@ -686,6 +686,15 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       const given = Array.isArray(body?.uuids)
         ? body.uuids.map((u: any) => String(u).trim()).filter(Boolean)
         : [];
+      // The asset's own name, so a series that is not the recorded one still
+      // gets its own labels: "01-egg" reads as "egg".
+      const names = Array.isArray(body?.names) ? body.names.map((n: any) => String(n)) : [];
+      const nameAt = (i: number) =>
+        String(names[i] ?? "")
+          .replace(/\.[a-z0-9]+$/i, "")
+          .replace(/^\s*\d+\s*[-_. ]\s*/, "")
+          .replace(/[-_]+/g, " ")
+          .trim();
       const bad = given.find((u: string) => !UUID_RE.test(u));
       if (bad) return fail(`That does not look like a uuid: "${bad}". Copy just the id from the asset page.`);
 
@@ -696,12 +705,21 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
         // Fewer ids than capsules cycles them, so one asset can fill the room
         // while only some of the six have been uploaded.
         const uuid = given.length ? given[i % given.length] : slot.uuid || DEMO_UUID;
+        /* Only borrow the recording's stage names, prompts and files when this
+           really is the recorded specimen. Matching by position alone put the
+           crustacean's paperwork on whatever anyone else had uploaded. */
         const f = fx?.stages?.[i];
+        const same = !!f && String(f.uuid || "").trim() === uuid;
+        /* A capsule given a different asset is a different specimen: its old
+           name and file go with the old one rather than sitting on top of the
+           new one. */
+        const swapped = String(slot.uuid || "") !== uuid;
+        const keep = <T,>(v: T) => (swapped ? undefined : v);
         bank[i] = {
           ...slot,
-          stage: slot.stage || f?.stage || `Stage ${i + 1}`,
-          prompt: slot.prompt || f?.prompt || "",
-          dossier: slot.dossier || f?.dossier || null,
+          stage: keep(slot.stage) || (same ? f!.stage : "") || nameAt(i) || `Stage ${i + 1}`,
+          prompt: keep(slot.prompt) || (same ? f!.prompt : "") || "",
+          dossier: keep(slot.dossier) || (same ? f!.dossier : null) || null,
           uuid,
           status: "live",
           modelStartedAt: 0,
@@ -718,8 +736,18 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
         hatchedAt: Date.now(),
       });
 
-      // Remembered, so a later seed brings the same assets back.
-      if (fx) {
+      /* Remembered, so a later seed brings the same assets back, but only when
+         these are the assets the recording already describes or it has none
+         yet. Writing any adopted uuid back put someone else's ids next to the
+         recorded stage names and dossiers, and the next adopt then believed
+         they matched. */
+      const claimable =
+        !!fx &&
+        fx.stages.every((st: any, i: number) => {
+          const had = String(st.uuid || "").trim();
+          return !had || had === bank[i].uuid;
+        });
+      if (fx && claimable) {
         fx.viewerKey = key;
         fx.stages = fx.stages.map((st: any, i: number) => ({ ...st, uuid: bank[i].uuid }));
         await writeFile(FIXTURES, JSON.stringify(fx, null, 2) + "\n");

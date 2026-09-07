@@ -386,7 +386,12 @@ export function CapsuleAuto({ data, onDone }: { data: any; onDone: () => void })
       const res = await fetch("/api/miris", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "adopt", viewerKey: key.trim(), uuids: found!.slice(0, STAGES).map((a) => a.uuid) }),
+        body: JSON.stringify({
+          action: "adopt",
+          viewerKey: key.trim(),
+          uuids: found!.slice(0, STAGES).map((a) => a.uuid),
+          names: found!.slice(0, STAGES).map((a) => a.name),
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error ?? `request failed: ${res.status}`);

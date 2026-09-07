@@ -14,7 +14,10 @@ export default function Dossier({ specimens = [] as any[] }) {
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       // Anything with its own controls, the guide included, keeps its click.
-      if ((e.target as HTMLElement)?.closest?.(".mw-panel, .mw-dossier, .mw-tab, .mw-tray, .mw-tray-min, .mw-dev")) return;
+      // .mw-dossier-panel, not .mw-dossier: the shorter class does not exist,
+      // so every click inside the open file fell through to the hit test and
+      // the close button selected whichever capsule sat behind it.
+      if ((e.target as HTMLElement)?.closest?.(".mw-panel, .mw-dossier-panel, .mw-tab, .mw-tray, .mw-tray-min, .mw-dev")) return;
       let best = -1;
       let bestArea = Infinity;
       getBoxes().forEach((b, n) => {
