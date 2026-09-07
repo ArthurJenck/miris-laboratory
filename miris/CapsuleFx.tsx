@@ -105,9 +105,8 @@ const PULSE_FRAG = `
   uniform float uCalm;
 
   void main() {
-    // Period differs per capsule, so the room does not blink in unison; under
-    // the pointer it shortens until the pulses nearly run together.
-    float period = mix(4.5 + uSeed * 3.0, 1.9, uHover);
+    // Period differs per capsule, so the room does not blink in unison.
+    float period = 4.5 + uSeed * 3.0;
     float t = mod(uTime + uSeed * 17.0, period);
     float travel = 1.6;
     float live = 1.0 - step(travel, t);
@@ -124,18 +123,19 @@ const PULSE_FRAG = `
     // Ease in as it leaves the floor and out as it reaches the rim.
     pulse *= smoothstep(0.0, 0.15, pos) * (1.0 - smoothstep(0.85, 1.0, pos));
     // Standing at the glass the band filled the frame and washed the creature
-    // out for a second or two each cycle. The open capsule pulses quietly.
-    pulse *= mix(1.0, 0.35, uCalm);
+    // out for a second or two each cycle. The open capsule pulses quietly,
+    // and so does a hovered one: a band racing through a glow read as a glitch.
+    pulse *= mix(1.0, 0.35, max(uCalm, uHover));
 
     // Faint idle breathing so the fluid never looks switched off. Hovered, the
-    // whole column lights from within: this is the hover effect, in the tank
-    // rather than painted over the screen.
-    float idle = mix(0.035, 0.26, uHover) + 0.025 * sin(uTime * 0.9 + vUv.y * 4.0 + uSeed * 6.2832);
+    // whole column lights from within, steadily: this is the hover effect, in
+    // the tank rather than painted over the screen.
+    float idle = mix(0.035, 0.24, uHover) + 0.025 * sin(uTime * 0.9 + vUv.y * 4.0 + uSeed * 6.2832);
     // Brighter toward the middle of the column when lit, so it reads as the
     // fluid glowing around the specimen rather than the glass being painted.
-    idle += uHover * 0.22 * (1.0 - abs(vUv.y - 0.5) * 2.0);
+    idle += uHover * 0.2 * (1.0 - abs(vUv.y - 0.5) * 2.0);
 
-    float a = (pulse * (0.85 + 0.15 * uHover) + idle);
+    float a = pulse * 0.85 + idle;
     a *= smoothstep(0.0, 0.08, vUv.y) * (1.0 - smoothstep(0.92, 1.0, vUv.y));
     gl_FragColor = vec4(uColor * a, a);
   }
