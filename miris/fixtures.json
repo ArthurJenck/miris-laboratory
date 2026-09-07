@@ -41,7 +41,7 @@
         ],
         "notes": "Specimen GT-07 remains affixed to its original basalt substrate. Its internal luminescence has maintained a consistent output for the last 72 cycles. Introduction of a low frequency sonic pulse caused no observable change in its dormant state or light intensity. Containment is maintained with standard atmospheric pressure and ambient temperature, with no apparent degradation of the specimen's integrity."
       },
-      "uuid": ""
+      "uuid": "fb7eb2cc-e7d2-4d46-bf9a-2126fc5348df"
     },
     {
       "stage": "nauplius",
@@ -79,7 +79,7 @@
         ],
         "notes": "Specimen PL-04 maintains consistent internal blue bioluminescence, notably intensified under a 500nm wavelength light source. Feeding behavior involves rhythmic appendage movement to direct suspended particulate matter, demonstrating remarkable efficiency. Containment requires a high-density liquid medium with stable osmotic pressure to prevent cellular lysis. Under prolonged exposure to low-frequency sonic pulses, the bioluminescence flickers erratically before stabilizing."
       },
-      "uuid": ""
+      "uuid": "0b82de16-f1aa-402f-8328-7d61f72e9799"
     },
     {
       "stage": "zoea",
@@ -117,7 +117,7 @@
         ],
         "notes": "Specimen LS-14 continues to exhibit robust swimming behavior within its designated aquatic enclosure. The blue bioluminescent seams along its developing plates are becoming increasingly defined, particularly noticeable under low light conditions. Under exposure to a 450nm light source, the specimen demonstrates increased thoracic appendage activity, indicating a positive phototactic response. Containment protocols must ensure consistent water quality and temperature to support its ongoing development."
       },
-      "uuid": ""
+      "uuid": "e2d95455-86a9-4b6a-bae7-8bff9c2e8e89"
     },
     {
       "stage": "megalopa",
@@ -155,7 +155,7 @@
         ],
         "notes": "Specimen CR-77 exhibits a pronounced preference for dark, enclosed spaces, often secreting a cohesive mucus to secure itself. During feeding cycles, it displays an unexpected agility, rapidly securing prey with its six limbs. Containment requires a high-density ceramic casing to prevent abrasion from its constant scuttling. Under conditions of elevated humidity, its bioluminescent seams intensify, suggesting a regulatory link to environmental moisture levels."
       },
-      "uuid": ""
+      "uuid": "dbf44f6c-e62b-444a-b8fe-cef3a0d1b468"
     },
     {
       "stage": "juvenile",
@@ -193,7 +193,7 @@
         ],
         "notes": "Specimen PL-06 exhibits consistent foraging behavior on simulated seafloor substrate. Its blue bioluminescence remains at a steady intensity during all observed cycles, showing no fluctuation under varying pressure simulations. Containment is maintained with standard reinforced acrylic, as no attempts to breach have been recorded. During a nutrient deprivation test, PL-06 demonstrated a marked reduction in movement but no discernible change in bioluminescent output or structural integrity."
       },
-      "uuid": ""
+      "uuid": "aa392d3d-2f48-405e-9483-14d4c725b770"
     },
     {
       "stage": "adult",
@@ -231,7 +231,8 @@
         ],
         "notes": "Specimen CH-23 maintains a consistent rhythmic luminescence, showing no deviation even under external stress tests. It responds positively to controlled nutrient injections, exhibiting increased activity for several hours post-administration. Containment requires reinforced plasteel walls, due to the specimen's considerable mass and limb strength. Under conditions of complete darkness, its bioluminescence intensifies, appearing to serve a navigational or communication function rather than simply an aesthetic one."
       },
-      "uuid": ""
+      "uuid": "f19a39a6-f288-422a-9eae-bc306b56bcf7"
     }
-  ]
+  ],
+  "viewerKey": "Tv3sVSznjlD4EQJUXHygAUmH3sLXFMGt71VdJInAdp4"
 }
