@@ -11,6 +11,8 @@ const EYE = 1.7;
 const STANDOFF = 1.1;
 const NEAREST = 1.2;
 const FARTHEST = 3.2; // any further and the orbit clips the neighbours again
+/** How far the camera rests from the glass; the placard sizes itself to it. */
+export const FOCUS_DISTANCE = RING - STANDOFF;
 /* The capsule interior runs y 0.36 to 2.96; this is its middle. */
 const GLASS_MIDDLE = 1.66;
 const TRAVEL = 0.9; // seconds
