@@ -1583,3 +1583,21 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 .mw-dev button:hover:not(:disabled) { background: rgba(80, 165, 200, 0.42); }
 .mw-dev button:disabled { opacity: 0.5; cursor: default; }
 .mw-dev-err { color: #ffb4b4; max-width: 320px; }
+
+/* What the key found, before it is committed. Shown rather than assumed: a
+   silent mis-order would put the adult in capsule one and read as a bad
+   upload, which is a worse ten minutes than one glance. */
+.mw-found { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; background: var(--mono-800); border: 1px solid var(--mono-800); }
+.mw-found li {
+  display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: center;
+  padding: 8px 11px; background: var(--surface-raised); font-size: 13px; color: var(--mono-200);
+}
+.mw-found-n { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--mono-600); font-variant-numeric: tabular-nums; }
+.mw-found-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mw-link {
+  align-self: flex-start; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 13px; color: var(--mono-500); text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.mw-link:hover { color: var(--mono-200); }
+.mw-link:disabled { opacity: 0.5; cursor: default; }

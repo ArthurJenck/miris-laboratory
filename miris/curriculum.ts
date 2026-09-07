@@ -124,7 +124,7 @@ export const STEPS: Step[] = [
         num: "3.1",
         title: "Upload your specimen",
         body:
-          "You started this at step 2.4. Back in the Miris portal, check all six uploads have finished processing and copy the asset uuid from each of the six asset pages. Then create a viewer key scoped to those six assets, rather than one that can read everything in your account. One scoped key covers all six capsules.",
+          "You started this at step 2.4. Back in the Miris portal, check all six uploads have finished processing, then create a viewer key scoped to those six assets rather than one that can read everything in your account. That key is the only thing you need to copy: the six uuids come back with it.",
         link: { href: PORTAL_URL, label: "Open Miris" },
         explain:
           "A viewer key is not a password. It is what lets a browser read your assets with nobody logged in, which means it ships inside the page: anyone who opens your deployed lab can read it out of the source in a few seconds. That is fine, and it is the point, but it decides what the key should be allowed to reach. An account wide key hands every reader of your page the ability to fetch anything you ever upload, including work that has nothing to do with this workshop. A key scoped to these six assets can fetch exactly these six and nothing else, so the worst case is that someone streams the creature you just built on purpose. Scope is the thing you control here, not secrecy.",
@@ -133,7 +133,7 @@ export const STEPS: Step[] = [
         num: "3.2",
         title: "Put it in the glass",
         body:
-          "Pick a capsule, paste the uuid for that stage, and seal it. Work along the row in growth order so the life cycle reads round the room. Your scoped viewer key only needs pasting once, and every capsule reads through it.",
+          "Paste your scoped viewer key and press Find my specimens. The key already knows which assets it can read, so it fetches them, orders them by the number in each name, and shows you the order before anything is sealed. Check it reads egg first and adult last, then seal all six.",
         capsuleUuid: true,
         check: "capsuleUuid",
         explain:

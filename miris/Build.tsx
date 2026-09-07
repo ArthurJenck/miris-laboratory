@@ -306,6 +306,119 @@ export function DevBar({ hatch }: { hatch: HatchState }) {
   );
 }
 
+/* The archive names its meshes 01-egg through 06-adult, so a leading number is
+   the growth order. Only a leading one counts: matching any digit anywhere put
+   "HL2 Ammo Crate" first, ahead of six correctly numbered specimens, because
+   of the 2 in HL2. Anything unnumbered sorts after rather than being dropped,
+   so a renamed asset still lands somewhere the attendee can see it. */
+const INDEXED = /^\s*(\d+)\s*[-_. ]/;
+const orderOf = (name: string) => {
+  const m = String(name).match(INDEXED);
+  return m ? Number(m[1]) : Number.MAX_SAFE_INTEGER;
+};
+
+/** Step 3.2. A scoped key already knows which assets it can read, so asking
+ *  for six uuids as well was asking the attendee to retype what the key could
+ *  answer for itself. Paste the key, look at what it found, seal all six. */
+export function CapsuleAuto({ data, onDone }: { data: any; onDone: () => void }) {
+  const [key, setKey] = useState(data?.viewerKey ?? "");
+  const [found, setFound] = useState<any[] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [manual, setManual] = useState(false);
+
+  const find = async () => {
+    setBusy(true);
+    setError("");
+    setFound(null);
+    try {
+      const { MirisScene } = await import("@miris-inc/three");
+      const scene: any = new (MirisScene as any)({ viewerKey: key.trim() });
+      if (scene.ready) await scene.ready;
+      const assets = await scene.fetchAssets();
+      scene.dispose?.();
+      if (!assets?.length) throw new Error("That key cannot see any assets. Check it is the key you scoped, and that the uploads finished.");
+      setFound([...assets].sort((a: any, b: any) => orderOf(a.name) - orderOf(b.name) || String(a.name).localeCompare(String(b.name))));
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const seal = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      const res = await fetch("/api/miris", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "adopt", viewerKey: key.trim(), uuids: found!.slice(0, STAGES).map((a) => a.uuid) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error ?? `request failed: ${res.status}`);
+      onDone();
+      location.reload();
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+      setBusy(false);
+    }
+  };
+
+  if (manual) return <CapsuleForm data={data} onDone={onDone} />;
+
+  const take = found?.slice(0, STAGES) ?? [];
+  const numbered = found?.filter((a) => INDEXED.test(String(a.name))).length ?? 0;
+  return (
+    <div className="mw-build mw-capsule">
+      <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="scoped viewer key" spellCheck={false} />
+
+      {!found && (
+        <button className="btn btn-primary btn-sm" disabled={busy || !key.trim()} onClick={find}>
+          {busy ? "Looking" : "Find my specimens"}
+        </button>
+      )}
+
+      {found && (
+        <>
+          <ol className="mw-found">
+            {take.map((a, i) => (
+              <li key={a.uuid}>
+                <span className="mw-found-n">{String(i + 1).padStart(2, "0")}</span>
+                <span className="mw-found-name">{a.name}</span>
+              </li>
+            ))}
+          </ol>
+          <p className={numbered === 0 ? "mw-error" : "mw-note"}>
+            {numbered === 0
+              ? `None of the ${found.length} assets this key reads are numbered, so this order is alphabetical and almost certainly wrong. Check you pasted the key scoped to your six.`
+              : found.length > STAGES
+                ? `That key reads ${found.length} assets. The ${numbered} numbered ones lead, and the first ${STAGES} go in.`
+                : found.length < STAGES
+                  ? `That key reads ${found.length}. The rest of the capsules stay empty until more finish processing.`
+                  : "In growth order, one per capsule."}
+          </p>
+          <div className="mw-row">
+            <button className="btn btn-primary btn-sm" disabled={busy} onClick={seal}>
+              {busy ? "Sealing" : `Seal ${take.length === 1 ? "the capsule" : `all ${take.length}`}`}
+            </button>
+            <button className="mw-link" onClick={() => setFound(null)} disabled={busy}>
+              Look again
+            </button>
+          </div>
+        </>
+      )}
+
+      {error && <p className="mw-error">{error}</p>}
+      {!found && (
+        <button className="mw-link" onClick={() => setManual(true)}>
+          Enter them by hand
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function CapsuleForm({ data, onDone }: { data: any; onDone: () => void }) {
   const i = data?.active ?? 0;
   const slot = data?.specimens?.[i];

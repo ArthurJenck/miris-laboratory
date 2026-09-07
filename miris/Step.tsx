@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react";
 import { useState } from "react";
 import type { Step, Sub } from "./curriculum";
 import type { Track } from "./tracks";
-import { CapsuleForm, CapsulePicker, ConceptField, type HatchState } from "./Build";
+import { CapsuleAuto, CapsulePicker, ConceptField, type HatchState } from "./Build";
 import Chevron from "./Chevron";
 import Code from "./highlight";
 import { PARTS } from "./snippets.mjs";
@@ -231,7 +231,7 @@ export default function StepPane({
 
             {sub.capsuleUuid && <CapsulePicker data={data} onDone={actions.reload} />}
             {sub.panel && <ConceptField hatch={hatch} />}
-            {sub.capsuleUuid && <CapsuleForm data={data} onDone={actions.reload} />}
+            {sub.capsuleUuid && <CapsuleAuto data={data} onDone={actions.reload} />}
 
             {sub.label && (
               <button
