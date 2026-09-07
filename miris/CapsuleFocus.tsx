@@ -6,14 +6,11 @@ import { getSelected } from "./labState";
 const RING = 4.2;
 const EYE = 1.7;
 /* Where the camera comes to rest. Capsules stand 4.2 apart, so an orbit of
-   radius 3.7 around one swept straight through its neighbours; 2.6 clears
+   radius 3.7 around one swept straight through its neighbours; 3.1 clears
    them. The wheel then zooms between the two limits below. */
-const STANDOFF = 1.6;
+const STANDOFF = 1.1;
 const NEAREST = 1.2;
 const FARTHEST = 3.2; // any further and the orbit clips the neighbours again
-/* The aim sits a little toward the placard, so the glass and its file share
-   the frame; the pivot is still, to the eye, the specimen. */
-const TOWARD_CARD = 0.45;
 /* The capsule interior runs y 0.36 to 2.96; this is its middle. */
 const GLASS_MIDDLE = 1.66;
 const TRAVEL = 0.9; // seconds
@@ -57,8 +54,9 @@ export default function CapsuleFocus() {
         const cx = Math.cos(a);
         const cz = Math.sin(a);
         toPos.set(cx * STANDOFF, EYE, cz * STANDOFF);
-        // Right of the capsule as seen from the middle: (-sin a, cos a).
-        toTarget.set(cx * RING - cz * TOWARD_CARD, GLASS_MIDDLE, cz * RING + cx * TOWARD_CARD);
+        // Aim at the middle of the glass, so orbiting once arrived turns
+        // around the specimen rather than around a point beside it.
+        toTarget.set(cx * RING, GLASS_MIDDLE, cz * RING);
       }
       last.current = i;
       t.current = 0;

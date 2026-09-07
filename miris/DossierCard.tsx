@@ -6,9 +6,12 @@ import { getSelected, labVersion, subscribeLab } from "./labState";
 
 const RING = 4.2;
 const MIDDLE = 1.66;
-/* How far to the side of the glass the placard stands: to the right as seen
-   from the middle of the room, outside the glass. */
-const BESIDE = 1.5;
+/* The placard's inner edge stands this far from the capsule's axis: just
+   outside the glass, so the tube never hides it. */
+const EDGE = 1.0;
+/* Hinged on that edge and swung back, the way a sign angles toward whoever
+   is reading it. Flat, its far edge fell out of frame with the guide open. */
+const TILT = 0.56;
 /* The markup is 340px wide, which the shared px-to-units ratio makes as tall
    as the glass. A little smaller reads as a label on the tank rather than a
    second tank. */
@@ -34,10 +37,11 @@ export default function DossierCard({ specimens = [] as any[] }) {
   const a = (i / 6) * Math.PI * 2;
   // Right of the capsule as seen from the middle of the room: the outward
   // vector is (cos a, sin a), so right is (-sin a, cos a).
-  const x = Math.cos(a) * RING - Math.sin(a) * BESIDE;
-  const z = Math.sin(a) * RING + Math.cos(a) * BESIDE;
-  // A plane faces +Z; yawed by this it faces the middle of the room.
-  const yaw = Math.atan2(-Math.cos(a), -Math.sin(a));
+  const x = Math.cos(a) * RING - Math.sin(a) * EDGE;
+  const z = Math.sin(a) * RING + Math.cos(a) * EDGE;
+  // A plane faces +Z; yawed by this it faces the middle of the room. The
+  // extra tilt turns it about its inner edge, far edge receding.
+  const yaw = Math.atan2(-Math.cos(a), -Math.sin(a)) + TILT;
 
   return (
     <group position={[x, MIDDLE, z]} rotation={[0, yaw, 0]} scale={SCALE}>
@@ -45,11 +49,11 @@ export default function DossierCard({ specimens = [] as any[] }) {
           painted over the specimen from behind: splats write no depth, so
           nothing stopped it. As a solid in the opaque pass the splats blend
           over it when they are in front and sit behind it when they are not. */}
-      <mesh>
+      <mesh position={[width / 2, 0, 0]}>
         <planeGeometry args={[width, height]} />
         <meshBasicMaterial map={texture} alphaTest={0.5} toneMapped={false} side={FrontSide} />
       </mesh>
-      <mesh position={[0, 0, -0.02]} rotation={[0, Math.PI, 0]}>
+      <mesh position={[width / 2, 0, -0.02]} rotation={[0, Math.PI, 0]}>
         <planeGeometry args={[width, height]} />
         <meshStandardMaterial color={0x0b1016} roughness={0.7} metalness={0.3} side={FrontSide} />
       </mesh>
