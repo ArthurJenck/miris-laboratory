@@ -134,7 +134,7 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     const { specimens, active, viewerKey } = await readData(MIRIS_DIR);
     const slot = (specimens as any[])?.[Number(active) || 0];
     const uuid = slot?.uuid ?? "";
-    if (!uuid) return "That capsule has no asset id yet. Paste your uuid and viewer key above.";
+    if (!uuid) return "The capsules are not sealed yet. Paste your scoped viewer key above and press Find my specimens.";
     if (!UUID_RE.test(uuid))
       return `That uuid does not look like one: "${uuid}". Copy just the id from the asset page.`;
     if (uuid === DEMO_UUID)

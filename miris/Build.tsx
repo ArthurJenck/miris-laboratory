@@ -115,9 +115,22 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, 
 /** Step 1.2's card. One sentence describes the creature; the six bodies that
  *  grow out of it are the workflow's business, not the attendee's. */
 export function ConceptField({ hatch }: { hatch: HatchState }) {
-  const { track, concept, setConcept, running, error, data, refresh } = hatch;
+  const { track, concept, setConcept, running, error, data, refresh, done } = hatch;
   const [skip, setSkip] = useState(false);
+  const [again, setAgain] = useState(false);
   if (running) return <p className="mw-note">Growing the series, in the tray to the left.</p>;
+
+  /* Once six are grown the form does not come back on its own. It did, with
+     the same red button, and a second press is another twelve dollars. */
+  if (done >= STAGES && !again && !skip)
+    return (
+      <div className="mw-build">
+        <p className="mw-note">All six stages are grown. The archive is in the tray, to the left of this panel.</p>
+        <button className="mw-link" onClick={() => setAgain(true)}>
+          Grow a different {track.noun} instead
+        </button>
+      </div>
+    );
 
   /* Growing costs about twelve minutes and twelve dollars. Anyone who has
      already uploaded a series, running the workshop a second time or
@@ -359,6 +372,7 @@ export function CapsuleAuto({ data, onDone }: { data: any; onDone: () => void })
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [manual, setManual] = useState(false);
+  const [again, setAgain] = useState(false);
 
   const find = async () => {
     setBusy(true);
@@ -404,6 +418,22 @@ export function CapsuleAuto({ data, onDone }: { data: any; onDone: () => void })
   };
 
   if (manual) return <CapsuleForm data={data} onDone={onDone} />;
+
+  /* Sealing reloads the page, so the form came back blank as if nothing had
+     happened. Say what is in the glass, and keep the way back. */
+  const sealed = (data?.specimens ?? []).filter((s: any) => s?.uuid);
+  if (!found && !again && sealed.length >= STAGES)
+    return (
+      <div className="mw-build mw-capsule">
+        <p className="mw-note">
+          All {STAGES} capsules are sealed, {String(sealed[0]?.stage || "egg").toLowerCase()} first. The glass fills as each
+          stream arrives.
+        </p>
+        <button className="mw-link" onClick={() => setAgain(true)}>
+          Use a different key
+        </button>
+      </div>
+    );
 
   const take = found?.slice(0, STAGES) ?? [];
   const numbered = found?.filter((a) => INDEXED.test(String(a.name))).length ?? 0;
