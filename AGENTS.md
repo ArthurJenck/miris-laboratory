@@ -137,6 +137,31 @@ found through the `.pass` field on the bind and composite meshes the SDK adds
 to the scene. Cost: fp16 headroom on very bright splats. Worth filing against
 the SDK; if it is fixed, the guard can go.
 
+**The vendored SDK's adaptive splat budget does not start itself.** The build
+is vendored for the controller from aqua PR 5982, but the only caller of
+`Miris._startAdaptiveBudget(scene)` is the SDK's own lab page, so here every
+stream drew at the engine's default heuristic and focusing a capsule fell from
+ninety frames a second to under twenty, and stayed there after Escape.
+`miris/BudgetGuard.tsx` starts it. The controller wants a `MirisScene` with
+`coreScene` and `miris` on it; the stage is a plain R3F scene, which the SDK
+pairs with a core scene (keyed on the three scene) when the first stream is
+added, so the guard adds those two getters and starts the controller then.
+`Miris._instance._adaptiveBudgetStatus` in the console shows it working.
+Worth filing against the SDK; if it starts the controller itself, the guard
+can go.
+
+**What the room costs, measured.** With the splat budget pinned and the canvas
+at six times its size so nothing sits at the frame cap, every category of
+scene object was shown alone: glass, shafts, pulses, glows, rings, door, the
+effect canvas and 150k splats each added nothing measurable over an empty
+frame. The deck added 8.4ms at that size, and 7.8ms of that was anisotropy 8
+across its five maps; at 4 it is 0.6ms. At a real retina canvas the whole
+host scene is well under a millisecond, so anything that feels slow is the
+splat side, and the controller above is the lever. Method, for next time:
+`scene.__r3f.root.getState().gl` from the R3F scene, `_setSplatCountBudgetOverride`
+to pin the load, `setPixelRatio(6)`, median frame time over two seconds, best
+of two. GPU timer queries do not work here; the SDK holds one open.
+
 `optimizeDeps.include` in `vite.config.ts` is load-bearing, not tidying. The SDK
 is in `optimizeDeps.exclude` so esbuild leaves its WASM paths alone, but that
 also means Vite cannot scan its imports and meets them for the first time as the

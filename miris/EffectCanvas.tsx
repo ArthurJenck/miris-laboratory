@@ -45,7 +45,9 @@ export default function EffectCanvas({ node }: { node: any }) {
       const resize = () => {
         const w = canvas.clientWidth || innerWidth;
         const h = canvas.clientHeight || innerHeight;
-        r.setPixelRatio(Math.min(devicePixelRatio, 2));
+        // Capped where the stage canvas is capped: a full-screen pass at a
+        // higher density than the scene under it is pixels nobody sees.
+        r.setPixelRatio(Math.min(devicePixelRatio, 1.5));
         r.setSize(w, h, false);
         screenAspect.value = w / h;
       };
