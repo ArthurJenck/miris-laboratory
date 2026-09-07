@@ -193,27 +193,84 @@ const parseDossier = (raw: unknown) => {
 /* One concept becomes six bodies. The model is asked for a growth series
    rather than six variations, because the capsules read left to right as a
    life cycle and six unrelated creatures would say nothing. */
+/* The planner. It used to be asked only for "six stages, earliest to most
+   developed", which produced Larva, Juvenile, Adolescent, Mature, Elder,
+   Ancient for every creature alike: insect terms and mammal terms in one
+   series, no egg, and a last two stages that were just bigger. Deciding the
+   clade first, and naming stages from that clade's real life cycle, is what
+   keeps an egg layer starting as an egg and a mammal starting as a fetus. */
 const EMBRYOLOGIST =
-  "You plan the growth series of a single organism for a laboratory archive. " +
-  "Reply with ONLY a JSON array of exactly " + STAGES + " objects, no code fences, no commentary: " +
-  '[{"stage": "one or two words naming this point in its life", ' +
-  '"prompt": "one clause describing the whole body at this stage"}]. ' +
-  "Order them from earliest to most developed. Each prompt describes the same creature, " +
-  "changed by growth: proportions, plating, limbs, size and colour may all shift, but it stays " +
-  "recognisably the same animal. Do not mention other stages, ages, numbers or the word stage " +
-  "inside a prompt. Use no em dashes.";
+  "You are a developmental biologist planning the growth series of one organism for a laboratory archive. " +
+  "Work in this order. First decide what kind of animal the description implies: its clade, and how animals " +
+  "of that kind actually reproduce and develop. Then name the " + STAGES + " stages that kind of animal really " +
+  "passes through, using that clade's own terminology. Only then describe each body. " +
+  "Reply with ONLY a JSON object, no code fences, no commentary: " +
+  '{"clade": "", "development": "", "anatomy": "", "stages": [{"stage": "", "prompt": "", "carry": "", "change": ""}]} ' +
+  "with exactly " + STAGES + " stages. " +
+  "clade: what kind of animal this is, three to six words. " +
+  "development: its real developmental mode, a few words. " +
+  "anatomy: the adult body plan in one clause, covering limb count, segmentation, plating, markings and " +
+  "colour signature. This is what makes every stage the same species. " +
+  "stage: one or two words, the correct name for that point in this clade's life cycle. " +
+  "prompt: one or two clauses describing the whole body at that stage. " +
+  "carry: which anatomy features are already visible at this stage, or \"none\" for an egg or embryo. " +
+  "change: what visibly differs from the stage before, in a few words, naming something a viewer could point " +
+  "at such as plate thickness, limb length, seam brightness, wear or proportion. Use \"none\" for the first " +
+  "stage. Consecutive adult stages must still differ visibly, never repeat the previous body. " +
+  "Follow the real sequence for the clade you chose. " +
+  "Holometabolous insect: egg, larva, pupa, callow adult, mature adult, senescent adult. " +
+  "Hemimetabolous insect: egg, early nymph, late nymph, subimago, adult, senescent adult. " +
+  "Bird: egg, hatchling, nestling, fledgling, juvenile, adult. " +
+  "Placental mammal: fetus, neonate, nursing infant, juvenile, subadult, adult. " +
+  "Marsupial: embryo, pouch young, furred joey, weanling, subadult, adult. " +
+  "Reptile: egg, hatchling, juvenile, subadult, adult, old adult. " +
+  "Amphibian: egg mass, tadpole, limbed larva, metamorph, juvenile, adult. " +
+  "Bony fish: egg, yolk sac larva, fry, fingerling, juvenile, adult. " +
+  "Cephalopod: egg, paralarva, juvenile, subadult, adult, senescent adult. " +
+  "Crustacean: egg, nauplius, zoea, megalopa, juvenile, adult. " +
+  "Arachnid: egg sac, postembryo, early instar, late instar, subadult, adult. " +
+  "Choosing the clade: limb count, wing count, size and ornament never decide it on their own. Fur, whiskers " +
+  "or live young mean mammal even with six legs; feathers and a beak mean bird; chitin, compound eyes and a " +
+  "segmented exoskeleton mean arthropod; scales and claws mean reptile. When the description names a familiar " +
+  "animal, such as a fox, a moth or a turtle, follow that animal's real biology and treat everything else in " +
+  "the description as variation on it. " +
+  "The first stage is however this animal actually begins: egg layers begin as an egg, placental mammals " +
+  "begin as a fetus and never as an egg. " +
+  "The last two stages are variations on the adult, mature then aged, gravid or senescent. They are not " +
+  "simply larger. Never make the final stages colossal, geological or encrusted ruins. " +
+  "Every stage after the first is the same individual grown: proportions, plating and colour deepen, and the " +
+  "body plan changes only where that clade's real metamorphosis changes it. " +
+  "Do not mention other stages, ages, numbers or the word stage inside a prompt. Use no em dashes.";
 
-const parseStages = (raw: unknown) => {
+type Plan = {
+  clade: string;
+  development: string;
+  anatomy: string;
+  stages: { stage: string; prompt: string; carry: string; change: string }[];
+};
+
+const parsePlan = (raw: unknown): Plan | null => {
   if (typeof raw !== "string") return null;
   const text = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   try {
-    const list = JSON.parse(text);
+    const obj = JSON.parse(text);
+    const list = obj?.stages;
     if (!Array.isArray(list) || list.length !== STAGES) return null;
-    const out = list.map((x: any) => ({
+    const stages = list.map((x: any) => ({
       stage: String(x?.stage ?? "").trim().slice(0, 24),
       prompt: String(x?.prompt ?? "").trim(),
+      carry: String(x?.carry ?? "").trim(),
+      change: String(x?.change ?? "").trim(),
     }));
-    return out.some((x) => !x.stage || !x.prompt) ? null : out;
+    if (stages.some((x) => !x.stage || !x.prompt)) return null;
+    return {
+      clade: String(obj?.clade ?? "").trim(),
+      development: String(obj?.development ?? "").trim(),
+      // The anchor is what stops stage four drifting into a different animal,
+      // so a plan without one is not worth running six meshes on.
+      anatomy: String(obj?.anatomy ?? "").trim(),
+      stages,
+    };
   } catch {
     return null;
   }
@@ -423,42 +480,99 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
         prompt: `The creature: ${concept}.`,
         temperature: 0.9,
       });
-      const stages = parseStages(plan?.output);
-      if (!stages) return fail("The model did not return six stages. Press the button again.", 502);
+      const plan2 = parsePlan(plan?.output);
+      if (!plan2) return fail("The model did not return a usable growth plan. Press the button again.", 502);
+      const { anatomy, stages } = plan2;
 
       const fresh = await readData(MIRIS_DIR);
       const bank = normaliseBank(fresh.specimens as any[]);
       stages.forEach((st, i) => {
         bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "named", imageUrl: "", glb: "", dossier: null };
       });
-      await writeData(MIRIS_DIR, { concept, specimens: bank, zipReady: false, hatchedAt: Date.now() });
+      await writeData(MIRIS_DIR, {
+        concept,
+        clade: plan2.clade,
+        development: plan2.development,
+        anatomy,
+        specimens: bank,
+        zipReady: false,
+        hatchedAt: Date.now(),
+      });
 
-      /* Six renders and six meshes, all in flight at once. Run in series this
-         is half an hour; run together it is one mesh build plus change, which
-         is the only reason six stages fit a two hour session. */
-      const glbs = await Promise.all(
-        stages.map(async (st, i) => {
-          const shot: any = await falRun(IMAGE_MODEL, {
-            prompt: `${track.style}: ${st.prompt}. ${IMAGE_FRAMING}`,
+      /* The renders run in series, each one editing the last, because six
+         independent text renders of "the same creature" are six different
+         creatures: the recorded run drifted from a translucent larva to a
+         barnacled boulder. The meshes still run together, and each one starts
+         the moment its own render lands rather than waiting for all six, so
+         chaining costs about two minutes rather than the twenty it would if
+         the meshes queued behind the whole chain. */
+      const meshes: Promise<{ name: string; url: string }>[] = [];
+      let previous = "";
+      // Dev flag: six renders cost cents, six meshes cost about twelve dollars,
+      // so the chain can be judged on its own while its prompts are tuned.
+      const imagesOnly = body?.imagesOnly === true;
+
+      for (let i = 0; i < stages.length; i++) {
+        const st = stages[i];
+        const identity = st.carry && !/^none\b/i.test(st.carry) ? ` Visible identity: ${st.carry}.` : "";
+        // Stated outright, because an edit model left to itself returns the
+        // reference almost unchanged and three adult stages come back identical.
+        const delta = st.change && !/^none\b/i.test(st.change) ? ` Clearly show this change from the reference: ${st.change}.` : "";
+        let shot: any;
+
+        if (!previous) {
+          shot = await falRun(IMAGE_MODEL, {
+            prompt: `${track.style}: ${st.prompt}.${identity} ${IMAGE_FRAMING}`,
             image_size: "square_hd",
             num_images: 1,
             quality: "medium",
           });
-          const imageUrl = shot?.images?.[0]?.url;
-          if (!imageUrl) throw new Error(`fal returned no render for ${st.stage}`);
-          await patchSlot(i, { imageUrl, status: "building", modelStartedAt: Date.now() });
-
-          const mesh: any = await falRun(MODEL_3D, {
-            image_url: imageUrl,
-            texture_prompt: `${track.style}: ${st.prompt}`,
-            ...MESHY_INPUT,
+        } else {
+          shot = await falRun(`${IMAGE_MODEL}/edit`, {
+            image_urls: [previous],
+            prompt:
+              `The same individual organism as the reference image, the same species with the same markings ` +
+              `and colour signature, now developed into its next form: ${st.prompt}.${identity}${delta} ` +
+              `Species identity: ${anatomy}. ${track.style}. ${IMAGE_FRAMING}`,
+            image_size: "square_hd",
+            num_images: 1,
+            quality: "medium",
           });
-          const glb = findGlb(mesh);
-          if (!glb) throw new Error(`fal returned no glb for ${st.stage}. It sometimes answers with fbx only; press the button again.`);
-          await patchSlot(i, { glb, status: "ready", modelStartedAt: 0 });
-          return { name: stageFile(i, st.stage), url: glb };
-        }),
-      );
+        }
+
+        const imageUrl = shot?.images?.[0]?.url;
+        if (!imageUrl) throw new Error(`fal returned no render for ${st.stage}`);
+        previous = imageUrl;
+        await patchSlot(i, { imageUrl, status: "building", modelStartedAt: Date.now() });
+
+        if (imagesOnly) continue;
+
+        meshes.push(
+          (async () => {
+            const mesh: any = await falRun(MODEL_3D, {
+              image_url: imageUrl,
+              texture_prompt: `${track.style}: ${st.prompt}`,
+              ...MESHY_INPUT,
+            });
+            const glb = findGlb(mesh);
+            if (!glb) throw new Error(`fal returned no glb for ${st.stage}. It sometimes answers with fbx only; press the button again.`);
+            await patchSlot(i, { glb, status: "ready", modelStartedAt: 0 });
+            return { name: stageFile(i, st.stage), url: glb };
+          })(),
+        );
+      }
+
+      if (imagesOnly) {
+        const shots = (await readData(MIRIS_DIR)).specimens as any[];
+        return ok({
+          imagesOnly: true,
+          clade: plan2.clade,
+          anatomy,
+          stages: stages.map((st, i) => ({ stage: st.stage, image: shots[i]?.imageUrl ?? "" })),
+        });
+      }
+
+      const glbs = await Promise.all(meshes);
 
       const files = await Promise.all(
         glbs.map(async (g) => {
@@ -474,6 +588,24 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       await writeFile(ZIP, zipSync(files));
       await writeData(MIRIS_DIR, { zipReady: true });
       return ok({ stages: stages.map((s2) => s2.stage), files: files.map((f) => f.name) });
+    }
+
+    /* The growth plan on its own, written nowhere. Six meshes cost about twelve
+       dollars and twelve minutes, so being able to read the biology first, and
+       press again if the clade is wrong, is worth one cheap model call. */
+    case "plan": {
+      if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
+      const concept = String(body?.prompt ?? "").trim();
+      if (!concept) return fail("Describe the creature first.");
+      const out: any = await falRun(LABEL_MODEL, {
+        model: LABEL_LLM,
+        system_prompt: EMBRYOLOGIST,
+        prompt: `The creature: ${concept}.`,
+        temperature: 0.9,
+      });
+      const p = parsePlan(out?.output);
+      if (!p) return fail("The model did not return a usable growth plan. Press the button again.", 502);
+      return ok(p);
     }
 
     /* The whole run in one press: six stages named, six dossiers written, six

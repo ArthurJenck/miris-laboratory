@@ -43,6 +43,39 @@ directory alone is not enough either: those files have lived at `public/kit/`,
 earlier copies behind. Filter by filename too, and verify against every commit
 before pushing, not just `HEAD`.
 
+## The growth pipeline
+
+The planner decides the clade before it names any stage, because it used to be
+asked only for "six stages, earliest to most developed" and returned Larva,
+Juvenile, Adolescent, Mature, Elder, Ancient for every creature alike: insect
+and mammal terms in one series, no egg, and a last two stages that were only
+bigger. It now emits `clade`, `development`, an `anatomy` anchor, and per stage
+a `carry` (which identity features are visible yet) and a `change` (what
+visibly differs from the stage before). Verified across five clades: a
+six-legged furry fox plans as a placental mammal starting at fetus, a paper
+heron as a bird starting at egg.
+
+Limb count does not decide the clade. A "six-legged desert fox" was classified
+as a holometabolous insect until the prompt was told that fur outranks leg
+count and that a named familiar animal carries its own biology.
+
+The renders run **in series, each editing the last** through
+`openai/gpt-image-2/edit`, because six independent text renders of "the same
+creature" are six different creatures. The meshes still run together, and each
+starts the moment its own render lands rather than waiting for all six, so
+chaining costs about five minutes rather than the twenty it would if the meshes
+queued behind the whole chain.
+
+`change` exists because an edit model left alone returns the reference nearly
+untouched and the three adult stages came back identical.
+
+`IMAGE_FRAMING` forbids substrate as well as props: an egg photographed on a
+rock arrives in the capsule as a rock.
+
+Dev flags on `hatch`: `imagesOnly: true` runs the chain and stops, six renders
+costing cents rather than six meshes costing about twelve dollars. The `plan`
+action returns the biology alone, for checking a clade before spending at all.
+
 ## Rehearsing without fal
 
 `MIRIS_OFFLINE=1` in `.env.local` replays a recorded run from

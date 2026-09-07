@@ -9,7 +9,11 @@ export const IMAGE_MODEL = "openai/gpt-image-2";
 export const IMAGE_FRAMING =
   "Render exactly one subject, whole body centered and fully in frame, on a plain seamless studio backdrop. " +
   "No text, no labels, no color palette swatches, no scale-reference silhouettes or human figures, " +
-  "no alternate views or thumbnails, no props. A single clean reference render, not a concept sheet.";
+  "no alternate views or thumbnails, no props. " +
+  // Whatever the subject rests on is photographed as part of it and becomes
+  // part of the mesh: an egg on a rock arrives in the capsule as a rock.
+  "The subject alone, with nothing beneath or behind it: no rock, substrate, nest, branch, perch, ground " +
+  "plane or mound. A single clean reference render, not a concept sheet.";
 export const MODEL_3D = "meshy/v7/image-to-3d";
 export const LABEL_MODEL = "openrouter/router";
 export const LABEL_LLM = "google/gemini-2.5-flash";
