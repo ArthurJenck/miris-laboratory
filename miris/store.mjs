@@ -23,6 +23,10 @@ export const DEFAULT_DATA = {
   zipReady: false,
   // Which capsule the dossier and the uuid form are pointed at, 0-5.
   active: 0,
+  // Whether the growth tray is folded to its handle. Persisted because every
+  // Fill rewrites app/stage.tsx, which forces a full reload: kept in memory,
+  // the popover sprang back open on top of the scene at every paste.
+  traySmall: false,
   specimens: emptyBank(),
 };
 

@@ -15,7 +15,7 @@ export function useHatch(track: Track) {
   const [data, setData] = useState<any>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [small, setSmall] = useState(false);
+  const [small, setSmallHere] = useState(false);
   const bag = useRef<string[]>([]);
 
   const read = async () => {
@@ -31,8 +31,19 @@ export function useHatch(track: Track) {
   useEffect(() => {
     read().then((d) => {
       if (d?.concept) setConcept(d.concept);
+      if (d?.traySmall) setSmallHere(true);
     });
   }, []);
+
+  /* Folded or open outlives the reload that every Fill triggers. */
+  const setSmall = (v: boolean) => {
+    setSmallHere(v);
+    void fetch("/api/miris", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "save", patch: { traySmall: v } }),
+    }).catch(() => {});
+  };
 
   const stages: any[] = data?.specimens ?? [];
   const named = stages.filter((s) => s.stage).length;

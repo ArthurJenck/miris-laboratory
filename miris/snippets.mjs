@@ -2,7 +2,6 @@ const FLOOR = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 
         <circleGeometry args={[18, 64]} />
         <meshStandardMaterial map={deck} roughnessMap={wear} roughness={0.9} metalness={0.35} />
       </mesh>
-      <gridHelper args={[36, 36, 0x1d4c60, 0x123243]} position={[0, 0, 0]} />
       <mesh position={[0, 6.9, 0]}>
         <cylinderGeometry args={[16, 16, 14, 48, 1, false]} />
         <meshStandardMaterial
@@ -24,7 +23,14 @@ const FLOOR = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 
             rotation={[0, -angle + Math.PI / 2, 0]}
           >
             <planeGeometry args={[2.6, 3.4]} />
-            <meshBasicMaterial color={0x0d5eb1} toneMapped={false} transparent opacity={0.5} side={DoubleSide} />
+            <meshBasicMaterial
+              map={shade}
+              color={0x3f8fe0}
+              transparent
+              opacity={0.9}
+              depthWrite={false}
+              side={DoubleSide}
+            />
           </mesh>
         );
       })}`;
@@ -35,13 +41,13 @@ const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02,
       </mesh>
       {[2.6, 3.8].map((r) => (
         <mesh key={r} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-          <torusGeometry args={[r, 0.022, 8, 128]} />
+          <torusGeometry args={[r, 0.03, 6, 96]} />
           <meshBasicMaterial color={0x3bd6fe} toneMapped={false} />
         </mesh>
       ))}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
         <ringGeometry args={[3.12, 3.28, 64]} />
-        <meshBasicMaterial color={0xffffff} toneMapped={false} transparent opacity={0.85} />
+        <meshBasicMaterial color={0xc8e8f7} toneMapped={false} transparent opacity={0.75} />
       </mesh>`;
 
 const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
@@ -59,9 +65,9 @@ const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
               <meshStandardMaterial
                 color={TINTS[i]}
                 emissive={TINTS[i]}
-                emissiveIntensity={0.5}
+                emissiveIntensity={0.35}
                 transparent
-                opacity={0.18}
+                opacity={0.16}
                 roughness={0.2}
                 metalness={0.1}
                 depthWrite={false}
@@ -73,7 +79,7 @@ const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
             <FloorGlow color={TINTS[i]} />
             {[0.36, 2.96].map((y) => (
               <mesh key={y} position={[0, y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <torusGeometry args={[0.9, 0.014, 8, 64]} />
+                <torusGeometry args={[0.9, 0.022, 6, 48]} />
                 <meshBasicMaterial color={0x3f93b0} toneMapped={false} />
               </mesh>
             ))}
@@ -89,12 +95,9 @@ const STREAMS = `      {specimens.map((s, i) => {
         if (!s.uuid) return null;
         const angle = (i / 6) * Math.PI * 2;
         return (
-          <mirisStream
-            key={s.id}
-            position={[Math.cos(angle) * 4.2, 1.6, Math.sin(angle) * 4.2]}
-            scale={0.15}
-            args={[{ uuid: s.uuid, viewerKey: data.viewerKey || DEMO_KEY }]}
-          />
+          <FitInGlass key={s.id} position={[Math.cos(angle) * 4.2, 1.66, Math.sin(angle) * 4.2]} fill={0.7}>
+            <mirisStream args={[{ uuid: s.uuid, viewerKey: data.viewerKey || DEMO_KEY }]} />
+          </FitInGlass>
         );
       })}`;
 
