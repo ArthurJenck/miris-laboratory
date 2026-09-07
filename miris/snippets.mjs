@@ -62,7 +62,7 @@ const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
               <cylinderGeometry args={[1.05, 1.18, 0.36, 32]} />
               <meshStandardMaterial color={0x0b0d10} roughness={0.6} metalness={0.35} />
             </mesh>
-            <mesh position={[0, 1.66, 0]}>
+            <mesh position={[0, 1.66, 0]} renderOrder={1}>
               <cylinderGeometry args={[0.9, 0.9, 2.6, 40, 1, true]} />
               <meshStandardMaterial
                 color={TINTS[i]}
