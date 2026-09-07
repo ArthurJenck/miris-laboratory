@@ -9,6 +9,7 @@ import Dossier from "../miris/Dossier";
 import LabHud, { CapsuleProbe } from "../miris/LabHud";
 import CapsuleFocus from "../miris/CapsuleFocus";
 import DossierCard from "../miris/DossierCard";
+import HdrGuard from "../miris/HdrGuard";
 import FitInGlass from "../miris/FitInGlass";
 import { FloorGlow, LightShaft, Pulse, RadialGlow } from "../miris/CapsuleFx";
 import { floorMaps, walkwayTexture, wearMap } from "../miris/textures";
@@ -50,13 +51,10 @@ export default function Stage() {
         alpha: true,
         antialias: true,
         powerPreference: "high-performance",
-        // NoToneMapping, and not by preference. With a stream in the scene the
-        // SDK's render pass puts the curve through a second time: the glass,
-        // the rings and the wall strips all dropped to near black the moment
-        // step 2.5 landed, while the specimen itself stayed correct. Measured
-        // three ways: no streams and ACES is right, streams and ACES is dark,
-        // streams and no curve is right. Until the SDK stops doing that, the
-        // scene is graded without one.
+        // No curve for now. The room went dark whenever a stream was in it,
+        // and this looked like the cause; it was not. The SDK's HDR pass was
+        // rendering the whole scene into a float target and compositing it
+        // back unencoded, which HdrGuard now switches off. ACES could return.
         toneMapping: NoToneMapping,
       }}
       camera={{ position: [0, 1.7, 0.02], fov: 55 }}
@@ -73,6 +71,7 @@ export default function Stage() {
       {/* miris:scene-end */}
 
 
+      <HdrGuard />
       <CapsuleProbe />
       <CapsuleFocus />
       <DossierCard specimens={specimens} />

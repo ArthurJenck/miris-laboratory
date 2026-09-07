@@ -123,6 +123,20 @@ both SDK tarballs (5MB and 10MB) arrived byte-identical, and `npm install`
 resolved the vendored SDK. If artwork goes missing in bolt, the cause is
 somewhere else — do not write it off as the platform.
 
+**With a stream in the scene, everything that is not a splat goes dark.** The
+SDK's `SporkHdrPass` renders the whole scene into an fp16 target and
+composites it back through a shader that assumes every texel is already
+sRGB-encoded. The splats are, because their shader pre-encodes; nothing three
+draws is, because three writes linear into any render target that is not an XR
+target, whatever the target is tagged. So the glass, rings, deck and door come
+back with no transfer curve applied, uniformly dim, while the specimen looks
+right. One stream or six, the same. It is not tone mapping (measured off), not
+colour space (unchanged), not `<Canvas linear>` (tested), and not splat scale
+(tested tiny). `miris/HdrGuard.tsx` sets `pass.suspended = true` on the pass,
+found through the `.pass` field on the bind and composite meshes the SDK adds
+to the scene. Cost: fp16 headroom on very bright splats. Worth filing against
+the SDK; if it is fixed, the guard can go.
+
 `optimizeDeps.include` in `vite.config.ts` is load-bearing, not tidying. The SDK
 is in `optimizeDeps.exclude` so esbuild leaves its WASM paths alone, but that
 also means Vite cannot scan its imports and meets them for the first time as the
