@@ -115,8 +115,27 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, 
 /** Step 1.2's card. One sentence describes the creature; the six bodies that
  *  grow out of it are the workflow's business, not the attendee's. */
 export function ConceptField({ hatch }: { hatch: HatchState }) {
-  const { track, concept, setConcept, running, error } = hatch;
+  const { track, concept, setConcept, running, error, data, refresh } = hatch;
+  const [skip, setSkip] = useState(false);
   if (running) return <p className="mw-note">Growing the series, in the tray to the left.</p>;
+
+  /* Growing costs about twelve minutes and twelve dollars. Anyone who has
+     already uploaded a series, running the workshop a second time or
+     rehearsing the half that comes after, should not have to buy another. */
+  if (skip)
+    return (
+      <div className="mw-build">
+        <p className="mw-note">
+          Paste the viewer key you scoped to six assets you have already uploaded. The capsules fill from it, and
+          the rest of this step is done.
+        </p>
+        <CapsuleAuto data={data} onDone={refresh} />
+        <button className="mw-link" onClick={() => setSkip(false)}>
+          Grow a new one instead
+        </button>
+      </div>
+    );
+
   return (
     <div className="mw-build">
       <div className="mw-prompt">
@@ -147,6 +166,9 @@ export function ConceptField({ hatch }: { hatch: HatchState }) {
         Grow the series
       </button>
       {error && <p className="mw-error">{error}</p>}
+      <button className="mw-link" onClick={() => setSkip(true)}>
+        I already have a series
+      </button>
     </div>
   );
 }

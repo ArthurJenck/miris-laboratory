@@ -24,6 +24,48 @@ const ZIP_OFFLINE = join(MIRIS_DIR, "specimens.offline.zip");
 const FIXTURES = join(MIRIS_DIR, "fixtures.json");
 const TEMPLATE = join(MIRIS_DIR, "stage.template.tsx");
 
+/* What each step's snippet must leave behind for its check to believe it. Kept
+   in one table, and audited against the snippets when the server starts,
+   because these drifted apart once: the floor check went looking for a
+   gridHelper the snippet had stopped emitting, so pressing Fill and then Done
+   told the attendee they had not done a step they had just done. A check that
+   blames the person for the repo's own drift is worse than no check. */
+const PROOF = {
+  floor: "circleGeometry",
+  walkway: "ringGeometry",
+  capsules: "TINTS",
+  streams: "mirisStream",
+  hud: "LabHud",
+  overlay: "EffectCanvas",
+  field: "Fn(",
+  cardOverlay: "Dossier",
+};
+
+/** Which snippet each proof has to appear in. */
+const PROOF_IN: Record<keyof typeof PROOF, keyof typeof SNIPPETS> = {
+  floor: "floor",
+  walkway: "walkway",
+  capsules: "capsules",
+  streams: "streams",
+  hud: "hud",
+  overlay: "effect",
+  field: "field",
+  cardOverlay: "card",
+};
+
+const auditProofs = () => {
+  const drifted = Object.entries(PROOF_IN)
+    .filter(([id, snip]) => !SNIPPETS[snip]?.includes(PROOF[id as keyof typeof PROOF]))
+    .map(([id, snip]) => `  ${id}: SNIPPETS.${snip} no longer contains ${JSON.stringify(PROOF[id as keyof typeof PROOF])}`);
+  if (drifted.length) {
+    console.warn(
+      "\n[miris] step checks have drifted from the snippets they verify.\n" +
+        drifted.join("\n") +
+        "\nThose steps will refuse Done even when the attendee has pasted the snippet.\n",
+    );
+  }
+};
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const MESHY_INPUT = {
@@ -62,28 +104,28 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
 
   async floor() {
     const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes("gridHelper")
+    return block.includes(PROOF.floor)
       ? null
       : "The scene block in app/stage.tsx has no deck in it yet. Paste the snippet between the miris:scene comments, or let the step do it.";
   },
 
   async walkway() {
     const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes("ringGeometry")
+    return block.includes(PROOF.walkway)
       ? null
       : "No walkway in the scene block yet. Add it under the deck, or let the step do it.";
   },
 
   async capsules() {
     const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes("TINTS")
+    return block.includes(PROOF.capsules)
       ? null
       : "No capsules in the scene block yet. Add them under the walkway, or let the step do it.";
   },
 
   async streams() {
     const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes("mirisStream")
+    return block.includes(PROOF.streams)
       ? null
       : "Nothing is streaming into the capsules yet. Add the block under the capsules, or let the step do it.";
   },
@@ -117,14 +159,14 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
 
   async hud() {
     const block = readMarker(await readFile(STAGE, "utf8"), "hud");
-    return block.includes("LabHud")
+    return block.includes(PROOF.hud)
       ? null
       : "No LabHud in the miris:hud block yet. Add the line, or let the step do it.";
   },
 
   async overlay() {
     const block = readMarker(await readFile(STAGE, "utf8"), "effect");
-    return block.includes("EffectCanvas")
+    return block.includes(PROOF.overlay)
       ? null
       : "No EffectCanvas in the miris:effect block yet. Add the line, or let the step do it.";
   },
@@ -133,14 +175,14 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     const src = await readFile(STAGE, "utf8");
     if (!readMarker(src, "effect").includes("EffectCanvas"))
       return "No EffectCanvas yet. Step 5.2 puts it there.";
-    return readMarker(src, "field").includes("Fn(")
+    return readMarker(src, "field").includes(PROOF.field)
       ? null
       : "The overlay is mounted but the field is still null. Write the TSL, or let the step do it.";
   },
 
   async cardOverlay() {
     const block = readMarker(await readFile(STAGE, "utf8"), "card");
-    return block.includes("Dossier")
+    return block.includes(PROOF.cardOverlay)
       ? null
       : "No Dossier in the miris:card block yet. Add the line, or let the step do it.";
   },
@@ -798,6 +840,7 @@ export function mirisDevApi(mode: string): Plugin {
     },
 
     configureServer(server) {
+      auditProofs();
       server.middlewares.use("/api/miris", async (req, res, next) => {
         try {
           if (req.method === "GET") {

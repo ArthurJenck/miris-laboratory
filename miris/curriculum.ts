@@ -55,7 +55,7 @@ export const STEPS: Step[] = [
         num: "1.2",
         title: "Describe your {noun}",
         body:
-          "One creature, in one sentence. Everything in the room grows out of this: a model reads it and plans six points in the animal's life, then renders and builds all six at once. Four to six minutes, running in the tray. Or press the dice.",
+          "One creature, in one sentence. Everything in the room grows out of this: a model works out what kind of animal it is and how that kind actually develops, then plans six points in its life and renders each one from the one before it. About twelve minutes, and it costs real money, so if you already have a series uploaded you can skip straight to it. Or press the dice.",
         panel: true,
         check: "series",
         explain:
