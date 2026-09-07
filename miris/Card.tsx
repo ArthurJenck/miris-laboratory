@@ -16,8 +16,8 @@ export interface CardData {
   notes: string;
 }
 
-/** The dossier's markup, shared by the DOM overlay at step 4.2 and the canvas
- *  texture at step 4.3, so the two steps compare like for like. */
+/** The dossier's markup. Painted into a canvas and shown in the scene by
+ *  DossierCard, the card step 4.1 opens. */
 export function dossierHtml(d: Partial<CardData>): string {
   // Written by a model and then by an agent editing data.json, so nothing here
   // is trusted: a string where an array belongs used to blank the whole canvas.

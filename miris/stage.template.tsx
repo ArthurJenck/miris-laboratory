@@ -85,7 +85,7 @@ export default function Stage() {
     </Canvas>
 
     {/* miris:card-start */}
-    {/* Step 4.2 goes here. */}
+    {/* Step 4.1 goes here. */}
     {/* miris:card-end */}
 
     {/* miris:hud-start */}

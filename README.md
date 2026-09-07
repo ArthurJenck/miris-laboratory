@@ -83,7 +83,7 @@ adds a stage list, because a spinner tells you nothing across minutes.
   sidebar writes between them. The `extend({ MirisStream })` at the top is what
   makes `<mirisStream>` an ordinary scene node; step 2.4 explains it.
 - `app/main.tsx` mounts the stage and the guide. Attendees edit it once, at
-  step 5.5, to remove the guide.
+  step 6.1, to remove the guide.
 - `miris/devApi.ts` is the only server code: it writes files, proxies
   fal, and owns `data.json`. The fal key never reaches the browser.
 - `miris/StageBoundary.tsx` keeps a runtime error in the stage from taking the
@@ -96,7 +96,7 @@ adds a stage list, because a spinner tells you nothing across minutes.
 
 ### Removing the guide
 
-Comment out `<MirisGuide />` in `app/main.tsx`. That is step 5.5, and it is
+Comment out `<MirisGuide />` in `app/main.tsx`. That is step 6.1, and it is
 the only line the guide adds to the app. Verified: the production build is clean
 with it commented out.
 
@@ -134,7 +134,7 @@ whatever is inside it, so a box-derived scale always renders content small, and
 the box floor is nowhere near where the content starts. Measured content floor
 is -1.017 here; on `0.0.8-dc2d7ec` the same asset measured -1.24.
 
-**If the SDK pin changes, re-measure.** Step 4.4 turns this into a lesson rather
+**If the SDK pin changes, re-measure.** Step 3.3 turns this into a lesson rather
 than hiding it: attendees nudge two numbers and watch their asset sit down.
 
 ### Renderer settings that are not style choices

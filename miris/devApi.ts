@@ -94,10 +94,10 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     const { specimens, zipReady, hatchedAt } = await readData(MIRIS_DIR);
     const grown = (specimens as any[])?.filter((s) => s.glb).length ?? 0;
     if (grown >= STAGES) return zipReady ? null : "All six are built but the archive is still being packed.";
-    /* A run in flight is not a reason to hold anyone here. Step 2.4 sends them
-       to make their Miris account precisely while the meshes build, so gating
-       this on all six finishing contradicted the step that follows it: twelve
-       minutes of the session spent watching a tray. */
+    /* A run in flight is not a reason to hold anyone here. The room is built
+       while the meshes grow, and the tray points at the Miris account in the
+       meantime, so gating this on all six finishing would be twelve minutes of
+       the session spent watching a tray. */
     if (Number(hatchedAt) > 0 && !zipReady) return null;
     return "Nothing grown yet. Describe your creature and press Grow the series.";
   },

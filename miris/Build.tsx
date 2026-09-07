@@ -3,9 +3,9 @@ import { STAGES } from "./config";
 import type { Track } from "./tracks";
 
 /* The state lives above the steps, in Guide. It used to live inside step 1.2's
- * card, which unmounted the moment anyone advanced: step 2.3 tells attendees to
- * make their Miris account while the model builds, so the four minute job lost
- * its entire UI at exactly the point the curriculum sends them away from it. */
+ * card, which unmounted the moment anyone advanced: the room is built while the
+ * series grows, so the twelve minute job lost its entire UI at exactly the
+ * point the curriculum sends attendees on to the next step. */
 
 /* One concept, six bodies. The workflow runs server side and writes each stage
    into data.json as it lands, so this only has to watch the file: a reload
@@ -350,7 +350,7 @@ const orderOf = (name: string) => {
   return m ? Number(m[1]) : Number.MAX_SAFE_INTEGER;
 };
 
-/** Step 3.2. A scoped key already knows which assets it can read, so asking
+/** Step 3.3. A scoped key already knows which assets it can read, so asking
  *  for six uuids as well was asking the attendee to retype what the key could
  *  answer for itself. Paste the key, look at what it found, seal all six. */
 export function CapsuleAuto({ data, onDone }: { data: any; onDone: () => void }) {

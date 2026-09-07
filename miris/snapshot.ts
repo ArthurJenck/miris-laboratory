@@ -6,7 +6,7 @@ import { readData } from "./store.mjs";
 /* The stage fetches /api/miris, and that endpoint is dev middleware with no
  * counterpart in a static deploy: the request comes back as HTML, res.json()
  * throws, and the stage renders its skeleton forever. Attendees publish from
- * bolt at step 5.5, so that skeleton is what the link they share would show.
+ * bolt at step 6.1, so that skeleton is what the link they share would show.
  *
  * Freezing data.json into dist/api/miris at build time gives the deployed lab
  * the same reply the dev server would have made. The file is left extensionless
