@@ -39,6 +39,7 @@ const PROOF = {
   overlay: "EffectCanvas",
   field: "Fn(",
   cardOverlay: "Dossier",
+  markup: "mw-dossier",
 };
 
 /** Which snippet each proof has to appear in. */
@@ -51,6 +52,7 @@ const PROOF_IN: Record<keyof typeof PROOF, keyof typeof SNIPPETS> = {
   overlay: "effect",
   field: "field",
   cardOverlay: "card",
+  markup: "markup",
 };
 
 const auditProofs = () => {
@@ -172,11 +174,18 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
       : "The overlay is mounted but the field is still null. Write the TSL, or let the step do it.";
   },
 
+  async markup() {
+    const block = readMarker(await readFile(STAGE, "utf8"), "markup");
+    return block.includes(PROOF.markup)
+      ? null
+      : "No file markup yet. Put fileMarkup in the miris:markup block near the top of app/stage.tsx, or let the step do it.";
+  },
+
   async cardOverlay() {
     const block = readMarker(await readFile(STAGE, "utf8"), "card");
     return block.includes(PROOF.cardOverlay)
       ? null
-      : "No Dossier in the miris:card block yet. Add the line, or let the step do it.";
+      : "Nothing in the miris:card block yet. Add the two lines inside the Canvas, or let the step do it.";
   },
 
 };

@@ -32,6 +32,11 @@ export default function Stage() {
   }, []);
 
 
+  // miris:markup-start
+  // Step 4.1 goes here.
+  const fileMarkup = undefined;
+  // miris:markup-end
+
   // miris:field-start
   // Step 5.3 goes here.
   const field = null;
@@ -71,12 +76,15 @@ export default function Stage() {
       {/* Steps 2.1 to 2.4 go here. */}
       {/* miris:scene-end */}
 
+      {/* miris:card-start */}
+      {/* Step 4.2 goes here. */}
+      {/* miris:card-end */}
+
 
       <HdrGuard />
       <BudgetGuard />
       <CapsuleProbe />
       <CapsuleFocus />
-      <DossierCard specimens={specimens} />
       <OrbitControls
         makeDefault
         target={[0, 1.7, 0]}
@@ -85,10 +93,6 @@ export default function Stage() {
         rotateSpeed={-0.35}
       />
     </Canvas>
-
-    {/* miris:card-start */}
-    {/* Step 4.1 goes here. */}
-    {/* miris:card-end */}
 
     {/* miris:hud-start */}
     {/* Step 5.1 goes here. */}

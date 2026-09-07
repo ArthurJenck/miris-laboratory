@@ -108,14 +108,39 @@ const HUD = `    <LabHud specimens={specimens} />`;
 
 const EFFECT = `    <EffectCanvas node={field} />`;
 
-const FIELD = `  const field = useMemo(() => Fn(() => {
+const FIELD = `  // TSL: JavaScript that builds a shader graph. Each call is a node, and the
+  // graph runs once per pixel, every frame, on the GPU.
+  const field = useMemo(() => Fn(() => {
+    // Where this pixel is: uv() runs 0 to 1 across the screen; this makes it
+    // -1 to 1 from the middle, stretched so a circle stays a circle.
     const p = uv().mul(2).sub(1).mul(vec2(screenAspect, float(1)));
-    const scan = uv().y.mul(220).sub(time.mul(1.4)).sin().mul(0.5).add(0.5).mul(0.03);
+    // Scanlines: a sine wave up the screen, drifting with time, kept faint.
+    const wave = uv().y.mul(220).sub(time.mul(1.4)).sin();
+    const scan = wave.mul(0.5).add(0.5).mul(0.03);
+    // Vignette: distance from the middle, nothing until 0.8, darkest at 1.6.
     const edge = smoothstep(float(0.8), float(1.6), p.length()).mul(0.5);
+    // Colour and alpha. The lines add cyan light; the vignette adds only
+    // alpha, and black at any alpha darkens whatever is behind it.
     return vec4(vec3(0.42, 0.86, 1.0).mul(scan), scan.add(edge));
   })(), []);`;
 
-const CARD_PANEL = `    <Dossier specimens={specimens} />`;
+const MARKUP = `  // The file is HTML. The browser lays it out with the guide's own CSS, then
+  // paints it into a canvas, and that canvas becomes a texture on a plane.
+  const fileMarkup = (d: any) => \`
+    <div class="mw-dossier">
+      <p class="mw-d-code">\${d.designation} / \${d.series}</p>
+      <h3>\${d.name}</h3>
+      <p class="mw-d-class">\${d.classification}</p>
+      <ul class="mw-d-stats">
+        \${(d.stats || []).map((s: any) => \`
+          <li><span>\${s.label}</span><i><b style="width:\${s.value}%"></b></i><span>\${s.value}</span></li>\`).join("")}
+      </ul>
+      <p class="mw-d-head">Handler notes</p>
+      <p class="mw-d-notes">\${d.notes}</p>
+    </div>\`;`;
+
+const CARD_PANEL = `      <Dossier specimens={specimens} />
+      <DossierCard specimens={specimens} html={fileMarkup} />`;
 
 export const SNIPPETS = {
   floor: FLOOR,
@@ -125,6 +150,7 @@ export const SNIPPETS = {
   hud: HUD,
   effect: EFFECT,
   field: FIELD,
+  markup: MARKUP,
   card: CARD_PANEL,
 };
 
@@ -140,6 +166,7 @@ export const PARTS = {
   hud: HUD,
   effect: EFFECT,
   field: FIELD,
+  markup: MARKUP,
   card: CARD_PANEL,
 };
 
@@ -159,6 +186,7 @@ export const CLEARS_TO = {
 };
 
 export const MARKER_FOR = {
+  markup: "markup",
   card: "card",
   floor: "scene",
   walkway: "scene",

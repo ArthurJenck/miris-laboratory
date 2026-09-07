@@ -56,11 +56,22 @@ function fitToFrame(width: number, k: number): { tilt: number; scale: number; ed
  *  orbit and you walk around it like anything else in the room. Front face
  *  only, with a dark plate behind it, so from behind you see a slab and never
  *  the text reversed. */
-export default function DossierCard({ specimens = [] as any[] }) {
+export default function DossierCard({ specimens = [] as any[], html }: { specimens?: any[]; html?: (d: any) => string }) {
   useSyncExternalStore(subscribeLab, labVersion, labVersion);
   const i = getSelected();
   const d = i >= 0 ? specimens[i]?.dossier : null;
-  const { texture, width, height } = useHtmlTexture(d ? dossierHtml(d) : null);
+  // The attendee's markup when they have written it, the designed file when
+  // not, and the designed file again if theirs throws mid-edit.
+  let markup: string | null = null;
+  if (d) {
+    try {
+      markup = (html ?? dossierHtml)(d);
+    } catch (e) {
+      console.warn("fileMarkup threw, showing the default file instead", e);
+      markup = dossierHtml(d);
+    }
+  }
+  const { texture, width, height } = useHtmlTexture(markup);
   const camera = useThree((s) => s.camera) as any;
   const aspect = useThree((s) => s.size.width / s.size.height);
 
