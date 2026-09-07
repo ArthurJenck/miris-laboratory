@@ -145,7 +145,9 @@ export default function LabHud({ specimens = [] as any[] }) {
       {box && (
         <div className="mw-brackets" style={{ left: box.x, top: box.y, width: box.w, height: box.h }}>
           <i /><i /><i /><i />
-          {named && <em>{named}</em>}
+          {/* Hangs above the box, but never over the header or off the top:
+              zoomed in, the glass can reach past the edge of the frame. */}
+          {named && <em style={{ left: Math.max(box.x, 22) - box.x, top: Math.max(box.y - 20, 60) - box.y }}>{named}</em>}
         </div>
       )}
     </div>
