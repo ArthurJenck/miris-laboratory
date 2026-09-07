@@ -1,7 +1,7 @@
 const FLOOR = `      <fog attach="fog" args={[0x02050a, 20, 50]} />
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
         <circleGeometry args={[46, 96]} />
-        <meshStandardMaterial {...floor} roughness={1} metalness={1} normalScale={[0.9, 0.9]} />
+        <meshStandardMaterial {...floor} roughness={0.85} metalness={0.6} normalScale={[0.9, 0.9]} />
       </mesh>
       <mesh position={[0, 6.9, 0]}>
         <cylinderGeometry args={[46, 46, 14, 64, 1, false]} />
