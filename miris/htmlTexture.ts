@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CanvasTexture, SRGBColorSpace } from "three";
+import { DataTexture, LinearFilter, RGBAFormat, SRGBColorSpace, type Texture, UnsignedByteType } from "three";
 import { detect, paintElement } from "./htmlInCanvas";
 
 /** Scene units per CSS pixel: a 200px card comes out 0.9 units wide, which is
@@ -11,7 +11,7 @@ const ACCENT_FALLBACK = "#35ddfe";
 
 export interface HtmlTexture {
   /** Null until the first paint lands, and while `html` is empty. */
-  texture: CanvasTexture | null;
+  texture: Texture | null;
   /** Plane size in scene units, already converted. */
   width: number;
   height: number;
@@ -40,7 +40,7 @@ export default function useHtmlTexture(html: string | false | null | undefined):
     }
 
     let alive = true;
-    let made: CanvasTexture | null = null;
+    let made: Texture | null = null;
 
     // Offscreen via `left`, never display:none: an unrendered element never
     // paints, and the native call throws without a paint snapshot. The native
@@ -80,13 +80,26 @@ export default function useHtmlTexture(html: string | false | null | undefined):
         return;
       }
       if (!alive) return;
-        const texture = new CanvasTexture(target);
-        // The default, stated: a canvas is top-down and three's UVs are not.
-        texture.flipY = true;
-        // A 2D canvas draws in sRGB, so say so and let three decode it. This
-        // was tagged linear back when the stage rendered with <Canvas linear>
-        // and nothing re-encoded on output; both halves of that went together.
+        /* The pixels are read out and uploaded in a fixed row order rather than
+           handing three the live canvas. Handed the canvas, the card came up
+           vertically mirrored some of the time, reading order intact and every
+           line upside down, which is a texture orientation fault and not the
+           plane: whatever path or GL state produced it, a DataTexture built
+           bottom row first with flipY off has exactly one orientation. */
+        const ctx2 = target.getContext("2d")!;
+        const { width: tw, height: th } = target;
+        const src = ctx2.getImageData(0, 0, tw, th).data;
+        const rows = new Uint8Array(src.length);
+        const stride = tw * 4;
+        for (let y = 0; y < th; y++) rows.set(src.subarray(y * stride, (y + 1) * stride), (th - 1 - y) * stride);
+        const texture = new DataTexture(rows, tw, th, RGBAFormat, UnsignedByteType);
+        texture.flipY = false;
+        texture.minFilter = LinearFilter;
+        texture.magFilter = LinearFilter;
+        texture.generateMipmaps = false;
+        // A 2D canvas draws in sRGB, so say so and let three decode it.
         texture.colorSpace = SRGBColorSpace;
+        texture.needsUpdate = true;
         made = texture;
         setOut((prev) => {
           prev.texture?.dispose();
