@@ -1,7 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { AdditiveBlending, DoubleSide, ShaderMaterial, Vector3 } from "three";
-import { getHover } from "./labState";
+import { getHover, getSelected } from "./labState";
 import { glowTexture } from "./textures";
 
 /* Two small shaders the capsules wear. Raw GLSL rather than TSL, deliberately:
@@ -102,6 +102,7 @@ const PULSE_FRAG = `
   uniform vec3 uColor;
   uniform float uSeed;
   uniform float uHover;
+  uniform float uCalm;
 
   void main() {
     // Period differs per capsule, so the room does not blink in unison; under
@@ -122,16 +123,19 @@ const PULSE_FRAG = `
     float pulse = live * (band + trail);
     // Ease in as it leaves the floor and out as it reaches the rim.
     pulse *= smoothstep(0.0, 0.15, pos) * (1.0 - smoothstep(0.85, 1.0, pos));
+    // Standing at the glass the band filled the frame and washed the creature
+    // out for a second or two each cycle. The open capsule pulses quietly.
+    pulse *= mix(1.0, 0.35, uCalm);
 
     // Faint idle breathing so the fluid never looks switched off. Hovered, the
     // whole column lights from within: this is the hover effect, in the tank
     // rather than painted over the screen.
-    float idle = mix(0.035, 0.34, uHover) + 0.025 * sin(uTime * 0.9 + vUv.y * 4.0 + uSeed * 6.2832);
+    float idle = mix(0.035, 0.26, uHover) + 0.025 * sin(uTime * 0.9 + vUv.y * 4.0 + uSeed * 6.2832);
     // Brighter toward the middle of the column when lit, so it reads as the
     // fluid glowing around the specimen rather than the glass being painted.
     idle += uHover * 0.22 * (1.0 - abs(vUv.y - 0.5) * 2.0);
 
-    float a = (pulse * (0.85 + 0.5 * uHover) + idle);
+    float a = (pulse * (0.85 + 0.15 * uHover) + idle);
     a *= smoothstep(0.0, 0.08, vUv.y) * (1.0 - smoothstep(0.92, 1.0, vUv.y));
     gl_FragColor = vec4(uColor * a, a);
   }
@@ -146,7 +150,7 @@ export function Pulse({ radius = 0.86, height = 2.5, color = 0xd8f2ff, seed = Ma
       new ShaderMaterial({
         vertexShader: VERT,
         fragmentShader: PULSE_FRAG,
-        uniforms: { uTime: { value: 0 }, uColor: { value: [0, 0, 0] }, uSeed: { value: seed }, uHover: { value: 0 } },
+        uniforms: { uTime: { value: 0 }, uColor: { value: [0, 0, 0] }, uSeed: { value: seed }, uHover: { value: 0 }, uCalm: { value: 0 } },
         transparent: true,
         depthWrite: false,
         blending: AdditiveBlending,
@@ -159,11 +163,25 @@ export function Pulse({ radius = 0.86, height = 2.5, color = 0xd8f2ff, seed = Ma
     const c = color;
     mat.uniforms.uColor.value = [((c >> 16) & 255) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255];
   }, [mat, color]);
+  // Which capsule this is comes from where it stands, not a prop, so the
+  // attendee's snippet stays one line.
+  const slot = useRef(-1);
   useFrame((_, dt) => {
     mat.uniforms.uTime.value += dt;
+    const m = mesh.current;
+    if (!m) return;
+    if (slot.current < 0) {
+      m.getWorldPosition(worldPos);
+      slot.current = Math.round(((Math.atan2(worldPos.z, worldPos.x) / (Math.PI * 2)) * 6 + 6)) % 6;
+    }
+    // Eased, so the glow comes up and dies away rather than switching.
+    const k = 1 - Math.exp(-dt * 6);
+    const u = mat.uniforms;
+    u.uHover.value += ((getHover() === slot.current ? 1 : 0) - u.uHover.value) * k;
+    u.uCalm.value += ((getSelected() === slot.current ? 1 : 0) - u.uCalm.value) * k;
   });
   return (
-    <mesh position={[0, 1.66, 0]} material={mat}>
+    <mesh ref={mesh} position={[0, 1.66, 0]} material={mat}>
       <cylinderGeometry args={[radius, radius, height, 36, 1, true]} />
     </mesh>
   );
