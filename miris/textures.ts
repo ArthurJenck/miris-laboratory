@@ -1,0 +1,175 @@
+import { CanvasTexture, RepeatWrapping, type Texture } from "three";
+
+/* Surfaces are drawn here rather than shipped as image files. WebContainer
+   drops binaries on import, so a laboratory that depended on a texture folder
+   would arrive bare in bolt. A canvas costs nothing and always survives. */
+
+const make = (size: number, draw: (c: CanvasRenderingContext2D, s: number) => void): Texture => {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext("2d")!;
+  draw(ctx, size);
+  const t = new CanvasTexture(canvas);
+  t.wrapS = t.wrapT = RepeatWrapping;
+  return t;
+};
+
+/** Value noise, tiled, so the edges meet when the texture repeats. */
+function noise(ctx: CanvasRenderingContext2D, s: number, amount: number, scale: number) {
+  const img = ctx.getImageData(0, 0, s, s);
+  const grid = Math.max(2, Math.round(s / scale));
+  const rand: number[] = [];
+  for (let i = 0; i < grid * grid; i++) rand.push(Math.random());
+  const at = (x: number, y: number) => rand[(y % grid) * grid + (x % grid)];
+  const smooth = (t: number) => t * t * (3 - 2 * t);
+
+  for (let y = 0; y < s; y++) {
+    for (let x = 0; x < s; x++) {
+      const gx = (x / s) * grid;
+      const gy = (y / s) * grid;
+      const x0 = Math.floor(gx);
+      const y0 = Math.floor(gy);
+      const fx = smooth(gx - x0);
+      const fy = smooth(gy - y0);
+      const top = at(x0, y0) * (1 - fx) + at(x0 + 1, y0) * fx;
+      const bot = at(x0, y0 + 1) * (1 - fx) + at(x0 + 1, y0 + 1) * fx;
+      const n = (top * (1 - fy) + bot * fy - 0.5) * amount;
+      const i = (y * s + x) * 4;
+      img.data[i] = Math.max(0, Math.min(255, img.data[i] + n));
+      img.data[i + 1] = Math.max(0, Math.min(255, img.data[i + 1] + n));
+      img.data[i + 2] = Math.max(0, Math.min(255, img.data[i + 2] + n));
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
+/** The deck: dark plate with a seam every half tile and a little grain. */
+export const deckTexture = () =>
+  make(512, (ctx, s) => {
+    ctx.fillStyle = "#1b242e";
+    ctx.fillRect(0, 0, s, s);
+    noise(ctx, s, 26, 5);
+
+    ctx.strokeStyle = "rgba(120, 168, 190, 0.10)";
+    ctx.lineWidth = 2;
+    for (const p of [0, s / 2]) {
+      ctx.beginPath();
+      ctx.moveTo(p + 1, 0);
+      ctx.lineTo(p + 1, s);
+      ctx.moveTo(0, p + 1);
+      ctx.lineTo(s, p + 1);
+      ctx.stroke();
+    }
+    // A few brighter scuffs, so the repeat is harder to read as a grid.
+    ctx.strokeStyle = "rgba(150, 190, 210, 0.045)";
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 60; i++) {
+      const x = Math.random() * s;
+      const y = Math.random() * s;
+      const len = 10 + Math.random() * 70;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + len, y + (Math.random() - 0.5) * 6);
+      ctx.stroke();
+    }
+  });
+
+/** The walkway: lighter, brushed along one axis, with bolt heads at the seams. */
+export const walkwayTexture = () =>
+  make(512, (ctx, s) => {
+    ctx.fillStyle = "#2b3640";
+    ctx.fillRect(0, 0, s, s);
+    noise(ctx, s, 14, 3);
+
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.035)";
+    ctx.lineWidth = 1;
+    for (let y = 0; y < s; y += 3) {
+      ctx.beginPath();
+      ctx.moveTo(0, y + Math.random());
+      ctx.lineTo(s, y + Math.random());
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "rgba(10, 16, 20, 0.5)";
+    for (const [x, y] of [
+      [24, 24],
+      [s - 24, 24],
+      [24, s - 24],
+      [s - 24, s - 24],
+    ]) {
+      ctx.beginPath();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+/** The room shell: panelled plate with two recessed rails, high enough up that
+ *  they read as architecture rather than cutting across the capsules. */
+export const wallTexture = () =>
+  make(512, (ctx, s) => {
+    ctx.fillStyle = "#212d38";
+    ctx.fillRect(0, 0, s, s);
+    noise(ctx, s, 18, 6);
+
+    // Vertical seams between plates, doubled so the repeat is less obvious.
+    ctx.strokeStyle = "rgba(8, 12, 16, 0.55)";
+    ctx.lineWidth = 3;
+    for (const x of [0, s / 4, s / 2, (s * 3) / 4]) {
+      ctx.beginPath();
+      ctx.moveTo(x + 1.5, 0);
+      ctx.lineTo(x + 1.5, s);
+      ctx.stroke();
+    }
+    ctx.strokeStyle = "rgba(150, 190, 210, 0.05)";
+    ctx.lineWidth = 1;
+    for (const x of [0, s / 4, s / 2, (s * 3) / 4]) {
+      ctx.beginPath();
+      ctx.moveTo(x + 4, 0);
+      ctx.lineTo(x + 4, s);
+      ctx.stroke();
+    }
+
+    // Horizontal rails: a dark recess with a pale edge above it.
+    for (const y of [s * 0.34, s * 0.62]) {
+      ctx.fillStyle = "rgba(6, 10, 14, 0.6)";
+      ctx.fillRect(0, y, s, 14);
+      ctx.fillStyle = "rgba(140, 186, 208, 0.09)";
+      ctx.fillRect(0, y - 2, s, 2);
+    }
+  });
+
+/** Cyan strip lights banded across the wall, added as emissive so they glow
+ *  without lighting anything. */
+export const wallGlowMap = () =>
+  make(512, (ctx, s) => {
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(0, 0, s, s);
+    for (const y of [s * 0.34, s * 0.62]) {
+      const g = ctx.createLinearGradient(0, y - 10, 0, y + 22);
+      g.addColorStop(0, "rgba(0,0,0,0)");
+      g.addColorStop(0.4, "rgba(90, 200, 240, 0.62)");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, y - 10, s, 32);
+    }
+  });
+
+/** The pool of light a capsule throws on the deck. Radial, so it has no edge. */
+export const glowTexture = () =>
+  make(256, (ctx, s) => {
+    const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+    g.addColorStop(0, "rgba(255,255,255,0.85)");
+    g.addColorStop(0.35, "rgba(255,255,255,0.28)");
+    g.addColorStop(0.7, "rgba(255,255,255,0.06)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, s, s);
+  });
+
+/** A roughness map so the deck is not uniformly matte under the rim lights. */
+export const wearMap = () =>
+  make(256, (ctx, s) => {
+    ctx.fillStyle = "#b4b4b4";
+    ctx.fillRect(0, 0, s, s);
+    noise(ctx, s, 90, 4);
+  });

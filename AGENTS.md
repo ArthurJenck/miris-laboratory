@@ -49,8 +49,27 @@ The dev API (`miris/devApi.ts`) is a Vite `configureServer` middleware, so it
 exists only under `npm run dev`. A built preview answers `/api/miris` with the
 SPA fallback: **200 and `text/html`**, not a 404. Detect it by content type.
 
+The SDK is **vendored, not installed from npm**. `package.json` points at
+`file:vendor/*.tgz` for `0.0.9-budget-lab.bd3d02d`, an unreleased build from
+aqua PR #5982, because it carries the adaptive splat budget and six streams at
+once need it. Those two tarballs are committed on purpose: `vendor/` holds the
+only copy, so a clone without them fails `npm install` outright with `ENOENT`.
+It can appear to work anyway on a machine that has them in its npm cache, which
+makes the breakage invisible locally — test with `npm install --cache $(mktemp -d)`.
+Re-pin to a registry version once this build ships to npm.
+
 `@miris-inc/core` is a peer dependency of `@miris-inc/three`. Nothing imports it
 directly, so it looks removable from `package.json`. It is not.
 
 WebContainer drops binary files on import. Attendees running in bolt.new may see
 the chooser artwork and fonts missing; that is the platform, not the repo.
+
+`optimizeDeps.include` in `vite.config.ts` is load-bearing, not tidying. The SDK
+is in `optimizeDeps.exclude` so esbuild leaves its WASM paths alone, but that
+also means Vite cannot scan its imports and meets them for the first time as the
+browser asks. It then re-optimizes and reloads, and during that window the page
+holds two copies of `@react-three/fiber`: drei reads a different React context
+than `<Canvas>` wrote, and every drei hook throws **"R3F: Hooks can only be used
+within the Canvas component!"** from a component that is plainly inside the
+Canvas. The stack blames drei and the error is a red herring. Anything the SDK
+pulls in, plus `three/webgpu` and `three/tsl`, has to be named in `include`.

@@ -4,6 +4,12 @@ dist/
 .env.local
 .DS_Store
 public/models/
+
+# The budget-lab SDK ships with the repo. package.json installs core and three
+# from vendor/, so a clone without them cannot npm install at all. The other two
+# tarballs are 42MB that nothing here imports, so they stay out.
+vendor/miris-inc-components-*.tgz
+vendor/miris-web-sdk-*.tgz
 .superpowers/
 miris/data.json
 miris/specimens.zip

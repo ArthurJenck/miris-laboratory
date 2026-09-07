@@ -7,8 +7,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@miris-inc/core": "0.0.8-1238406",
-    "@miris-inc/three": "0.0.8-1238406",
+    "@miris-inc/core": "file:vendor/miris-inc-core-0.0.9-budget-lab.bd3d02d.tgz",
+    "@miris-inc/three": "file:vendor/miris-inc-three-0.0.9-budget-lab.bd3d02d.tgz",
     "@react-three/drei": "^10.7.8",
     "@react-three/fiber": "^9.7.0",
     "react": "^19.2.8",

@@ -20,8 +20,27 @@ export default defineConfig(({ mode }) => {
       host: true,
     },
     preview: { port: 3000, strictPort: true, host: true },
-    // The SDK ships prebuilt ESM with WASM alongside it. Leaving it out of
-    // dependency pre-bundling keeps esbuild from rewriting the WASM fetch paths.
-    optimizeDeps: { exclude: ["@miris-inc/core", "@miris-inc/three"] },
+    optimizeDeps: {
+      // The SDK ships prebuilt ESM with WASM alongside it. Leaving it out of
+      // dependency pre-bundling keeps esbuild from rewriting the WASM fetch paths.
+      exclude: ["@miris-inc/core", "@miris-inc/three"],
+      // Everything the excluded SDK imports, plus the WebGPU/TSL entrypoints,
+      // has to be named here. Vite cannot scan inside an excluded package, so
+      // it meets these imports for the first time as the browser asks for
+      // them, re-optimizes, and reloads. During that window the page holds two
+      // copies of @react-three/fiber: drei then reads a different React
+      // context than <Canvas> wrote, and every drei hook throws "R3F: Hooks
+      // can only be used within the Canvas component!" from inside the Canvas.
+      include: [
+        "three",
+        "three/tsl",
+        "three/webgpu",
+        "three/addons/loaders/GLTFLoader.js",
+        "three/addons/loaders/DRACOLoader.js",
+        "three/addons/loaders/HDRLoader.js",
+        "@react-three/fiber",
+        "@react-three/drei",
+      ],
+    },
   };
 });

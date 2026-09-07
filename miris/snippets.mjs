@@ -1,11 +1,19 @@
 const FLOOR = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
         <circleGeometry args={[18, 64]} />
-        <meshStandardMaterial color={0x0a0d11} roughness={0.85} metalness={0.2} />
+        <meshStandardMaterial map={deck} roughnessMap={wear} roughness={0.9} metalness={0.35} />
       </mesh>
       <gridHelper args={[36, 36, 0x1d4c60, 0x123243]} position={[0, 0, 0]} />
-      <mesh position={[0, 4.4, 0]}>
-        <cylinderGeometry args={[16, 16, 9, 48, 1, true]} />
-        <meshStandardMaterial color={0x1b2530} roughness={0.9} metalness={0.1} side={DoubleSide} />
+      <mesh position={[0, 6.9, 0]}>
+        <cylinderGeometry args={[16, 16, 14, 48, 1, false]} />
+        <meshStandardMaterial
+          map={wall}
+          emissiveMap={wallGlow}
+          emissive={0xffffff}
+          emissiveIntensity={0.35}
+          roughness={0.9}
+          metalness={0.1}
+          side={DoubleSide}
+        />
       </mesh>
       {[0, 1, 2, 3, 4, 5].map((i) => {
         const angle = ((i + 0.5) / 6) * Math.PI * 2;
@@ -23,7 +31,7 @@ const FLOOR = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 
 
 const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
         <ringGeometry args={[2.6, 3.8, 64]} />
-        <meshStandardMaterial color={0x39454f} roughness={0.45} metalness={0.4} />
+        <meshStandardMaterial map={walk} roughnessMap={wear} roughness={0.5} metalness={0.55} />
       </mesh>
       {[2.6, 3.8].map((r) => (
         <mesh key={r} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
@@ -60,24 +68,19 @@ const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
                 side={DoubleSide}
               />
             </mesh>
-            <mesh position={[0, 4.6, 0]}>
-              <coneGeometry args={[1.5, 5.2, 28, 1, true]} />
-              <meshBasicMaterial
-                color={0xbcd9ea}
-                transparent
-                opacity={0.045}
-                side={DoubleSide}
-                depthWrite={false}
-                blending={AdditiveBlending}
-                toneMapped={false}
-              />
-            </mesh>
+            <LightShaft />
+            <Bubbles color={TINTS[i]} />
+            <FloorGlow color={TINTS[i]} />
             {[0.36, 2.96].map((y) => (
               <mesh key={y} position={[0, y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <torusGeometry args={[0.9, 0.015, 8, 64]} />
-                <meshBasicMaterial color={0x9ef4ff} toneMapped={false} />
+                <torusGeometry args={[0.9, 0.014, 8, 64]} />
+                <meshBasicMaterial color={0x3f93b0} toneMapped={false} />
               </mesh>
             ))}
+            <mesh position={[0, 4.9, 0]} rotation={[Math.PI / 2, 0, 0]}>
+              <circleGeometry args={[0.34, 24]} />
+              <meshBasicMaterial color={0xa9d6e8} toneMapped={false} />
+            </mesh>
           </group>
         );
       })}`;
