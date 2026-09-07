@@ -10,6 +10,7 @@ import LabHud, { CapsuleProbe } from "../miris/LabHud";
 import CapsuleFocus from "../miris/CapsuleFocus";
 import DossierCard from "../miris/DossierCard";
 import HdrGuard from "../miris/HdrGuard";
+import BudgetGuard from "../miris/BudgetGuard";
 import FitInGlass from "../miris/FitInGlass";
 import { FloorGlow, LightShaft, Pulse, RadialGlow } from "../miris/CapsuleFx";
 import { floorMaps, walkwayTexture, wearMap } from "../miris/textures";
@@ -72,6 +73,7 @@ export default function Stage() {
 
 
       <HdrGuard />
+      <BudgetGuard />
       <CapsuleProbe />
       <CapsuleFocus />
       <DossierCard specimens={specimens} />
