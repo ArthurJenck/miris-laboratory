@@ -1,6 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useRef } from "react";
 import { Group } from "three";
+import { setFit } from "./labState";
 
 /* The capsule's inside, from the snippet that builds it. */
 const FLOOR = 0.36;
@@ -61,6 +62,13 @@ export default function FitInGlass({
 
     if (Math.abs(want - 1) < CLOSE_ENOUGH && off < CLOSE_ENOUGH) {
       rest.current += 1;
+      // Settled: tell the HUD where the creature is, so the hover glow can hug
+      // it. Which capsule this is comes from where it stands, not a prop, so
+      // the attendee's snippet stays one line.
+      if (rest.current === 1) {
+        const slot = Math.round(Math.atan2(position[2], position[0]) / (Math.PI / 3));
+        setFit(((slot % 6) + 6) % 6, { center: [centre[0], centre[1], centre[2]], size: [size[0], size[1], size[2]] });
+      }
       return;
     }
     rest.current = 0;

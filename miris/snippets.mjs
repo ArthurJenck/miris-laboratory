@@ -112,12 +112,11 @@ const EFFECT = `    <EffectCanvas node={field} />`;
 const FIELD = `  const field = useMemo(() => Fn(() => {
     const p = uv().mul(2).sub(1).mul(vec2(screenAspect, float(1)));
     const a = anchorPos.mul(vec2(screenAspect, float(1)));
-    const q = p.sub(a).abs().sub(anchorSize);
-    const edge = q.x.max(q.y);
-    const outside = q.max(vec2(0, 0)).length();
-    const rim = smoothstep(float(-0.03), float(0), edge).mul(smoothstep(float(0), float(0.16), outside).oneMinus()).mul(anchorSeen);
+    const r = anchorSize.x;
+    const d = p.sub(a).length();
+    const ring = smoothstep(r.mul(0.84), r, d).mul(smoothstep(r, r.mul(1.3), d).oneMinus()).mul(anchorSeen);
     const scan = uv().y.mul(220).sub(time.mul(1.4)).sin().mul(0.5).add(0.5).mul(0.03);
-    const glow = rim.mul(0.55).add(scan);
+    const glow = ring.mul(0.5).add(scan);
     return vec4(vec3(0.42, 0.86, 1.0).mul(glow), glow);
   })(), []);`;
 

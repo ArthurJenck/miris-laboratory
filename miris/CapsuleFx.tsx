@@ -30,8 +30,6 @@ const SHAFT_FRAG = `
   uniform float uTime;
   uniform float uStrength;
 
-  float hash(vec2 p) { return fract(sin(dot(p, vec2(41.3, 289.1))) * 43758.5453); }
-
   void main() {
     // Brightest at the lamp and thinning all the way down, the way a beam in
     // haze actually falls off. It never reaches full dark at the tube, so no
@@ -44,10 +42,11 @@ const SHAFT_FRAG = `
     float facing = abs(dot(normalize(vNormalV), normalize(-vPosV)));
     float rim = smoothstep(0.0, 0.6, facing);
 
-    // Slow drifting motes, so the shaft is never a flat wash.
-    float dust = 0.86 + 0.14 * hash(floor(vec2(vUv.x * 60.0, vUv.y * 26.0 - uTime * 0.35)));
+    // Soft rays turning slowly around the cone, so the shaft is never a flat
+    // wash. Smooth on purpose: a hashed cell grid here read as a mosaic.
+    float rays = 0.9 + 0.1 * sin(vUv.x * 56.5 + uTime * 0.4) * sin(vUv.x * 23.0 - uTime * 0.25);
 
-    float a = body * rim * dust * uStrength;
+    float a = body * rim * rays * uStrength;
     gl_FragColor = vec4(uColor * a, a);
   }
 `;
