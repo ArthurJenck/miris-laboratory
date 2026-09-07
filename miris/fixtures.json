@@ -1,18 +1,97 @@
 {
-  "_note": "Captured from a real run so offline mode replays it. dossier and uuid are filled in by the capture steps; see AGENTS.md.",
+  "_note": "Captured from a real run so offline mode replays it. Regenerate with a live hatch, then six label calls, then re-harvest.",
   "concept": "a plated deep-sea grazer with bioluminescent seams",
+  "clade": "crustacean",
+  "development": "indirect, with metamorphosis",
+  "anatomy": "six pairs of jointed limbs, segmented body, thick chitinous plates, glowing blue bioluminescent seams, dark grey coloration",
   "stages": [
     {
-      "stage": "Larva",
-      "prompt": "The tiny, translucent creature unfurls a delicate plume of feathery gills, its bioluminescent seams just faint suggestions.",
+      "stage": "egg",
+      "prompt": "A small, translucent sphere, faintly glowing from within with a soft blue light, attached to a rocky substrate.",
       "dossier": {
-        "designation": "AD-07",
-        "series": "AQUATIX",
-        "name": "LUMINOS",
-        "classification": "Pisciculus pellucidus",
-        "status": "STABLE",
+        "designation": "GT-07",
+        "series": "LUMINA",
+        "name": "AURELIA",
+        "classification": "Vesica lucens",
+        "status": "DORMANT",
         "generation": 4,
-        "viability": 88.3,
+        "viability": 98.7,
+        "stats": [
+          {
+            "label": "VITALITY",
+            "value": 20
+          },
+          {
+            "label": "AGGRESSION",
+            "value": 5
+          },
+          {
+            "label": "BIOELECTRIC",
+            "value": 75
+          },
+          {
+            "label": "COHESION",
+            "value": 90
+          }
+        ],
+        "traits": [
+          "Passive light emission",
+          "Substrate adherence",
+          "Low metabolic rate"
+        ],
+        "notes": "Specimen GT-07 remains affixed to its original basalt substrate. Its internal luminescence has maintained a consistent output for the last 72 cycles. Introduction of a low frequency sonic pulse caused no observable change in its dormant state or light intensity. Containment is maintained with standard atmospheric pressure and ambient temperature, with no apparent degradation of the specimen's integrity."
+      },
+      "uuid": ""
+    },
+    {
+      "stage": "nauplius",
+      "prompt": "A microscopic, unsegmented oval body with three pairs of appendages for swimming and feeding, featuring internal blue bioluminescence visible through its clear cuticle.",
+      "dossier": {
+        "designation": "PL-04",
+        "series": "PELAGIC",
+        "name": "LUMIVORE",
+        "classification": "Luminosus ovalis",
+        "status": "STABLE",
+        "generation": 3,
+        "viability": 98.7,
+        "stats": [
+          {
+            "label": "VITALITY",
+            "value": 85
+          },
+          {
+            "label": "AGGRESSION",
+            "value": 15
+          },
+          {
+            "label": "BIOELECTRIC",
+            "value": 70
+          },
+          {
+            "label": "COHESION",
+            "value": 90
+          }
+        ],
+        "traits": [
+          "Internal luminescence",
+          "Microscopic form",
+          "Appendage propulsion"
+        ],
+        "notes": "Specimen PL-04 maintains consistent internal blue bioluminescence, notably intensified under a 500nm wavelength light source. Feeding behavior involves rhythmic appendage movement to direct suspended particulate matter, demonstrating remarkable efficiency. Containment requires a high-density liquid medium with stable osmotic pressure to prevent cellular lysis. Under prolonged exposure to low-frequency sonic pulses, the bioluminescence flickers erratically before stabilizing."
+      },
+      "uuid": ""
+    },
+    {
+      "stage": "zoea",
+      "prompt": "A small, shrimp-like larva with a prominent cephalothorax and abdomen, developing more distinct blue bioluminescent seams along its growing chitinous plates, actively swimming with its thoracic appendages.",
+      "dossier": {
+        "designation": "LS-14",
+        "series": "LARVA",
+        "name": "LUMOS",
+        "classification": "Aquatica crustaceum",
+        "status": "STABLE",
+        "generation": 3,
+        "viability": 87.2,
         "stats": [
           {
             "label": "VITALITY",
@@ -20,74 +99,112 @@
           },
           {
             "label": "AGGRESSION",
-            "value": 12
+            "value": 15
           },
           {
             "label": "BIOELECTRIC",
-            "value": 91
+            "value": 62
           },
           {
             "label": "COHESION",
-            "value": 65
+            "value": 45
           }
         ],
         "traits": [
-          "Photonic respiration",
-          "Subtle bioluminescence",
-          "Feathery gill structures"
+          "aquatic locomotion",
+          "bioluminescent seams",
+          "chitinous exoskeleton"
         ],
-        "notes": "Specimen AD-07 maintains a consistent bioluminescent output, though intensity fluctuates subtly with ambient light conditions. It exhibits no observable agitation when exposed to ultrasonic frequencies, maintaining its characteristic slow undulation. Containment requires a specialized aquatic medium with precise salinity and a regulated light cycle to prevent desiccation and maintain metabolic equilibrium. Feeding response is minimal, primarily absorbing trace nutrients from its environment."
+        "notes": "Specimen LS-14 continues to exhibit robust swimming behavior within its designated aquatic enclosure. The blue bioluminescent seams along its developing plates are becoming increasingly defined, particularly noticeable under low light conditions. Under exposure to a 450nm light source, the specimen demonstrates increased thoracic appendage activity, indicating a positive phototactic response. Containment protocols must ensure consistent water quality and temperature to support its ongoing development."
       },
       "uuid": ""
     },
     {
-      "stage": "Juvenile",
-      "prompt": "A small, oval creature now sports nascent, subtly glowing armor plates and short, paddle-like limbs beginning to form.",
+      "stage": "megalopa",
+      "prompt": "A more crab-like form with a flattened cephalothorax and tucked abdomen, six pairs of limbs are well-developed, and the blue bioluminescent seams are brighter and more defined on its hardening dark grey plates.",
       "dossier": {
-        "designation": "NZ-04",
-        "series": "CHRYSO",
-        "name": "LUMIT",
-        "classification": "Chrysozoa luminaris",
-        "status": "VOLATILE",
+        "designation": "CR-77",
+        "series": "CHITINOUS",
+        "name": "CRUSTAVIS",
+        "classification": "Carcinus nocturnus",
+        "status": "STABLE",
         "generation": 3,
-        "viability": 78.2,
+        "viability": 88.2,
         "stats": [
           {
             "label": "VITALITY",
-            "value": 65
+            "value": 78
           },
           {
             "label": "AGGRESSION",
-            "value": 40
+            "value": 45
           },
           {
             "label": "BIOELECTRIC",
-            "value": 88
+            "value": 62
           },
           {
             "label": "COHESION",
-            "value": 72
+            "value": 91
           }
         ],
         "traits": [
-          "bioluminescent plating",
-          "aquatic adaptation",
-          "rapid development"
+          "Hardened carapace",
+          "Nocturnal bioluminescence",
+          "Amphibious locomotion"
         ],
-        "notes": "Specimen NZ-04 exhibits rapid morphological changes, with the development of glowing armor plates observed over a 48-hour period. During nutrient deprivation, it displays increased bioluminescence and attempts to bond with nearby inorganic materials. Containment requires a high-salinity aquatic environment with constant temperature regulation. Exposure to UV light causes a temporary cessation of growth and a reduction in observed bioelectric output."
+        "notes": "Specimen CR-77 exhibits a pronounced preference for dark, enclosed spaces, often secreting a cohesive mucus to secure itself. During feeding cycles, it displays an unexpected agility, rapidly securing prey with its six limbs. Containment requires a high-density ceramic casing to prevent abrasion from its constant scuttling. Under conditions of elevated humidity, its bioluminescent seams intensify, suggesting a regulatory link to environmental moisture levels."
       },
       "uuid": ""
     },
     {
-      "stage": "Adolescent",
-      "prompt": "The creature has grown significantly, its protective plates are more defined with brighter, intricate bioluminescent patterns along their edges, and its limbs are longer and more articulated.",
+      "stage": "juvenile",
+      "prompt": "A miniature version of the adult, with fully formed, thick dark grey chitinous plates and six pairs of jointed limbs; its blue bioluminescent seams glow steadily as it grazes on the seafloor.",
       "dossier": {
-        "designation": "PL-74",
-        "series": "PHOS",
-        "name": "LUXILLIA",
-        "classification": "Phoslumen magna",
+        "designation": "PL-06",
+        "series": "PELAGIC",
+        "name": "CHITINUS",
+        "classification": "Arthropoda diminutus",
         "status": "STABLE",
-        "generation": 4,
+        "generation": 3,
+        "viability": 98.7,
+        "stats": [
+          {
+            "label": "VITALITY",
+            "value": 85
+          },
+          {
+            "label": "AGGRESSION",
+            "value": 15
+          },
+          {
+            "label": "BIOELECTRIC",
+            "value": 70
+          },
+          {
+            "label": "COHESION",
+            "value": 92
+          }
+        ],
+        "traits": [
+          "deep sea grazer",
+          "bioluminescent seams",
+          "chitinous exoskeleton"
+        ],
+        "notes": "Specimen PL-06 exhibits consistent foraging behavior on simulated seafloor substrate. Its blue bioluminescence remains at a steady intensity during all observed cycles, showing no fluctuation under varying pressure simulations. Containment is maintained with standard reinforced acrylic, as no attempts to breach have been recorded. During a nutrient deprivation test, PL-06 demonstrated a marked reduction in movement but no discernible change in bioluminescent output or structural integrity."
+      },
+      "uuid": ""
+    },
+    {
+      "stage": "adult",
+      "prompt": "A large, robust creature with heavily armored dark grey chitinous plates and six pairs of strong jointed limbs, its blue bioluminescent seams pulsate rhythmically along its segmented body.",
+      "dossier": {
+        "designation": "CH-23",
+        "series": "CHITIN",
+        "name": "CHROMATIS",
+        "classification": "Gigantus lumina",
+        "status": "STABLE",
+        "generation": 7,
         "viability": 98.7,
         "stats": [
           {
@@ -100,133 +217,19 @@
           },
           {
             "label": "BIOELECTRIC",
-            "value": 88
-          },
-          {
-            "label": "COHESION",
-            "value": 76
-          }
-        ],
-        "traits": [
-          "Photonic absorption",
-          "Crystalline growth",
-          "Bio-luminescent patterning"
-        ],
-        "notes": "Specimen PL-74 has exhibited significant growth since its last evaluation, with notable enhancements to its epidermal plating and limb articulation. The bioluminescent patterns, previously diffuse, are now sharply defined and show increased brilliance, especially when exposed to elevated gamma radiation. Containment protocols should continue to emphasize controlled light exposure to prevent over-excitation of its photonic structures. During a recent simulated stress test, PL-74 responded to a sudden drop in ambient temperature by initiating a rapid, complex light show, seemingly as a thermoregulatory response."
-      },
-      "uuid": ""
-    },
-    {
-      "stage": "Mature",
-      "prompt": "A substantial, broad-bodied creature glides with fully developed, interlocking armor plates that pulse with a steady, vibrant bioluminescence, and powerful, segmented limbs for propulsion.",
-      "dossier": {
-        "designation": "GX-42",
-        "series": "CHITINOUS",
-        "name": "VOLCANIS",
-        "classification": "Armatura lucens",
-        "status": "STABLE",
-        "generation": 7,
-        "viability": 88.3,
-        "stats": [
-          {
-            "label": "VITALITY",
-            "value": 92
-          },
-          {
-            "label": "AGGRESSION",
-            "value": 65
-          },
-          {
-            "label": "BIOELECTRIC",
             "value": 78
           },
           {
             "label": "COHESION",
-            "value": 85
+            "value": 89
           }
         ],
         "traits": [
-          "Pulsating bioluminescence",
-          "Interlocking armor plates",
-          "Segmented limb propulsion"
+          "heavily armored",
+          "six limbs",
+          "blue bioluminescence"
         ],
-        "notes": "Subject GX-42 exhibits a consistent bioluminescent rhythm, proving useful in low light observation. Containment requires a reinforced plasteel enclosure due to its sheer mass and propulsion strength. When exposed to high frequency sonic stimulation, the armor plates resonate, producing a low hum and increased luminescence. Feeding cycles are regular with no observed refusal of standard nutrient paste."
-      },
-      "uuid": ""
-    },
-    {
-      "stage": "Elder",
-      "prompt": "The ancient creature is massive and heavily armored, its plates are thick and scarred, with bioluminescent seams that glow with a deep, authoritative thrum, and its limbs are gnarled and powerful.",
-      "dossier": {
-        "designation": "GX-47",
-        "series": "TITAN",
-        "name": "COLOSSUS",
-        "classification": "Magnus Gigantus",
-        "status": "STABLE",
-        "generation": 3,
-        "viability": 98.7,
-        "stats": [
-          {
-            "label": "VITALITY",
-            "value": 95
-          },
-          {
-            "label": "AGGRESSION",
-            "value": 30
-          },
-          {
-            "label": "BIOELECTRIC",
-            "value": 75
-          },
-          {
-            "label": "COHESION",
-            "value": 88
-          }
-        ],
-        "traits": [
-          "Heavily Armored",
-          "Bioluminescent Seams",
-          "Gnarled Limbs"
-        ],
-        "notes": "Specimen GX-47 exhibits remarkable resilience, shrugging off impacts that would compromise lesser constructs. Its bioluminescent thrum intensifies noticeably when exposed to high-frequency sonic pulses, a phenomenon under ongoing study. Containment protocols must account for its immense mass and surprising agility despite its size. During nutrient cycling, it displays a low-frequency hum, suggesting a metabolic process that merits further investigation."
-      },
-      "uuid": ""
-    },
-    {
-      "stage": "Ancient",
-      "prompt": "A colossal, almost geological creature rests, its massive, barnacle-encrusted plates dimly luminescent with ancient light, its limbs like weathered columns supporting its immense form.",
-      "dossier": {
-        "designation": "GT-07",
-        "series": "COLOSSUS",
-        "name": "GEOLITH",
-        "classification": "Terraforma gargantuan",
-        "status": "STABLE",
-        "generation": 3,
-        "viability": 98.7,
-        "stats": [
-          {
-            "label": "VITALITY",
-            "value": 95
-          },
-          {
-            "label": "AGGRESSION",
-            "value": 10
-          },
-          {
-            "label": "BIOELECTRIC",
-            "value": 25
-          },
-          {
-            "label": "COHESION",
-            "value": 88
-          }
-        ],
-        "traits": [
-          "Crustacean symbiosis",
-          "Geothermal affinity",
-          "Ancient luminescence"
-        ],
-        "notes": "Specimen GT-07 demonstrates extreme inertia, moving only with tectonic slowness. Its barnacle-like growths appear to be a symbiotic component, not a parasitic one, showing metabolic integration. Containment is primarily environmental, requiring a stable, deep-water trench with minimal seismic activity. Under high-frequency sonic bombardment, the luminescence intensifies slightly, but no other measurable response is observed."
+        "notes": "Specimen CH-23 maintains a consistent rhythmic luminescence, showing no deviation even under external stress tests. It responds positively to controlled nutrient injections, exhibiting increased activity for several hours post-administration. Containment requires reinforced plasteel walls, due to the specimen's considerable mass and limb strength. Under conditions of complete darkness, its bioluminescence intensifies, appearing to serve a navigational or communication function rather than simply an aesthetic one."
       },
       "uuid": ""
     }
