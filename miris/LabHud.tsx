@@ -3,7 +3,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { Vector3 } from "three";
 import { anchor } from "./anchor";
 import "./lab.css";
-import { type Box, getBoxes, getFits, getHover, labVersion, setBoxes, setHover, subscribeLab } from "./labState";
+import { type Box, getBoxes, getFits, getHover, getSelected, labVersion, setBoxes, setHover, subscribeLab } from "./labState";
 
 const RING = 4.2; // where the capsules stand
 const GLASS = 0.95; // a little wider than the glass, so brackets clear it
@@ -27,18 +27,20 @@ function silhouetteOf(i: number, camera: any, w: number, h: number, radius: numb
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
-  let ahead = false;
   for (const side of [-radius, radius]) {
     for (const y of [bottom, top]) {
       v.set(cx + across.x * side, y, cz + across.z * side).project(camera);
-      if (v.z < 1) ahead = true;
+      // A corner behind the camera projects to nonsense, and a tube standing
+      // beside you spanned the whole screen: every click on the floor chose
+      // it. Off screen has no box.
+      if (v.z >= 1) return null;
       minX = Math.min(minX, (v.x * 0.5 + 0.5) * w);
       maxX = Math.max(maxX, (v.x * 0.5 + 0.5) * w);
       minY = Math.min(minY, (-v.y * 0.5 + 0.5) * h);
       maxY = Math.max(maxY, (-v.y * 0.5 + 0.5) * h);
     }
   }
-  return ahead ? { x: minX, y: minY, w: maxX - minX, h: maxY - minY } : null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
 
 /** Screen box of one capsule for the brackets and the hit test: the glass
@@ -55,12 +57,11 @@ function projectBox(center: [number, number, number], size: [number, number, num
   let minY = Infinity;
   let maxX = -Infinity;
   let maxY = -Infinity;
-  let ahead = false;
   for (const sx of [-1, 1]) {
     for (const sy of [-1, 1]) {
       for (const sz of [-1, 1]) {
         v.set(center[0] + (sx * size[0]) / 2, center[1] + (sy * size[1]) / 2, center[2] + (sz * size[2]) / 2).project(camera);
-        if (v.z < 1) ahead = true;
+        if (v.z >= 1) return null;
         minX = Math.min(minX, (v.x * 0.5 + 0.5) * w);
         maxX = Math.max(maxX, (v.x * 0.5 + 0.5) * w);
         minY = Math.min(minY, (-v.y * 0.5 + 0.5) * h);
@@ -68,7 +69,7 @@ function projectBox(center: [number, number, number], size: [number, number, num
       }
     }
   }
-  return ahead ? { x: minX, y: minY, w: maxX - minX, h: maxY - minY } : null;
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
 }
 
 /** Invisible plumbing inside the canvas: projects the six capsules every frame
@@ -122,7 +123,10 @@ export default function LabHud({ specimens = [] as any[] }) {
           best = i;
         }
       });
-      setHover(best);
+      // Standing at a capsule, its glass fills the frame and the pointer is
+      // always over it: the glow flooded the tank and the brackets framed
+      // the whole screen. The open one is not a hover.
+      setHover(best === getSelected() ? -1 : best);
     };
     window.addEventListener("pointermove", onMove);
     return () => window.removeEventListener("pointermove", onMove);
