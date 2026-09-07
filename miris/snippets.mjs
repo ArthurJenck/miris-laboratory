@@ -3,7 +3,6 @@ const FLOOR = `      <fog attach="fog" args={[0x02050a, 20, 50]} />
         <circleGeometry args={[46, 96]} />
         <meshStandardMaterial {...floor} roughness={1} metalness={1} normalScale={[0.9, 0.9]} />
       </mesh>
-      <gridHelper args={[92, 61, 0x2a86c4, 0x134766]} position={[0, 0.006, 0]} />
       <mesh position={[0, 6.9, 0]}>
         <cylinderGeometry args={[46, 46, 14, 64, 1, false]} />
         <meshStandardMaterial color={0x04070b} roughness={1} metalness={0} side={DoubleSide} />

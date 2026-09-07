@@ -70,7 +70,7 @@ export const STEPS: Step[] = [
         num: "2.1",
         title: "The deck",
         body:
-          "Sublevel 7 starts as a dark disc, a grid and the wall around them. Open app/stage.tsx, find the block between the two miris:scene comments, and put this inside it. Everything you write outside those comments is left alone.",
+          "Sublevel 7 starts as a plated deck running out into fog, and the dark shell around it. Open app/stage.tsx, find the block between the two miris:scene comments, and put this inside it. Everything you write outside those comments is left alone.",
         fill: "floor",
         check: "floor",
         explain:
