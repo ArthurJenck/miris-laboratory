@@ -86,7 +86,7 @@ export function LightShaft({
   });
   return (
     <mesh position={[0, base + height / 2, 0]} material={mat}>
-      <coneGeometry args={[radius, height, 40, 1, true]} />
+      <coneGeometry args={[radius, height, 24, 1, true]} />
     </mesh>
   );
 }
@@ -96,8 +96,12 @@ export function LightShaft({
    grid slides upward, so nothing has to be simulated or stored. */
 const BUBBLE_FRAG = `
   varying vec2 vUv;
+  varying vec3 vNormalV;
+  varying vec3 vPosV;
   uniform float uTime;
   uniform vec3 uColor;
+  uniform float uCircum;
+  uniform float uHeight;
 
   float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 
@@ -110,22 +114,56 @@ const BUBBLE_FRAG = `
     float present = step(0.78, h);
     // Wobble, because a bubble does not rise in a straight line.
     f.x += sin(uTime * 1.7 + h * 30.0) * 0.16;
-    float r = 0.055 + 0.075 * fract(h * 41.0);
-    float d = length(f * vec2(cols / rows, 1.0));
-    float body = smoothstep(r, r * 0.25, d);
-    // A brighter crescent on one side reads as a highlight on a sphere.
-    float lit = smoothstep(r * 1.1, r * 0.2, length((f - vec2(0.22, 0.24) * r * 6.0) * vec2(cols / rows, 1.0)));
-    return present * (body * 0.55 + lit * 0.45);
+
+    // Round means round in world units, not in cell counts. This tube's
+    // circumference is a little over twice its height, so a cell is wider
+    // than it is tall; correcting by cols/rows instead over-corrected by
+    // about half again and stretched every bubble into a vertical oval.
+    float aspect = (uCircum / cols) / (uHeight / rows);
+    vec2 d2 = f * vec2(aspect, 1.0);
+    float r = 0.10 + 0.10 * fract(h * 41.0);
+    float d = length(d2);
+
+    // A bubble is a shell: bright where the eye looks through its edge, almost
+    // clear through the middle, with one small highlight off to a side. Filling
+    // the whole disc is what made these read as sparks rather than air.
+    float shell = smoothstep(r, r * 0.82, d) * smoothstep(r * 0.5, r * 0.78, d);
+    float fill = smoothstep(r, r * 0.2, d) * 0.10;
+    float spec = smoothstep(r * 0.34, 0.0, length(d2 - vec2(-0.30, 0.34) * r));
+    return present * (shell * 0.55 + fill + spec * 0.5);
   }
 
   void main() {
-    float a = layer(vUv, 9.0, 5.0, 0.030, 0.0)
-            + layer(vUv, 14.0, 8.0, 0.048, 7.3)
-            + layer(vUv, 20.0, 12.0, 0.070, 19.1);
+    float a = layer(vUv, 9.0, 5.0, 0.030, 0.0);
+
+    // The far wall of the tube is seen through the fluid, so it gets the one
+    // coarse layer at a third strength while the near wall gets the detail.
+    // This mesh is double sided, so that is half the fragments in the pass for
+    // nothing anyone can point at, and it also stops the two walls' bubbles
+    // reading as one crowded field crossing through itself.
+    if (gl_FrontFacing) {
+      a += layer(vUv, 15.0, 9.0, 0.052, 7.3);
+    } else {
+      a *= 0.35;
+    }
+
     // Thin out at the very top and bottom so bubbles do not pop at the seams.
     a *= smoothstep(0.0, 0.10, vUv.y) * (1.0 - smoothstep(0.90, 1.0, vUv.y));
     a = clamp(a, 0.0, 1.0) * 0.85;
-    gl_FragColor = vec4(uColor * a, a);
+    // Mostly water, faintly the capsule's colour.
+    vec3 col = mix(vec3(0.85, 0.95, 1.0), uColor, 0.35) * a;
+
+    // The glass rim rides along in this pass rather than getting a mesh of its
+    // own. Glass is near invisible face on and bright where you look along its
+    // curve, and that band at the silhouette is the whole reason the eye reads
+    // a round tube instead of a flat tinted panel. Six more transparent
+    // cylinders is the one thing this room cannot afford, and the fluid
+    // already draws one four centimetres inside the glass.
+    float facing = abs(dot(normalize(vNormalV), normalize(-vPosV)));
+    float rim = pow(1.0 - facing, 3.0) * 0.55;
+    col += uColor * rim;
+
+    gl_FragColor = vec4(col, clamp(a + rim, 0.0, 1.0));
   }
 `;
 
@@ -135,13 +173,21 @@ export function Bubbles({ radius = 0.86, height = 2.5, color = 0xd8f2ff }) {
       new ShaderMaterial({
         vertexShader: VERT,
         fragmentShader: BUBBLE_FRAG,
-        uniforms: { uTime: { value: 0 }, uColor: { value: [0, 0, 0] } },
+        uniforms: {
+          uTime: { value: 0 },
+          uColor: { value: [0, 0, 0] },
+          // What the shader needs to keep a bubble round: the tube's real
+          // proportions, so changing the radius or height here cannot silently
+          // go back to stretching them.
+          uCircum: { value: 2 * Math.PI * radius },
+          uHeight: { value: height },
+        },
         transparent: true,
         depthWrite: false,
         blending: AdditiveBlending,
         side: DoubleSide,
       }),
-    [],
+    [radius, height],
   );
   useMemo(() => {
     const c = color;
@@ -154,7 +200,7 @@ export function Bubbles({ radius = 0.86, height = 2.5, color = 0xd8f2ff }) {
   });
   return (
     <mesh position={[0, 1.66, 0]} material={mat}>
-      <cylinderGeometry args={[radius, radius, height, 36, 1, true]} />
+      <cylinderGeometry args={[radius, radius, height, 28, 1, true]} />
     </mesh>
   );
 }
@@ -162,7 +208,8 @@ export function Bubbles({ radius = 0.86, height = 2.5, color = 0xd8f2ff }) {
 /* Where the beam lands. A radial decal just above the deck, so the light has
    somewhere to end instead of stopping in mid air at the base of the cone. */
 export function FloorGlow({ radius = 2.1, color = 0x8fd4ef, opacity = 0.5 }) {
-  const map = useMemo(() => glowTexture(), []);
+  // Shared between all six capsules, so no need to memoise per instance.
+  const map = glowTexture();
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
       <planeGeometry args={[radius * 2, radius * 2]} />

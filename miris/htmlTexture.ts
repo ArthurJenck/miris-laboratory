@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CanvasTexture, LinearSRGBColorSpace } from "three";
+import { CanvasTexture, SRGBColorSpace } from "three";
 import { detect, paintElement } from "./htmlInCanvas";
 
 /** Scene units per CSS pixel: a 200px card comes out 0.9 units wide, which is
@@ -81,10 +81,10 @@ export default function useHtmlTexture(html: string | false | null | undefined):
       }
       if (!alive) return;
         const texture = new CanvasTexture(target);
-        // Deliberate pass-through, not a mistake to "correct" to sRGB: the
-        // stage's <Canvas linear> means nothing re-encodes after sampling, so
-        // tagging this sRGB would decode it once and leave the text washed out.
-        texture.colorSpace = LinearSRGBColorSpace;
+        // A 2D canvas draws in sRGB, so say so and let three decode it. This
+        // was tagged linear back when the stage rendered with <Canvas linear>
+        // and nothing re-encoded on output; both halves of that went together.
+        texture.colorSpace = SRGBColorSpace;
         made = texture;
         setOut((prev) => {
           prev.texture?.dispose();

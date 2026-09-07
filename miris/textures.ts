@@ -14,6 +14,24 @@ const make = (size: number, draw: (c: CanvasRenderingContext2D, s: number) => vo
   return t;
 };
 
+/** A gradient in 8 bits has about 200 usable steps, and a dark falloff uses
+ *  only the bottom handful of them, so it arrives as concentric rings rather
+ *  than a fade. One bit of noise per channel scatters each step boundary and
+ *  the rings become grain below the eye's threshold. Costs nothing: this runs
+ *  once, on the canvas, before the texture is ever uploaded. */
+function dither(ctx: CanvasRenderingContext2D, s: number) {
+  const img = ctx.getImageData(0, 0, s, s);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const n = Math.random() * 2 - 1;
+    // Alpha too: in the glow textures it is alpha that carries the falloff.
+    img.data[i] += n;
+    img.data[i + 1] += n;
+    img.data[i + 2] += n;
+    img.data[i + 3] += n;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+
 /** Value noise, tiled, so the edges meet when the texture repeats. */
 function noise(ctx: CanvasRenderingContext2D, s: number, amount: number, scale: number) {
   const img = ctx.getImageData(0, 0, s, s);
@@ -152,11 +170,12 @@ export const wallGlowMap = () =>
       ctx.fillStyle = g;
       ctx.fillRect(0, y - 10, s, 32);
     }
+    dither(ctx, s);
   });
 
 /** The pool of light a capsule throws on the deck. Radial, so it has no edge. */
-export const glowTexture = () =>
-  make(256, (ctx, s) => {
+const makeGlow = () =>
+  make(512, (ctx, s) => {
     const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
     g.addColorStop(0, "rgba(255,255,255,0.85)");
     g.addColorStop(0.35, "rgba(255,255,255,0.28)");
@@ -164,6 +183,39 @@ export const glowTexture = () =>
     g.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, s, s);
+    dither(ctx, s);
+  });
+
+/* All six capsules throw the same pool of light, so they share one texture.
+   FloorGlow built its own, which meant the room drew this gradient six times
+   and kept six copies of it on the GPU. */
+let sharedGlow: Texture | null = null;
+export const glowTexture = () => (sharedGlow ??= makeGlow());
+
+/** The lit panels set into the wall. Soft at all four edges, so they read as
+ *  light behind glass rather than as blue rectangles. */
+export const shadeTexture = () =>
+  make(256, (ctx, s) => {
+    const v = ctx.createLinearGradient(0, 0, 0, s);
+    v.addColorStop(0, "rgba(255,255,255,0)");
+    v.addColorStop(0.16, "rgba(255,255,255,0.5)");
+    v.addColorStop(0.5, "rgba(255,255,255,0.95)");
+    v.addColorStop(0.84, "rgba(255,255,255,0.5)");
+    v.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = v;
+    ctx.fillRect(0, 0, s, s);
+
+    // Feather the sides as well, or the panel keeps two hard vertical edges.
+    ctx.globalCompositeOperation = "destination-in";
+    const h = ctx.createLinearGradient(0, 0, s, 0);
+    h.addColorStop(0, "rgba(0,0,0,0)");
+    h.addColorStop(0.13, "rgba(0,0,0,1)");
+    h.addColorStop(0.87, "rgba(0,0,0,1)");
+    h.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = h;
+    ctx.fillRect(0, 0, s, s);
+    ctx.globalCompositeOperation = "source-over";
+    dither(ctx, s);
   });
 
 /** A roughness map so the deck is not uniformly matte under the rim lights. */
