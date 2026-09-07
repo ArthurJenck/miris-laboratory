@@ -401,11 +401,6 @@ a:hover { text-decoration: underline; }
   scrollbar-color: var(--mono-800) transparent;
   animation: mw-tray-in var(--mo-reveal) var(--ease-in) both;
 }
-/* The dot grid is square and full width by default, which in a 320px popover
-   is a 290px block above the steps. Small and centred, it reads as a loader
-   rather than as the content. */
-.mw-tray .mw-skel { width: 104px; align-self: center; }
-
 @keyframes mw-tray-in {
   from { opacity: 0; transform: translateY(-6px); }
 }
@@ -519,27 +514,59 @@ a:hover { text-decoration: underline; }
   font-size: 14px;
   color: var(--mono-500);
 }
-.mw-skel {
+/* The run's progress, measured in the twelve jobs it actually does: a render
+   and a mesh for each of the six. A count of finished meshes sat at zero for
+   the first several minutes of a paid run, which read as nothing happening. */
+.mw-prog { display: flex; flex-direction: column; gap: 7px; }
+.mw-prog-rail {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--mono-800);
+  overflow: hidden;
+}
+.mw-prog-fill {
   display: block;
-  width: 100%;
-  aspect-ratio: 1;
-  border-radius: var(--radius-m);
-  border: 1px solid var(--border);
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width 700ms var(--ease-in, ease);
 }
-/* The wave is carried by the dots themselves, in both axes at once: scale and
-   opacity peak together. Delay comes off (x + y) in the markup, which is what
-   sends the crest down the diagonal rather than across. Duration is mirrored
-   by WAVE in Build.tsx. A breath, not a pulse: the whole range stays dim and
-   the travel is slow enough to be ignorable. */
-.mw-skel circle {
-  fill: var(--mono-500);
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: mw-dot 3.2s ease-in-out infinite;
+.mw-prog-read {
+  margin: 0;
+  font: 400 12px/1 var(--mono);
+  color: var(--mono-500);
+  font-variant-numeric: tabular-nums;
 }
-@keyframes mw-dot {
-  0%, 100% { transform: scale(0.7); opacity: 0.07; }
-  50% { transform: scale(1); opacity: 0.26; }
+
+/* Two pips per specimen, filled as its render and then its mesh land. The
+   pending pip of whichever stage is in flight breathes on the app's one
+   shared curve, so the row that is working says so without a word. */
+.mw-pips { display: flex; gap: 5px; align-items: center; }
+.mw-pips i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--mono-700);
+}
+.mw-pips i[data-on] { background: var(--accent); }
+.mw-stage[data-active] { background: var(--surface-raised); }
+.mw-stage[data-active] .mw-stage-name { color: var(--mono-000, #fff); }
+/* Three states that are distinct standing still, not only in motion: filled
+   is done, ringed is in flight, grey is waiting. Filling the pending pip with
+   the accent made a half finished row look identical to a finished one in any
+   still frame, which is most of them. */
+.mw-stage[data-active] .mw-pips i:not([data-on]) {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--accent);
+  animation: mw-pip 2.4s ease-in-out infinite;
+}
+@keyframes mw-pip {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mw-stage[data-active] .mw-pips i:not([data-on]) { animation: none; opacity: 0.7; }
+  .mw-prog-fill { transition: none; }
 }
 
 /* ── the build block, inline in step 1.2 ──────────────── */

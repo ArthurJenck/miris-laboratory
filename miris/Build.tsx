@@ -2,37 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { STAGES } from "./config";
 import type { Track } from "./tracks";
 
-const GRID = 16;
-// Must match the mw-dot duration in guide.css: the delays are fractions of it.
-const WAVE = 3.2;
-
-/* A dot grid rather than a shimmering block. Delay runs off (x + y), so the
-   crest travels the diagonal, and each dot carries the wave in both its scale
-   and its opacity. Negative delays start every dot mid-cycle, so the wave is
-   already moving on the first frame. */
-function DotWave() {
-  const step = 100 / GRID;
-  const dots = [];
-  for (let y = 0; y < GRID; y++) {
-    for (let x = 0; x < GRID; x++) {
-      dots.push(
-        <circle
-          key={`${x}-${y}`}
-          cx={(x + 0.5) * step}
-          cy={(y + 0.5) * step}
-          r={step / 7}
-          style={{ animationDelay: `${(-(x + y) / (GRID * 2 - 2)) * WAVE}s` }}
-        />,
-      );
-    }
-  }
-  return (
-    <svg className="mw-skel" viewBox="0 0 100 100" aria-hidden="true">
-      {dots}
-    </svg>
-  );
-}
-
 /* The state lives above the steps, in Guide. It used to live inside step 1.2's
  * card, which unmounted the moment anyone advanced: step 2.3 tells attendees to
  * make their Miris account while the model builds, so the four minute job lost
@@ -67,6 +36,7 @@ export function useHatch(track: Track) {
 
   const stages: any[] = data?.specimens ?? [];
   const named = stages.filter((s) => s.stage).length;
+  const drawn = stages.filter((s) => s.imageUrl).length;
   const done = stages.filter((s) => s.glb).length;
   /* Driven by the file, not by stage names. The names only land once the
      planner returns, so keying off them left the tray hidden for the first
@@ -124,7 +94,7 @@ export function useHatch(track: Track) {
     setError("");
   };
 
-  return { track, concept, setConcept, data, stages, named, done, running, elapsed, error, hatch, roll, small, setSmall, refresh: read };
+  return { track, concept, setConcept, data, stages, named, drawn, done, running, elapsed, error, hatch, roll, small, setSmall, refresh: read };
 }
 
 export type HatchState = ReturnType<typeof useHatch>;
@@ -181,7 +151,7 @@ const STATE_LABEL: Record<string, string> = {
 
 /** The tray: six rows, one per stage, and the archive when they all land. */
 export default function HatchTray({ hatch }: { hatch: HatchState }) {
-  const { stages, done, running, elapsed, data, small, setSmall } = hatch;
+  const { stages, drawn, done, running, elapsed, data, small, setSmall } = hatch;
   const box = useRef<HTMLElement>(null);
 
   /* Popover manners: Escape and a click outside put it away. Bound only while
@@ -209,7 +179,12 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
   // Present as soon as there is a run, even before it has named anything.
   if (!running && !stages.some((s: any) => s.stage)) return null;
 
-  const count = running ? `Growing ${done} of ${STAGES}` : `${done} of ${STAGES} grown`;
+  /* "Growing 0 of 6" was the headline for the first several minutes, because
+     the count only moves when a mesh lands. A run is twelve jobs, a render and
+     a mesh per specimen, so that is what the rail measures. */
+  const jobs = STAGES * 2;
+  const pct = Math.round(((drawn + done) / jobs) * 100);
+  const count = running ? "Growing the series" : `${done} of ${STAGES} grown`;
 
   /* Collapsed is a pill, not an empty column. The tray is a full height fixed
      panel, so hiding only its list left 340px of nothing between the scene and
@@ -245,14 +220,31 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
         </button>
       </header>
 
-      {running && <DotWave />}
+      {running && (
+        <div className="mw-prog">
+          <div className="mw-prog-rail" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Run progress">
+            <span className="mw-prog-fill" style={{ width: `${pct}%` }} />
+          </div>
+          <p className="mw-prog-read">
+            {drawn} rendered, {done} built
+          </p>
+        </div>
+      )}
 
       <ol className="mw-stages">
         {stages.map((s: any, i: number) => (
-          <li key={s.id} className={`mw-stage is-${s.status}`}>
+          <li key={s.id} className={`mw-stage is-${s.status}`} {...(running && s.imageUrl && !s.glb ? { "data-active": "" } : {})}>
             <span className="mw-stage-n">{String(i + 1).padStart(2, "0")}</span>
             <span className="mw-stage-name">{s.stage || "\u2014"}</span>
-            <span className="mw-stage-state">{STATE_LABEL[s.status] ?? s.status}</span>
+            {running ? (
+              // Two jobs per specimen, so two pips: rendered, then built.
+              <span className="mw-pips" aria-label={`${s.imageUrl ? "rendered" : "waiting"}, ${s.glb ? "built" : "not built"}`}>
+                <i {...(s.imageUrl ? { "data-on": "" } : {})} />
+                <i {...(s.glb ? { "data-on": "" } : {})} />
+              </span>
+            ) : (
+              <span className="mw-stage-state">{STATE_LABEL[s.status] ?? s.status}</span>
+            )}
           </li>
         ))}
       </ol>

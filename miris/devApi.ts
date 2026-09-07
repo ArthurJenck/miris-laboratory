@@ -24,6 +24,8 @@ const ZIP_OFFLINE = join(MIRIS_DIR, "specimens.offline.zip");
 const FIXTURES = join(MIRIS_DIR, "fixtures.json");
 const TEMPLATE = join(MIRIS_DIR, "stage.template.tsx");
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const MESHY_INPUT = {
   should_texture: true,
   enable_pbr: true,
@@ -91,7 +93,7 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     const slot = (specimens as any[])?.[Number(active) || 0];
     const uuid = slot?.uuid ?? "";
     if (!uuid) return "That capsule has no asset id yet. Paste your uuid and viewer key above.";
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid))
+    if (!UUID_RE.test(uuid))
       return `That uuid does not look like one: "${uuid}". Copy just the id from the asset page.`;
     if (uuid === DEMO_UUID)
       return "That capsule still holds the demo specimen. Paste your own asset id from the portal.";
@@ -645,6 +647,59 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       return ok(p);
     }
 
+    /* Skip the generation. Assets already uploaded, with a key already scoped
+       to them, is the state the twelve minutes exist to reach, so anyone
+       rehearsing what comes after should be able to start from it. Unlike
+       seeding this is not offline only: the capsules stream the real assets,
+       nothing is replayed. */
+    case "adopt": {
+      const key = String(body?.viewerKey ?? "").trim();
+      if (!key) return fail("Paste the viewer key you scoped to your assets.");
+      if (key === VIEWER_KEY) return fail("That is the workshop's demo key, which cannot read your assets.");
+      const given = Array.isArray(body?.uuids)
+        ? body.uuids.map((u: any) => String(u).trim()).filter(Boolean)
+        : [];
+      const bad = given.find((u: string) => !UUID_RE.test(u));
+      if (bad) return fail(`That does not look like a uuid: "${bad}". Copy just the id from the asset page.`);
+
+      const fx = await readFixtures().catch(() => null as any);
+      const stored = await readData(MIRIS_DIR);
+      const bank = normaliseBank(stored.specimens as any[]);
+      bank.forEach((slot, i) => {
+        // Fewer ids than capsules cycles them, so one asset can fill the room
+        // while only some of the six have been uploaded.
+        const uuid = given.length ? given[i % given.length] : slot.uuid || DEMO_UUID;
+        const f = fx?.stages?.[i];
+        bank[i] = {
+          ...slot,
+          stage: slot.stage || f?.stage || `Stage ${i + 1}`,
+          prompt: slot.prompt || f?.prompt || "",
+          dossier: slot.dossier || f?.dossier || null,
+          uuid,
+          status: "live",
+          modelStartedAt: 0,
+          // The archive is not what was skipped, the generating of it was.
+          glb: slot.glb || `adopted:${String(i + 1).padStart(2, "0")}`,
+        };
+      });
+      await writeData(MIRIS_DIR, {
+        track: stored.track || TRACKS[0].id,
+        concept: stored.concept || fx?.concept || "",
+        specimens: bank,
+        viewerKey: key,
+        zipReady: true,
+        hatchedAt: Date.now(),
+      });
+
+      // Remembered, so a later seed brings the same assets back.
+      if (fx) {
+        fx.viewerKey = key;
+        fx.stages = fx.stages.map((st: any, i: number) => ({ ...st, uuid: bank[i].uuid }));
+        await writeFile(FIXTURES, JSON.stringify(fx, null, 2) + "\n");
+      }
+      return ok({ adopted: bank.length, distinct: new Set(bank.map((b) => b.uuid)).size });
+    }
+
     /* The whole run in one press: six stages named, six dossiers written, six
        capsules streaming. What the workshop takes two hours and twelve dollars
        to reach, for rehearsing everything downstream of it. */
@@ -664,7 +719,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
         track: stored.track || TRACKS[0].id,
         concept: fx.concept,
         specimens: bank,
-        viewerKey: stored.viewerKey || VIEWER_KEY,
+        viewerKey: String(fx.viewerKey || "").trim() || stored.viewerKey || VIEWER_KEY,
         zipReady: true,
         hatchedAt: Date.now(),
         active: 0,
@@ -709,7 +764,7 @@ const falKey = (mode: string) => loadEnv(mode, ROOT, "").FAL_KEY ?? "";
  * attendee is meant to see, not one to silently paper over. */
 const offline = (mode: string) => (loadEnv(mode, ROOT, "").MIRIS_OFFLINE ?? "") === "1";
 
-const readFixtures = async (): Promise<{ concept: string; stages: any[] }> =>
+const readFixtures = async (): Promise<{ concept: string; stages: any[]; viewerKey?: string }> =>
   JSON.parse(await readFile(FIXTURES, "utf8"));
 
 /** Six cubes standing in for six creatures, so the download step still works. */
