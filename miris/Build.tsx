@@ -180,42 +180,60 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
   const { stages, done, running, elapsed, data, small, setSmall } = hatch;
   if (!stages.some((s: any) => s.stage)) return null;
 
+  const count = running ? `Growing ${done} of ${STAGES}` : `${done} of ${STAGES} grown`;
+
+  /* Collapsed is a pill, not an empty column. The tray is a full height fixed
+     panel, so hiding only its list left 340px of nothing between the scene and
+     the guide, which is the opposite of what collapsing is for. */
+  if (small) {
+    return (
+      <button
+        className="mw-tray-min"
+        onClick={() => setSmall(false)}
+        aria-expanded={false}
+        aria-label={`${count}. Expand the tray`}
+      >
+        <i className="mw-tray-dot" {...(running ? { "data-busy": "" } : {})} aria-hidden="true" />
+        <span className="l12">{count}</span>
+        {running && <span className="mw-tray-clock">{mmss(elapsed)}</span>}
+        <span className="mw-tray-chev" aria-hidden="true">
+          +
+        </span>
+      </button>
+    );
+  }
+
   return (
-    <aside className={`mw-tray${small ? " is-small" : ""}`}>
+    <aside className="mw-tray">
       <header className="mw-tray-head">
         <span className="l12">
           <i className={running ? "mw-dot-live" : "mw-dot-done"} aria-hidden="true" />
-          {running ? `Growing ${done} of ${STAGES}` : `${done} of ${STAGES} grown`}
+          {count}
         </span>
         <span className="mw-elapsed">{running ? mmss(elapsed) : null}</span>
-        <button className="mw-tray-fold" onClick={() => setSmall(!small)} aria-label={small ? "Expand" : "Collapse"}>
-          {small ? "+" : "\u2013"}
+        <button className="mw-tray-fold" onClick={() => setSmall(true)} aria-expanded={true} aria-label="Collapse the tray">
+          {"\u2013"}
         </button>
       </header>
 
-      {!small && (
-        <>
-          <ol className="mw-stages">
-            {stages.map((s: any, i: number) => (
-              <li key={s.id} className={`mw-stage is-${s.status}`}>
-                <span className="mw-stage-n">{String(i + 1).padStart(2, "0")}</span>
-                <span className="mw-stage-name">{s.stage || "\u2014"}</span>
-                <span className="mw-stage-state">{STATE_LABEL[s.status] ?? s.status}</span>
-              </li>
-            ))}
-          </ol>
+      <ol className="mw-stages">
+        {stages.map((s: any, i: number) => (
+          <li key={s.id} className={`mw-stage is-${s.status}`}>
+            <span className="mw-stage-n">{String(i + 1).padStart(2, "0")}</span>
+            <span className="mw-stage-name">{s.stage || "\u2014"}</span>
+            <span className="mw-stage-state">{STATE_LABEL[s.status] ?? s.status}</span>
+          </li>
+        ))}
+      </ol>
 
-          {data?.zipReady ? (
-            <a className="btn btn-primary btn-sm mw-dl" href="/api/miris?download=zip" download="specimens.zip">
-              Download the archive
-            </a>
-          ) : (
-            <p className="mw-note">
-              Six renders and six meshes, running together. Four to six minutes. Make your Miris account while you
-              wait.
-            </p>
-          )}
-        </>
+      {data?.zipReady ? (
+        <a className="btn btn-primary btn-sm mw-dl" href="/api/miris?download=zip" download="specimens.zip">
+          Download the archive
+        </a>
+      ) : (
+        <p className="mw-note">
+          Six renders and six meshes, running together. Four to six minutes. Make your Miris account while you wait.
+        </p>
       )}
     </aside>
   );
