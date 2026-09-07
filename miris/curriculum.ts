@@ -22,7 +22,6 @@ export interface Sub {
   /** Renders the uuid and viewer key form for the active capsule. */
   capsuleUuid?: boolean;
   /** Renders the Write the label button. */
-  label?: boolean;
   /** A check id from the CHECKS map in miris/devApi.ts. Done verifies it before
    *  moving on. Steps whose work happens outside the project, signing up or
    *  deploying, deliberately have none. */
@@ -165,16 +164,6 @@ export const STEPS: Step[] = [
     subs: [
       {
         num: "4.1",
-        title: "Write the dossier",
-        body:
-          "Press the button and a model on your fal key turns your prompt into a specimen record: a designation, a classification, a gene readout, expressed traits and handler notes.",
-        label: true,
-        check: "dossier",
-        explain:
-          "The register that makes a room of shapes read as an archive. Everything on the card is derived from the one sentence you wrote at step 1.2, which is why the numbers feel like they belong to your specimen rather than to a template. Note what the model is being asked for: not prose, but a structure with a closed status set and exactly four stats. A card that sometimes has three bars and sometimes five cannot be laid out.",
-      },
-      {
-        num: "4.2",
         title: "Open it on click",
         body:
           "One line puts the file on screen. Add it in the miris:card block, at the bottom of app/stage.tsx outside the Canvas, then click a capsule: the camera walks over to it and its file opens. Click away, or press Escape, to come back.",

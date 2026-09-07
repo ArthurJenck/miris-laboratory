@@ -492,31 +492,3 @@ export function CapsuleForm({ data, onDone }: { data: any; onDone: () => void })
   );
 }
 
-/** Which capsule the attendee is filling. Shown wherever a step writes into
- *  one, so it is always obvious which of the six is about to change. */
-export function CapsulePicker({ data, onDone }: { data: any; onDone: () => void }) {
-  const specimens: any[] = data?.specimens ?? [];
-  const active = data?.active ?? 0;
-  const pick = async (i: number) => {
-    await fetch("/api/miris", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "save", patch: { active: i } }),
-    });
-    onDone();
-  };
-  return (
-    <div className="mw-capsules" role="group" aria-label="Choose a capsule">
-      {specimens.map((s, i) => (
-        <button
-          key={s.id}
-          className={`mw-cap${i === active ? " is-active" : ""}${s.uuid ? " is-full" : ""}`}
-          onClick={() => pick(i)}
-          title={s.dossier?.name ?? (s.uuid ? "Streaming" : "Empty")}
-        >
-          {s.id}
-        </button>
-      ))}
-    </div>
-  );
-}

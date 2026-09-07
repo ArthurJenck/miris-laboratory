@@ -149,14 +149,6 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     return null;
   },
 
-  async dossier() {
-    const { specimens, active } = await readData(MIRIS_DIR);
-    const d = (specimens as any[])?.[Number(active) || 0]?.dossier;
-    return d && typeof d === "object" && d.name
-      ? null
-      : "This capsule has no dossier yet. Press Write the dossier.";
-  },
-
   async hud() {
     const block = readMarker(await readFile(STAGE, "utf8"), "hud");
     return block.includes(PROOF.hud)
@@ -467,37 +459,6 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       return ok({ ok: true, index: i });
     }
 
-    case "label": {
-      const stored = await readData(MIRIS_DIR);
-      const track = TRACKS.find((t) => t.id === stored.track);
-      if (!track) return fail("No track chosen yet.");
-      const bank = normaliseBank(stored.specimens as any[]);
-      const i = Number(stored.active) || 0;
-      if (!bank[i]?.prompt) return fail("This capsule has no prompt yet. Step 1.2 is where it comes from.");
-
-      if (offline(mode)) {
-        const fx = await readFixtures();
-        const dossier = fx.stages[i]?.dossier;
-        if (!dossier) return fail(`No recorded dossier for capsule ${i + 1}. Capture the fixtures with FAL_KEY set first.`);
-        bank[i] = { ...bank[i], dossier };
-        await writeData(MIRIS_DIR, { specimens: bank });
-        return ok({ dossier, offline: true });
-      }
-
-      if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
-      const out: any = await falRun(LABEL_MODEL, {
-        model: LABEL_LLM,
-        system_prompt: REGISTRAR,
-        prompt: `The specimen: ${bank[i].prompt}.`,
-        temperature: 0.9,
-      });
-      const dossier = parseDossier(out?.output);
-      if (!dossier) return fail("The model wrote something that is not a dossier. Press the button again.", 502);
-      bank[i] = { ...bank[i], dossier };
-      await writeData(MIRIS_DIR, { specimens: bank });
-      return ok({ dossier });
-    }
-
     case "hatch": {
       const stored = await readData(MIRIS_DIR);
       const track = TRACKS.find((t) => t.id === stored.track);
@@ -511,7 +472,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
         const fx = await readFixtures();
         const bank = normaliseBank(stored.specimens as any[]);
         fx.stages.forEach((st, i) => {
-          bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "ready", imageUrl: "", glb: `offline:${stageFile(i, st.stage)}`, dossier: null, modelStartedAt: 0 };
+          bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "ready", imageUrl: "", glb: `offline:${stageFile(i, st.stage)}`, dossier: st.dossier ?? null, modelStartedAt: 0 };
         });
         await writeFixtureZip(fx.stages);
         await writeData(MIRIS_DIR, { concept, specimens: bank, zipReady: true, hatchedAt: Date.now() });
@@ -571,7 +532,31 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
           hatchedAt: Date.now(),
         });
 
-        /* The renders run in series, each one editing the last, because six
+        /* The dossiers are written here, beside the plan, rather than by a button
+         the attendee presses six times later. They come from the same sentence
+         and the same clade the planner just decided, they cost one cheap model
+         call each next to twelve dollars of meshes, and a specimen whose file
+         appears only after a manual step is a specimen that looks unfinished
+         for no reason. Failures are swallowed: a missing dossier costs a panel,
+         and is not worth losing six meshes over. */
+      await Promise.all(
+        stages.map(async (st, i) => {
+          try {
+            const out: any = await falRun(LABEL_MODEL, {
+              model: LABEL_LLM,
+              system_prompt: REGISTRAR,
+              prompt: `The specimen: ${st.prompt} It is the ${st.stage} stage of ${concept}, a ${plan2.clade}.`,
+              temperature: 0.9,
+            });
+            const dossier = parseDossier(out?.output);
+            if (dossier) await patchSlot(i, { dossier });
+          } catch {
+            /* keep going: the meshes matter more than the paperwork */
+          }
+        }),
+      );
+
+      /* The renders run in series, each one editing the last, because six
            independent text renders of "the same creature" are six different
            creatures: the recorded run drifted from a translucent larva to a
            barnacled boulder. The meshes still run together, and each one starts

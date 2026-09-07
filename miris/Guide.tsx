@@ -214,20 +214,6 @@ export default function MirisGuide() {
     });
   };
 
-  const writeLabel = async (num: string) => {
-    setBusy(num);
-    setNote("");
-    try {
-      const r = await post({ action: "label" });
-      if (!r.ok) return setNote(r.problem!);
-      await load();
-      setNote(`Wrote "${r.data.card.name}".`);
-    } catch (e) {
-      setNote(`Could not write the label: ${(e as Error).message}`);
-    } finally {
-      setBusy("");
-    }
-  };
 
   // Done verifies before it advances. The check lives on the server because
   // every one of them reads a file the browser cannot see.
@@ -270,7 +256,6 @@ export default function MirisGuide() {
   const actions: StepActions = {
     fill,
     clear,
-    writeLabel,
     done,
     view: (subNum: string) => transition(() => setViewing(subNum)),
     // Undo is the pointer moving back, so the reopened substep becomes current

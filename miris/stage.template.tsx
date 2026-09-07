@@ -3,7 +3,7 @@ import { Canvas, extend } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { MirisStream } from "@miris-inc/three";
 import { TINTS, VIEWER_KEY as DEMO_KEY } from "../miris/config";
-import { ACESFilmicToneMapping, DoubleSide } from "three";
+import { DoubleSide, NoToneMapping } from "three";
 import { Fn, float, smoothstep, time, uv, vec2, vec3, vec4 } from "three/tsl";
 import Dossier from "../miris/Dossier";
 import LabHud, { CapsuleProbe } from "../miris/LabHud";
@@ -52,8 +52,14 @@ export default function Stage() {
         alpha: true,
         antialias: true,
         powerPreference: "high-performance",
-        toneMapping: ACESFilmicToneMapping,
-        toneMappingExposure: 1.0,
+        // NoToneMapping, and not by preference. With a stream in the scene the
+        // SDK's render pass puts the curve through a second time: the glass,
+        // the rings and the wall strips all dropped to near black the moment
+        // step 2.5 landed, while the specimen itself stayed correct. Measured
+        // three ways: no streams and ACES is right, streams and ACES is dark,
+        // streams and no curve is right. Until the SDK stops doing that, the
+        // scene is graded without one.
+        toneMapping: NoToneMapping,
       }}
       camera={{ position: [0, 1.7, 0.02], fov: 55 }}
       style={{ position: "fixed", inset: 0 }}
