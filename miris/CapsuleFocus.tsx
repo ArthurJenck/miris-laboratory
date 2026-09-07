@@ -5,9 +5,15 @@ import { getSelected } from "./labState";
 
 const RING = 4.2;
 const EYE = 1.7;
-/* Where the camera comes to rest: far enough back that the glass and the file
-   standing beside it both fit, with the sidebar taking a strip of the frame. */
-const STANDOFF = 0.5;
+/* Where the camera comes to rest. Capsules stand 4.2 apart, so an orbit of
+   radius 3.7 around one swept straight through its neighbours; 2.6 clears
+   them. The wheel then zooms between the two limits below. */
+const STANDOFF = 1.6;
+const NEAREST = 1.2;
+const FARTHEST = 3.2; // any further and the orbit clips the neighbours again
+/* The aim sits a little toward the placard, so the glass and its file share
+   the frame; the pivot is still, to the eye, the specimen. */
+const TOWARD_CARD = 0.45;
 /* The capsule interior runs y 0.36 to 2.96; this is its middle. */
 const GLASS_MIDDLE = 1.66;
 const TRAVEL = 0.9; // seconds
@@ -51,12 +57,22 @@ export default function CapsuleFocus() {
         const cx = Math.cos(a);
         const cz = Math.sin(a);
         toPos.set(cx * STANDOFF, EYE, cz * STANDOFF);
-        // Aim at the middle of the glass, so orbiting once arrived turns
-        // around the specimen rather than around a point beside it.
-        toTarget.set(cx * RING, GLASS_MIDDLE, cz * RING);
+        // Right of the capsule as seen from the middle: (-sin a, cos a).
+        toTarget.set(cx * RING - cz * TOWARD_CARD, GLASS_MIDDLE, cz * RING + cx * TOWARD_CARD);
       }
       last.current = i;
       t.current = 0;
+      /* The negative rotateSpeed is for standing in the room: with the target
+         two centimetres ahead, drag left looks left. Around a capsule that
+         same sign runs the orbit backwards, so it flips with the destination. */
+      if (controls) {
+        controls.rotateSpeed = i < 0 ? -0.35 : 0.35;
+        // Zoom is a focus-only affordance: standing in the room there is
+        // nothing two centimetres ahead worth zooming toward.
+        controls.enableZoom = i >= 0;
+        controls.minDistance = i >= 0 ? NEAREST : 0;
+        controls.maxDistance = i >= 0 ? FARTHEST : Infinity;
+      }
     }
 
     if (t.current >= 1) return; // Arrived: hand the camera back to the user.
