@@ -1,6 +1,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import { AdditiveBlending, DoubleSide, ShaderMaterial } from "three";
+import { AdditiveBlending, DoubleSide, ShaderMaterial, Vector3 } from "three";
+import { getHover } from "./labState";
 import { glowTexture } from "./textures";
 
 /* Two small shaders the capsules wear. Raw GLSL rather than TSL, deliberately:
@@ -100,10 +101,12 @@ const PULSE_FRAG = `
   uniform float uTime;
   uniform vec3 uColor;
   uniform float uSeed;
+  uniform float uHover;
 
   void main() {
-    // Period differs per capsule, so the room does not blink in unison.
-    float period = 4.5 + uSeed * 3.0;
+    // Period differs per capsule, so the room does not blink in unison; under
+    // the pointer it shortens until the pulses nearly run together.
+    float period = mix(4.5 + uSeed * 3.0, 1.9, uHover);
     float t = mod(uTime + uSeed * 17.0, period);
     float travel = 1.6;
     float live = 1.0 - step(travel, t);
@@ -120,22 +123,30 @@ const PULSE_FRAG = `
     // Ease in as it leaves the floor and out as it reaches the rim.
     pulse *= smoothstep(0.0, 0.15, pos) * (1.0 - smoothstep(0.85, 1.0, pos));
 
-    // Faint idle breathing so the fluid never looks switched off.
-    float idle = 0.035 + 0.025 * sin(uTime * 0.9 + vUv.y * 4.0 + uSeed * 6.2832);
+    // Faint idle breathing so the fluid never looks switched off. Hovered, the
+    // whole column lights from within: this is the hover effect, in the tank
+    // rather than painted over the screen.
+    float idle = mix(0.035, 0.34, uHover) + 0.025 * sin(uTime * 0.9 + vUv.y * 4.0 + uSeed * 6.2832);
+    // Brighter toward the middle of the column when lit, so it reads as the
+    // fluid glowing around the specimen rather than the glass being painted.
+    idle += uHover * 0.22 * (1.0 - abs(vUv.y - 0.5) * 2.0);
 
-    float a = (pulse * 0.85 + idle);
+    float a = (pulse * (0.85 + 0.5 * uHover) + idle);
     a *= smoothstep(0.0, 0.08, vUv.y) * (1.0 - smoothstep(0.92, 1.0, vUv.y));
     gl_FragColor = vec4(uColor * a, a);
   }
 `;
 
+const worldPos = new Vector3();
+
 export function Pulse({ radius = 0.86, height = 2.5, color = 0xd8f2ff, seed = Math.random() }) {
+  const mesh = useRef<any>(null);
   const mat = useMemo(
     () =>
       new ShaderMaterial({
         vertexShader: VERT,
         fragmentShader: PULSE_FRAG,
-        uniforms: { uTime: { value: 0 }, uColor: { value: [0, 0, 0] }, uSeed: { value: seed } },
+        uniforms: { uTime: { value: 0 }, uColor: { value: [0, 0, 0] }, uSeed: { value: seed }, uHover: { value: 0 } },
         transparent: true,
         depthWrite: false,
         blending: AdditiveBlending,

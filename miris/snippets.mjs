@@ -110,12 +110,9 @@ const EFFECT = `    <EffectCanvas node={field} />`;
 
 const FIELD = `  const field = useMemo(() => Fn(() => {
     const p = uv().mul(2).sub(1).mul(vec2(screenAspect, float(1)));
-    const a = anchorPos.mul(vec2(screenAspect, float(1)));
-    const d = p.sub(a).length();
-    const halo = smoothstep(float(0.02), float(0.5), d).oneMinus().mul(anchorSeen);
     const scan = uv().y.mul(220).sub(time.mul(1.4)).sin().mul(0.5).add(0.5).mul(0.03);
-    const glow = halo.mul(0.5).add(scan);
-    return vec4(vec3(0.42, 0.86, 1.0).mul(glow), glow);
+    const edge = smoothstep(float(0.8), float(1.6), p.length()).mul(0.5);
+    return vec4(vec3(0.42, 0.86, 1.0).mul(scan), scan.add(edge));
   })(), []);`;
 
 const CARD_PANEL = `    <Dossier specimens={specimens} />`;

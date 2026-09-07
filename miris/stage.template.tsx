@@ -13,7 +13,7 @@ import HdrGuard from "../miris/HdrGuard";
 import FitInGlass from "../miris/FitInGlass";
 import { FloorGlow, LightShaft, Pulse, RadialGlow } from "../miris/CapsuleFx";
 import { floorMaps, walkwayTexture, wearMap } from "../miris/textures";
-import EffectCanvas, { anchorPos, anchorSeen, anchorSize, screenAspect } from "../miris/EffectCanvas";
+import EffectCanvas, { screenAspect } from "../miris/EffectCanvas";
 import { StageSkeleton } from "../miris/Skeleton";
 
 // A Miris stream is now a scene node: <mirisStream args={[{ uuid, viewerKey }]} />
