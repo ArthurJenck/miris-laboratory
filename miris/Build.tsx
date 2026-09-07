@@ -68,7 +68,11 @@ export function useHatch(track: Track) {
   const stages: any[] = data?.specimens ?? [];
   const named = stages.filter((s) => s.stage).length;
   const done = stages.filter((s) => s.glb).length;
-  const running = busy || (named > 0 && done < STAGES && !data?.zipReady);
+  /* Driven by the file, not by stage names. The names only land once the
+     planner returns, so keying off them left the tray hidden for the first
+     ten to twenty seconds of a paid run. hatchedAt is written the moment the
+     run starts. */
+  const running = busy || (Number(data?.hatchedAt) > 0 && !data?.zipReady);
 
   // While anything is in flight the file is the only source of truth, because
   // the request that started it dies with the page.
@@ -202,7 +206,8 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
     };
   }, [small, setSmall]);
 
-  if (!stages.some((s: any) => s.stage)) return null;
+  // Present as soon as there is a run, even before it has named anything.
+  if (!running && !stages.some((s: any) => s.stage)) return null;
 
   const count = running ? `Growing ${done} of ${STAGES}` : `${done} of ${STAGES} grown`;
 

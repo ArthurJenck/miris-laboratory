@@ -47,11 +47,15 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
   },
 
   async series() {
-    const { specimens, zipReady } = await readData(MIRIS_DIR);
+    const { specimens, zipReady, hatchedAt } = await readData(MIRIS_DIR);
     const grown = (specimens as any[])?.filter((s) => s.glb).length ?? 0;
-    if (grown === 0) return "Nothing grown yet. Describe your creature and press Grow the series.";
-    if (grown < STAGES) return `${grown} of ${STAGES} stages are built. The rest are still running in the tray.`;
-    return zipReady ? null : "All six are built but the archive is still being packed.";
+    if (grown >= STAGES) return zipReady ? null : "All six are built but the archive is still being packed.";
+    /* A run in flight is not a reason to hold anyone here. Step 2.4 sends them
+       to make their Miris account precisely while the meshes build, so gating
+       this on all six finishing contradicted the step that follows it: twelve
+       minutes of the session spent watching a tray. */
+    if (Number(hatchedAt) > 0 && !zipReady) return null;
+    return "Nothing grown yet. Describe your creature and press Grow the series.";
   },
 
   async floor() {
@@ -472,129 +476,155 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
 
       if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
 
-      /* Each slot is patched on its own, read-modify-write inside the store's
-         queue, so six concurrent stages cannot clobber one another. */
-      const patchSlot = async (i: number, patch: Record<string, unknown>) => {
-        const fresh = await readData(MIRIS_DIR);
-        const bank = normaliseBank(fresh.specimens as any[]);
-        bank[i] = { ...bank[i], ...patch };
-        await writeData(MIRIS_DIR, { specimens: bank });
+      /* The run is written to disk before the planner is called, not after it
+         returns. Nothing was recorded for the first ten to twenty seconds
+         otherwise, so the page could not tell a run had started: the tray
+         stayed hidden and the step gate said nothing had grown, both while
+         six meshes were being paid for. Cleared again if the run falls over,
+         or the app would think it was still growing forever. */
+      await writeData(MIRIS_DIR, { concept, hatchedAt: Date.now(), zipReady: false });
+      const abandon = async (e: unknown) => {
+        await writeData(MIRIS_DIR, { hatchedAt: 0 });
+        throw e;
       };
 
-      const plan: any = await falRun(LABEL_MODEL, {
-        model: LABEL_LLM,
-        system_prompt: EMBRYOLOGIST,
-        prompt: `The creature: ${concept}.`,
-        temperature: 0.9,
-      });
-      const plan2 = parsePlan(plan?.output);
-      if (!plan2) return fail("The model did not return a usable growth plan. Press the button again.", 502);
-      const { anatomy, stages } = plan2;
+      try {
 
-      const fresh = await readData(MIRIS_DIR);
-      const bank = normaliseBank(fresh.specimens as any[]);
-      stages.forEach((st, i) => {
-        bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "named", imageUrl: "", glb: "", dossier: null };
-      });
-      await writeData(MIRIS_DIR, {
-        concept,
-        clade: plan2.clade,
-        development: plan2.development,
-        anatomy,
-        specimens: bank,
-        zipReady: false,
-        hatchedAt: Date.now(),
-      });
+        /* Each slot is patched on its own, read-modify-write inside the store's
+           queue, so six concurrent stages cannot clobber one another. */
+        const patchSlot = async (i: number, patch: Record<string, unknown>) => {
+          const fresh = await readData(MIRIS_DIR);
+          const bank = normaliseBank(fresh.specimens as any[]);
+          bank[i] = { ...bank[i], ...patch };
+          await writeData(MIRIS_DIR, { specimens: bank });
+        };
 
-      /* The renders run in series, each one editing the last, because six
-         independent text renders of "the same creature" are six different
-         creatures: the recorded run drifted from a translucent larva to a
-         barnacled boulder. The meshes still run together, and each one starts
-         the moment its own render lands rather than waiting for all six, so
-         chaining costs about two minutes rather than the twenty it would if
-         the meshes queued behind the whole chain. */
-      const meshes: Promise<{ name: string; url: string }>[] = [];
-      let previous = "";
-      // Dev flag: six renders cost cents, six meshes cost about twelve dollars,
-      // so the chain can be judged on its own while its prompts are tuned.
-      const imagesOnly = body?.imagesOnly === true;
+        const plan: any = await falRun(LABEL_MODEL, {
+          model: LABEL_LLM,
+          system_prompt: EMBRYOLOGIST,
+          prompt: `The creature: ${concept}.`,
+          temperature: 0.9,
+        }).catch(abandon);
+        const plan2 = parsePlan(plan?.output);
+        if (!plan2) {
+          await writeData(MIRIS_DIR, { hatchedAt: 0 });
+          return fail("The model did not return a usable growth plan. Press the button again.", 502);
+        }
+        const { anatomy, stages } = plan2;
 
-      for (let i = 0; i < stages.length; i++) {
-        const st = stages[i];
-        const identity = st.carry && !/^none\b/i.test(st.carry) ? ` Visible identity: ${st.carry}.` : "";
-        // Stated outright, because an edit model left to itself returns the
-        // reference almost unchanged and three adult stages come back identical.
-        const delta = st.change && !/^none\b/i.test(st.change) ? ` Clearly show this change from the reference: ${st.change}.` : "";
-        let shot: any;
+        const fresh = await readData(MIRIS_DIR);
+        const bank = normaliseBank(fresh.specimens as any[]);
+        stages.forEach((st, i) => {
+          bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "named", imageUrl: "", glb: "", dossier: null };
+        });
+        await writeData(MIRIS_DIR, {
+          concept,
+          clade: plan2.clade,
+          development: plan2.development,
+          anatomy,
+          specimens: bank,
+          zipReady: false,
+          hatchedAt: Date.now(),
+        });
 
-        if (!previous) {
-          shot = await falRun(IMAGE_MODEL, {
-            prompt: `${track.style}: ${st.prompt}.${identity} ${IMAGE_FRAMING}`,
-            image_size: "square_hd",
-            num_images: 1,
-            quality: "medium",
-          });
-        } else {
-          shot = await falRun(`${IMAGE_MODEL}/edit`, {
-            image_urls: [previous],
-            prompt:
-              `The same individual organism as the reference image, the same species with the same markings ` +
-              `and colour signature, now developed into its next form: ${st.prompt}.${identity}${delta} ` +
-              `Species identity: ${anatomy}. ${track.style}. ${IMAGE_FRAMING}`,
-            image_size: "square_hd",
-            num_images: 1,
-            quality: "medium",
+        /* The renders run in series, each one editing the last, because six
+           independent text renders of "the same creature" are six different
+           creatures: the recorded run drifted from a translucent larva to a
+           barnacled boulder. The meshes still run together, and each one starts
+           the moment its own render lands rather than waiting for all six, so
+           chaining costs about two minutes rather than the twenty it would if
+           the meshes queued behind the whole chain. */
+        const meshes: Promise<{ name: string; url: string }>[] = [];
+        let previous = "";
+        // Dev flag: six renders cost cents, six meshes cost about twelve dollars,
+        // so the chain can be judged on its own while its prompts are tuned.
+        const imagesOnly = body?.imagesOnly === true;
+
+        for (let i = 0; i < stages.length; i++) {
+          const st = stages[i];
+          const identity = st.carry && !/^none\b/i.test(st.carry) ? ` Visible identity: ${st.carry}.` : "";
+          // Stated outright, because an edit model left to itself returns the
+          // reference almost unchanged and three adult stages come back identical.
+          const delta = st.change && !/^none\b/i.test(st.change) ? ` Clearly show this change from the reference: ${st.change}.` : "";
+          let shot: any;
+
+          if (!previous) {
+            shot = await falRun(IMAGE_MODEL, {
+              prompt: `${track.style}: ${st.prompt}.${identity} ${IMAGE_FRAMING}`,
+              image_size: "square_hd",
+              num_images: 1,
+              quality: "medium",
+            });
+          } else {
+            shot = await falRun(`${IMAGE_MODEL}/edit`, {
+              image_urls: [previous],
+              prompt:
+                `The same individual organism as the reference image, the same species with the same markings ` +
+                `and colour signature, now developed into its next form: ${st.prompt}.${identity}${delta} ` +
+                `Species identity: ${anatomy}. ${track.style}. ${IMAGE_FRAMING}`,
+              image_size: "square_hd",
+              num_images: 1,
+              quality: "medium",
+            });
+          }
+
+          const imageUrl = shot?.images?.[0]?.url;
+          if (!imageUrl) throw new Error(`fal returned no render for ${st.stage}`);
+          previous = imageUrl;
+          await patchSlot(i, { imageUrl, status: "building", modelStartedAt: Date.now() });
+
+          if (imagesOnly) continue;
+
+          meshes.push(
+            (async () => {
+              const mesh: any = await falRun(MODEL_3D, {
+                image_url: imageUrl,
+                texture_prompt: `${track.style}: ${st.prompt}`,
+                ...MESHY_INPUT,
+              });
+              const glb = findGlb(mesh);
+              if (!glb) throw new Error(`fal returned no glb for ${st.stage}. It sometimes answers with fbx only; press the button again.`);
+              await patchSlot(i, { glb, status: "ready", modelStartedAt: 0 });
+              return { name: stageFile(i, st.stage), url: glb };
+            })(),
+          );
+        }
+
+        if (imagesOnly) {
+          // A probe, not a run: leaving the marker set would strand the tray
+          // in a growth that never finishes.
+          await writeData(MIRIS_DIR, { hatchedAt: 0 });
+          const shots = (await readData(MIRIS_DIR)).specimens as any[];
+          return ok({
+            imagesOnly: true,
+            clade: plan2.clade,
+            anatomy,
+            stages: stages.map((st, i) => ({ stage: st.stage, image: shots[i]?.imageUrl ?? "" })),
           });
         }
 
-        const imageUrl = shot?.images?.[0]?.url;
-        if (!imageUrl) throw new Error(`fal returned no render for ${st.stage}`);
-        previous = imageUrl;
-        await patchSlot(i, { imageUrl, status: "building", modelStartedAt: Date.now() });
+        const glbs = await Promise.all(meshes);
 
-        if (imagesOnly) continue;
-
-        meshes.push(
-          (async () => {
-            const mesh: any = await falRun(MODEL_3D, {
-              image_url: imageUrl,
-              texture_prompt: `${track.style}: ${st.prompt}`,
-              ...MESHY_INPUT,
-            });
-            const glb = findGlb(mesh);
-            if (!glb) throw new Error(`fal returned no glb for ${st.stage}. It sometimes answers with fbx only; press the button again.`);
-            await patchSlot(i, { glb, status: "ready", modelStartedAt: 0 });
-            return { name: stageFile(i, st.stage), url: glb };
-          })(),
+        const files = await Promise.all(
+          glbs.map(async (g) => {
+            const r = await fetch(g.url);
+            if (!r.ok) throw new Error(`could not fetch ${g.name}: ${r.status}`);
+            const data = Buffer.from(await r.arrayBuffer());
+            // Checked here rather than trusted: a mis-typed mesh only shows up
+            // as a failed upload in the portal, long after the workshop.
+            if (!isGlb(data)) throw new Error(`${g.name} came back as ${data.toString("ascii", 0, 4)}, not glTF. Press the button again.`);
+            return { name: g.name, data };
+          }),
         );
+        await writeFile(ZIP, zipSync(files));
+        await writeData(MIRIS_DIR, { zipReady: true });
+        return ok({ stages: stages.map((s2) => s2.stage), files: files.map((f) => f.name) });
+      } catch (e) {
+        // Any failure past this point leaves a run marked as in flight, and
+        // the tray would grow forever. Clear the marker, then rethrow.
+        await writeData(MIRIS_DIR, { hatchedAt: 0 });
+        throw e;
       }
-
-      if (imagesOnly) {
-        const shots = (await readData(MIRIS_DIR)).specimens as any[];
-        return ok({
-          imagesOnly: true,
-          clade: plan2.clade,
-          anatomy,
-          stages: stages.map((st, i) => ({ stage: st.stage, image: shots[i]?.imageUrl ?? "" })),
-        });
-      }
-
-      const glbs = await Promise.all(meshes);
-
-      const files = await Promise.all(
-        glbs.map(async (g) => {
-          const r = await fetch(g.url);
-          if (!r.ok) throw new Error(`could not fetch ${g.name}: ${r.status}`);
-          const data = Buffer.from(await r.arrayBuffer());
-          // Checked here rather than trusted: a mis-typed mesh only shows up
-          // as a failed upload in the portal, long after the workshop.
-          if (!isGlb(data)) throw new Error(`${g.name} came back as ${data.toString("ascii", 0, 4)}, not glTF. Press the button again.`);
-          return { name: g.name, data };
-        }),
-      );
-      await writeFile(ZIP, zipSync(files));
-      await writeData(MIRIS_DIR, { zipReady: true });
-      return ok({ stages: stages.map((s2) => s2.stage), files: files.map((f) => f.name) });
     }
 
     /* The growth plan on its own, written nowhere. Six meshes cost about twelve
