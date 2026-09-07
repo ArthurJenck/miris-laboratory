@@ -178,6 +178,30 @@ const STATE_LABEL: Record<string, string> = {
 /** The tray: six rows, one per stage, and the archive when they all land. */
 export default function HatchTray({ hatch }: { hatch: HatchState }) {
   const { stages, done, running, elapsed, data, small, setSmall } = hatch;
+  const box = useRef<HTMLElement>(null);
+
+  /* Popover manners: Escape and a click outside put it away. Bound only while
+     it is open, so the collapsed handle keeps its own click. */
+  useEffect(() => {
+    if (small) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSmall(true);
+    };
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (box.current?.contains(t as Node)) return;
+      // The guide and the dev bar are their own surfaces, not "outside".
+      if (t?.closest?.(".mw-panel, .mw-tab, .mw-dev")) return;
+      setSmall(true);
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("mousedown", onDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("mousedown", onDown);
+    };
+  }, [small, setSmall]);
+
   if (!stages.some((s: any) => s.stage)) return null;
 
   const count = running ? `Growing ${done} of ${STAGES}` : `${done} of ${STAGES} grown`;
@@ -204,7 +228,7 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
   }
 
   return (
-    <aside className="mw-tray">
+    <aside className="mw-tray" ref={box} role="dialog" aria-label="Growth series">
       <header className="mw-tray-head">
         <span className="l12">
           <i className={running ? "mw-dot-live" : "mw-dot-done"} aria-hidden="true" />
@@ -215,6 +239,8 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
           {"\u2013"}
         </button>
       </header>
+
+      {running && <DotWave />}
 
       <ol className="mw-stages">
         {stages.map((s: any, i: number) => (
@@ -232,7 +258,8 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
         </a>
       ) : (
         <p className="mw-note">
-          Six renders and six meshes, running together. Four to six minutes. Make your Miris account while you wait.
+          Each render grows from the one before it, and the meshes build as they land. About twelve minutes. Make
+          your Miris account while you wait.
         </p>
       )}
     </aside>

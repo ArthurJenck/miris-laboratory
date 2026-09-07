@@ -14,7 +14,7 @@ export default function Dossier({ specimens = [] as any[] }) {
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       // Anything with its own controls, the guide included, keeps its click.
-      if ((e.target as HTMLElement)?.closest?.(".mw-panel, .mw-dossier, .mw-tab")) return;
+      if ((e.target as HTMLElement)?.closest?.(".mw-panel, .mw-dossier, .mw-tab, .mw-tray, .mw-tray-min, .mw-dev")) return;
       let best = -1;
       let bestArea = Infinity;
       getBoxes().forEach((b, n) => {
