@@ -43,6 +43,28 @@ directory alone is not enough either: those files have lived at `public/kit/`,
 earlier copies behind. Filter by filename too, and verify against every commit
 before pushing, not just `HEAD`.
 
+## Rehearsing without fal
+
+`MIRIS_OFFLINE=1` in `.env.local` replays a recorded run from
+`miris/fixtures.json` instead of calling fal: `hatch` and `label` return
+instantly and for nothing, and a **Seed the lab** control appears bottom left
+that fills all six capsules, dossiers and uuids in one press. `unseed` empties
+it again. The whole flow downstream of the twelve minute wait can then be
+rehearsed in seconds.
+
+It is never inferred from a missing `FAL_KEY`. "FAL_KEY is not set" is a
+sentence attendees are meant to see, so offline has to be asked for explicitly.
+
+Two deliberate separations. Offline writes `miris/specimens.offline.zip` rather
+than `specimens.zip`, because overwriting 129MB of paid creature meshes with
+cubes during a rehearsal is not recoverable. And the archive holds six
+synthetic cubes from `miris/tinyGlb.mjs`, not real meshes, so nothing large
+lands in the repo; they are valid glTF and parse in three's GLTFLoader.
+
+`fixtures.json` carries stages, prompts, dossiers and a `uuid` per stage. An
+empty `uuid` falls back to `DEMO_UUID`, so seeding works before the six real
+assets have been uploaded to the portal and sharpens once they have.
+
 ## Other things that have bitten
 
 The dev API (`miris/devApi.ts`) is a Vite `configureServer` middleware, so it

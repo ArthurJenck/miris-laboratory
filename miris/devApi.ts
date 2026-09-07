@@ -5,8 +5,9 @@ import { loadEnv, type Plugin } from "vite";
 import { end as markerEnd, readMarker, replaceMarker, start as markerStart } from "./markers.mjs";
 import { readData, writeData } from "./store.mjs";
 import { CLEARS_TO, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
-import { normaliseBank } from "./specimens.mjs";
+import { emptyBank, normaliseBank } from "./specimens.mjs";
 import { zipSync } from "./zip.mjs";
+import { tinyGlb } from "./tinyGlb.mjs";
 import { DEMO_UUID, STAGES, STATUSES, STAT_LABELS, IMAGE_FRAMING, IMAGE_MODEL, LABEL_LLM, LABEL_MODEL, MODEL_3D, VIEWER_KEY } from "./config";
 import { TRACKS } from "./tracks";
 
@@ -17,6 +18,10 @@ const ROOT = process.cwd();
 const MIRIS_DIR = join(ROOT, "miris");
 const STAGE = join(ROOT, "app", "stage.tsx");
 const ZIP = join(ROOT, "miris", "specimens.zip");
+/* Offline builds its own archive rather than overwriting the real one: the
+   129MB of creature meshes from a paid run are not worth losing to a rehearsal. */
+const ZIP_OFFLINE = join(MIRIS_DIR, "specimens.offline.zip");
+const FIXTURES = join(MIRIS_DIR, "fixtures.json");
 const TEMPLATE = join(MIRIS_DIR, "stage.template.tsx");
 
 const MESHY_INPUT = {
@@ -351,13 +356,23 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
     }
 
     case "label": {
-      if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
       const stored = await readData(MIRIS_DIR);
       const track = TRACKS.find((t) => t.id === stored.track);
       if (!track) return fail("No track chosen yet.");
       const bank = normaliseBank(stored.specimens as any[]);
       const i = Number(stored.active) || 0;
       if (!bank[i]?.prompt) return fail("This capsule has no prompt yet. Step 1.2 is where it comes from.");
+
+      if (offline(mode)) {
+        const fx = await readFixtures();
+        const dossier = fx.stages[i]?.dossier;
+        if (!dossier) return fail(`No recorded dossier for capsule ${i + 1}. Capture the fixtures with FAL_KEY set first.`);
+        bank[i] = { ...bank[i], dossier };
+        await writeData(MIRIS_DIR, { specimens: bank });
+        return ok({ dossier, offline: true });
+      }
+
+      if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
       const out: any = await falRun(LABEL_MODEL, {
         model: LABEL_LLM,
         system_prompt: REGISTRAR,
@@ -372,12 +387,26 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
     }
 
     case "hatch": {
-      if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
       const stored = await readData(MIRIS_DIR);
       const track = TRACKS.find((t) => t.id === stored.track);
       if (!track) return fail("No track chosen yet.");
       const concept = String(body?.prompt ?? "").trim();
       if (!concept) return fail("Describe the creature first.");
+
+      /* The recorded run, replayed. Whatever the attendee typed is still kept
+         as the concept, so the tray reads back the way it would have. */
+      if (offline(mode)) {
+        const fx = await readFixtures();
+        const bank = normaliseBank(stored.specimens as any[]);
+        fx.stages.forEach((st, i) => {
+          bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "ready", imageUrl: "", glb: `offline:${stageFile(i, st.stage)}`, dossier: null, modelStartedAt: 0 };
+        });
+        await writeFixtureZip(fx.stages);
+        await writeData(MIRIS_DIR, { concept, specimens: bank, zipReady: true, hatchedAt: Date.now() });
+        return ok({ offline: true, stages: fx.stages.map((s2: any) => s2.stage), files: fx.stages.map((s2: any, i: number) => stageFile(i, s2.stage)) });
+      }
+
+      if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
 
       /* Each slot is patched on its own, read-modify-write inside the store's
          queue, so six concurrent stages cannot clobber one another. */
@@ -447,6 +476,40 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       return ok({ stages: stages.map((s2) => s2.stage), files: files.map((f) => f.name) });
     }
 
+    /* The whole run in one press: six stages named, six dossiers written, six
+       capsules streaming. What the workshop takes two hours and twelve dollars
+       to reach, for rehearsing everything downstream of it. */
+    case "seed": {
+      if (!offline(mode)) return fail("Seeding is offline only. Put MIRIS_OFFLINE=1 in .env.local.");
+      const fx = await readFixtures();
+      const stored = await readData(MIRIS_DIR);
+      const bank = normaliseBank(stored.specimens as any[]);
+      fx.stages.forEach((st: any, i: number) => {
+        // Falls back to the demo asset, so this works before the six real
+        // uuids have been captured, and sharpens once they have.
+        const uuid = String(st.uuid || "").trim() || DEMO_UUID;
+        bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, dossier: st.dossier ?? null, uuid, status: "live", imageUrl: "", glb: `offline:${stageFile(i, st.stage)}`, modelStartedAt: 0 };
+      });
+      await writeFixtureZip(fx.stages);
+      await writeData(MIRIS_DIR, {
+        track: stored.track || TRACKS[0].id,
+        concept: fx.concept,
+        specimens: bank,
+        viewerKey: stored.viewerKey || VIEWER_KEY,
+        zipReady: true,
+        hatchedAt: Date.now(),
+        active: 0,
+      });
+      const real = fx.stages.filter((s2: any) => s2.uuid).length;
+      return ok({ seeded: bank.length, realUuids: real, usingDemo: bank.length - real });
+    }
+
+    case "unseed": {
+      if (!offline(mode)) return fail("Seeding is offline only. Put MIRIS_OFFLINE=1 in .env.local.");
+      await writeData(MIRIS_DIR, { concept: "", specimens: emptyBank(), zipReady: false, hatchedAt: 0, active: 0 });
+      return ok({ ok: true });
+    }
+
     default:
       return fail(`unknown action: ${action}`);
   }
@@ -470,6 +533,22 @@ const readBody = (req: IncomingMessage) =>
  * file read, so an attendee who pastes their key into .env.local does not also
  * have to restart the dev server for it to count. */
 const falKey = (mode: string) => loadEnv(mode, ROOT, "").FAL_KEY ?? "";
+
+/* Offline replays a recorded run instead of calling fal, so the whole flow can
+ * be rehearsed in seconds and for nothing. Read per request like the key, and
+ * never inferred from a missing FAL_KEY: "FAL_KEY is not set" is a sentence an
+ * attendee is meant to see, not one to silently paper over. */
+const offline = (mode: string) => (loadEnv(mode, ROOT, "").MIRIS_OFFLINE ?? "") === "1";
+
+const readFixtures = async (): Promise<{ concept: string; stages: any[] }> =>
+  JSON.parse(await readFile(FIXTURES, "utf8"));
+
+/** Six cubes standing in for six creatures, so the download step still works. */
+const writeFixtureZip = async (stages: any[]) =>
+  writeFile(
+    ZIP_OFFLINE,
+    zipSync(stages.map((st, i) => ({ name: stageFile(i, st.stage), data: tinyGlb(0.6 + i * 0.3) }))),
+  );
 
 export function mirisDevApi(mode: string): Plugin {
   return {
@@ -503,7 +582,7 @@ export function mirisDevApi(mode: string): Plugin {
             if ((req.url ?? "").includes("download")) {
               let zip: Buffer;
               try {
-                zip = await readFile(ZIP);
+                zip = await readFile(offline(mode) ? ZIP_OFFLINE : ZIP);
               } catch {
                 return send(res, fail("No archive yet. Grow the series first.", 404));
               }
@@ -513,7 +592,9 @@ export function mirisDevApi(mode: string): Plugin {
               res.setHeader("Content-Length", String(zip.length));
               return res.end(zip);
             }
-            return send(res, ok(await readData(MIRIS_DIR)));
+            // The flag rides along with the state so the sidebar can show its
+            // dev controls without a second request.
+            return send(res, ok({ ...(await readData(MIRIS_DIR)), offline: offline(mode) }));
           }
 
           if (req.method === "POST") {

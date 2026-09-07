@@ -13,6 +13,10 @@ vendor/miris-web-sdk-*.tgz
 .superpowers/
 miris/data.json
 miris/specimens.zip
+# Offline rehearsal artefacts: the cube archive is rebuilt on every seed, and
+# specimens-out/ is just the real zip unpacked for uploading to the portal.
+miris/specimens.offline.zip
+specimens-out/
 .playwright-mcp/
 tsconfig.tsbuildinfo
 

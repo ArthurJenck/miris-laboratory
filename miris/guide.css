@@ -1531,3 +1531,23 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 .mw-stage.is-building .mw-stage-state { color: var(--track); }
 .mw-stage.is-ready .mw-stage-state, .mw-stage.is-live .mw-stage-state { color: var(--mono-200); }
 .mw-dl { display: inline-flex; align-items: center; justify-content: center; margin-top: 14px; text-decoration: none; }
+
+/* Offline dev controls. Loud on purpose, and lifted clear of the HUD's own
+   bottom-left readout: it must be obvious that the lab was seeded, not grown. */
+.mw-dev {
+  position: fixed; left: 16px; bottom: 44px; z-index: 60;
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 9px; border-radius: 8px;
+  background: rgba(12, 18, 24, 0.92); border: 1px solid rgba(120, 200, 230, 0.35);
+  font-family: "Geist Mono", ui-monospace, monospace; font-size: 11px;
+}
+.mw-dev-tag { color: #7fe3ff; letter-spacing: 0.14em; }
+.mw-dev button {
+  padding: 4px 9px; border-radius: 5px; cursor: pointer;
+  color: #dff3fb; background: rgba(60, 130, 160, 0.28);
+  border: 1px solid rgba(120, 200, 230, 0.4);
+  font: inherit;
+}
+.mw-dev button:hover:not(:disabled) { background: rgba(80, 165, 200, 0.42); }
+.mw-dev button:disabled { opacity: 0.5; cursor: default; }
+.mw-dev-err { color: #ffb4b4; max-width: 320px; }

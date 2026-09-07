@@ -221,6 +221,49 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
   );
 }
 
+/** Offline-only controls, rendered nowhere else: the whole recorded run in one
+ *  press, so everything downstream of the twelve minute wait can be rehearsed
+ *  without paying for it. Reloads afterwards because the stage reads the API
+ *  once on mount, and seeded capsules only stream after a fresh boot. */
+export function DevBar({ hatch }: { hatch: HatchState }) {
+  const { data, refresh } = hatch;
+  const [busy, setBusy] = useState("");
+  const [oops, setOops] = useState("");
+  if (!data?.offline) return null;
+
+  const run = async (action: string) => {
+    setBusy(action);
+    setOops("");
+    try {
+      const res = await fetch("/api/miris", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error ?? `request failed: ${res.status}`);
+      await refresh();
+      location.reload();
+    } catch (e: any) {
+      setOops(e?.message ?? String(e));
+      setBusy("");
+    }
+  };
+
+  return (
+    <div className="mw-dev">
+      <span className="mw-dev-tag">OFFLINE</span>
+      <button onClick={() => run("seed")} disabled={!!busy}>
+        {busy === "seed" ? "Seeding…" : "Seed the lab"}
+      </button>
+      <button onClick={() => run("unseed")} disabled={!!busy}>
+        {busy === "unseed" ? "Clearing…" : "Empty it"}
+      </button>
+      {oops && <span className="mw-dev-err">{oops}</span>}
+    </div>
+  );
+}
+
 export function CapsuleForm({ data, onDone }: { data: any; onDone: () => void }) {
   const i = data?.active ?? 0;
   const slot = data?.specimens?.[i];

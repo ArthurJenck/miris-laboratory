@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import HatchTray, { useHatch } from "./Build";
+import HatchTray, { DevBar, useHatch } from "./Build";
 import { STEPS, type Sub } from "./curriculum";
 import { transition } from "./transition";
 import { nextSub, stepOfSub } from "./progress";
@@ -285,18 +285,28 @@ export default function MirisGuide() {
 
   if (absent) return null;
   if (!loaded) return <PanelSkeleton />;
-  if (!data.track) return <Start onChoose={chooseTrack} note={note} />;
+  if (!data.track)
+    return (
+      <>
+        <DevBar hatch={hatch} />
+        <Start onChoose={chooseTrack} note={note} />
+      </>
+    );
 
   if (!open) {
     return (
-      <button className="mw-tab" style={trackVars} onClick={() => setOpen(true)}>
-        Guide
-      </button>
+      <>
+        <DevBar hatch={hatch} />
+        <button className="mw-tab" style={trackVars} onClick={() => setOpen(true)}>
+          Guide
+        </button>
+      </>
     );
   }
 
   return (
     <>
+      <DevBar hatch={hatch} />
       <HatchTray hatch={hatch} />
       <aside className="mw-panel" style={trackVars}>
         <header className="mw-head">
