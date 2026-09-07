@@ -1,39 +1,13 @@
-const FLOOR = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <circleGeometry args={[18, 64]} />
-        <meshStandardMaterial map={deck} roughnessMap={wear} roughness={0.9} metalness={0.35} />
+const FLOOR = `      <fog attach="fog" args={[0x02050a, 20, 50]} />
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
+        <circleGeometry args={[46, 96]} />
+        <meshStandardMaterial {...floor} roughness={1} metalness={1} normalScale={[0.9, 0.9]} />
       </mesh>
+      <gridHelper args={[92, 61, 0x2a86c4, 0x134766]} position={[0, 0.006, 0]} />
       <mesh position={[0, 6.9, 0]}>
-        <cylinderGeometry args={[16, 16, 14, 48, 1, false]} />
-        <meshStandardMaterial
-          map={wall}
-          emissiveMap={wallGlow}
-          emissive={0xffffff}
-          emissiveIntensity={0.35}
-          roughness={0.9}
-          metalness={0.1}
-          side={DoubleSide}
-        />
-      </mesh>
-      {[0, 1, 2, 3, 4, 5].map((i) => {
-        const angle = ((i + 0.5) / 6) * Math.PI * 2;
-        return (
-          <mesh
-            key={i}
-            position={[Math.cos(angle) * 9.4, 2.1, Math.sin(angle) * 9.4]}
-            rotation={[0, -angle + Math.PI / 2, 0]}
-          >
-            <planeGeometry args={[2.6, 3.4]} />
-            <meshBasicMaterial
-              map={shade}
-              color={0x3f8fe0}
-              transparent
-              opacity={0.9}
-              depthWrite={false}
-              side={DoubleSide}
-            />
-          </mesh>
-        );
-      })}`;
+        <cylinderGeometry args={[46, 46, 14, 64, 1, false]} />
+        <meshStandardMaterial color={0x04070b} roughness={1} metalness={0} side={DoubleSide} />
+      </mesh>`;
 
 const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
         <ringGeometry args={[2.6, 3.8, 64]} />
@@ -41,14 +15,38 @@ const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02,
       </mesh>
       {[2.6, 3.8].map((r) => (
         <mesh key={r} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-          <torusGeometry args={[r, 0.03, 6, 96]} />
+          <torusGeometry args={[r, 0.022, 8, 128]} />
           <meshBasicMaterial color={0x3bd6fe} toneMapped={false} />
         </mesh>
       ))}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
         <ringGeometry args={[3.12, 3.28, 64]} />
-        <meshBasicMaterial color={0xc8e8f7} toneMapped={false} transparent opacity={0.75} />
-      </mesh>`;
+        <meshBasicMaterial color={0xffffff} toneMapped={false} transparent opacity={0.85} />
+      </mesh>
+      <mesh position={[0, 0.02, -10.7]}>
+        <boxGeometry args={[2.4, 0.04, 14.2]} />
+        <meshStandardMaterial color={0x0b1119} roughness={0.45} metalness={0.6} />
+      </mesh>
+      {[-1.22, 1.22].map((x) => (
+        <mesh key={x} position={[x, 0.05, -10.7]}>
+          <boxGeometry args={[0.05, 0.02, 14.2]} />
+          <meshBasicMaterial color={0x3bd6fe} toneMapped={false} />
+        </mesh>
+      ))}
+      <group position={[0, 0, -18.1]}>
+        <mesh position={[0, 1.9, 0]}>
+          <boxGeometry args={[3.8, 4.0, 0.6]} />
+          <meshStandardMaterial color={0x0a0e14} roughness={0.55} metalness={0.45} />
+        </mesh>
+        <mesh position={[0, 1.8, 0.31]}>
+          <planeGeometry args={[2.7, 3.3]} />
+          <meshBasicMaterial color={0x6db6ff} toneMapped={false} />
+        </mesh>
+        <pointLight position={[0, 1.2, 1.6]} intensity={110} distance={24} decay={2} color={0x7cc0ff} />
+        <group position={[0, 0, 2.6]}>
+          <FloorGlow radius={3.6} color={0x9ad4ff} opacity={0.95} />
+        </group>
+      </group>`;
 
 const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
         const angle = (i / 6) * Math.PI * 2;
@@ -75,7 +73,7 @@ const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
               />
             </mesh>
             <LightShaft />
-            <Bubbles color={TINTS[i]} />
+            <Pulse color={TINTS[i]} seed={i / 6} />
             <FloorGlow color={TINTS[i]} />
             {[0.36, 2.96].map((y) => (
               <mesh key={y} position={[0, y, 0]} rotation={[-Math.PI / 2, 0, 0]}>

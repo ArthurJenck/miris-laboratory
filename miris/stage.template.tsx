@@ -9,8 +9,8 @@ import Dossier from "../miris/Dossier";
 import LabHud, { CapsuleProbe } from "../miris/LabHud";
 import CapsuleFocus from "../miris/CapsuleFocus";
 import FitInGlass from "../miris/FitInGlass";
-import { Bubbles, FloorGlow, LightShaft } from "../miris/CapsuleFx";
-import { deckTexture, shadeTexture, wallGlowMap, wallTexture, walkwayTexture, wearMap } from "../miris/textures";
+import { FloorGlow, LightShaft, Pulse } from "../miris/CapsuleFx";
+import { floorMaps, walkwayTexture, wearMap } from "../miris/textures";
 import EffectCanvas, { anchorPos, anchorSeen, screenAspect } from "../miris/EffectCanvas";
 import { StageSkeleton } from "../miris/Skeleton";
 
@@ -35,12 +35,9 @@ export default function Stage() {
   // miris:field-end
 
   const specimens = data?.specimens ?? [];
-  const deck = useMemo(() => { const t = deckTexture(); t.repeat.set(9, 9); return t; }, []);
+  const floor = useMemo(() => floorMaps(30), []);
   const walk = useMemo(() => { const t = walkwayTexture(); t.repeat.set(16, 2); return t; }, []);
   const wear = useMemo(() => { const t = wearMap(); t.repeat.set(7, 7); return t; }, []);
-  const wall = useMemo(() => { const t = wallTexture(); t.repeat.set(10, 1); return t; }, []);
-  const wallGlow = useMemo(() => { const t = wallGlowMap(); t.repeat.set(10, 1); return t; }, []);
-  const shade = useMemo(() => shadeTexture(), []);
 
   if (!data || !data.track) return <StageSkeleton />;
 
@@ -64,8 +61,10 @@ export default function Stage() {
       camera={{ position: [0, 1.7, 0.02], fov: 55 }}
       style={{ position: "fixed", inset: 0 }}
     >
-      <hemisphereLight args={[0x7ea8c4, 0x080d12, 0.3]} />
-      <directionalLight position={[-6, 9, 4]} intensity={0.55} color={0xbfe0f2} />
+      <hemisphereLight args={[0x7ea8c4, 0x0c141c, 0.45]} />
+      {/* Strong enough to reach the deck at the walls. The scan is dark teal, and
+          a point light with falloff lit only the middle of the room. */}
+      <directionalLight position={[-6, 9, 4]} intensity={1.1} color={0xbfe0f2} />
       <pointLight position={[0, 0.3, 0]} intensity={4} distance={9} decay={2} color={0x3bd6fe} />
 
       {/* miris:scene-start */}

@@ -1,4 +1,4 @@
-import { CanvasTexture, RepeatWrapping, type Texture } from "three";
+import { CanvasTexture, RepeatWrapping, SRGBColorSpace, TextureLoader, type Texture } from "three";
 
 /* Surfaces are drawn here rather than shipped as image files. WebContainer
    drops binaries on import, so a laboratory that depended on a texture folder
@@ -225,3 +225,32 @@ export const wearMap = () =>
     ctx.fillRect(0, 0, s, s);
     noise(ctx, s, 90, 4);
   });
+
+/* The deck is a real scan, CGAxis "Green Sci-Fi Floor 8766", downscaled to 2K
+   colour and normal and 1K for the rest. The procedural deck below stayed dark
+   and featureless from anywhere but the middle of the room; this one has
+   grooves for the normal map to catch the light in. Loaded rather than drawn,
+   which binaries surviving the bolt import made possible. */
+const loader = new TextureLoader();
+const tile = (url: string, repeat: number, srgb = false): Texture => {
+  const t = loader.load(url);
+  t.wrapS = t.wrapT = RepeatWrapping;
+  t.repeat.set(repeat, repeat);
+  t.anisotropy = 8;
+  if (srgb) t.colorSpace = SRGBColorSpace;
+  return t;
+};
+
+/** Every map the deck material takes, sharing one repeat so they stay aligned. */
+export const floorMaps = (repeat = 12) => {
+  const ao = tile("/textures/floor/floor_ao.jpg", repeat);
+  // CircleGeometry carries one uv set; aoMap reads uv1 unless told otherwise.
+  ao.channel = 0;
+  return {
+    map: tile("/textures/floor/floor_basecolor.jpg", repeat, true),
+    normalMap: tile("/textures/floor/floor_normal.jpg", repeat),
+    roughnessMap: tile("/textures/floor/floor_roughness.jpg", repeat),
+    metalnessMap: tile("/textures/floor/floor_metallic.jpg", repeat),
+    aoMap: ao,
+  };
+};

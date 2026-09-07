@@ -12,7 +12,16 @@ export default function Dossier({ specimens = [] as any[] }) {
   const i = getSelected();
 
   useEffect(() => {
+    /* A drag is not a click. Orbiting the room ends with the pointer wherever
+       it ends, and if that is over a capsule the file opened and the camera
+       walked off to it. Anything that moved more than a few pixels between
+       down and up is the orbit, not a choice. */
+    let downAt: [number, number] | null = null;
+    const onDown = (e: MouseEvent) => {
+      downAt = [e.clientX, e.clientY];
+    };
     const onClick = (e: MouseEvent) => {
+      if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
       // Anything with its own controls, the guide included, keeps its click.
       // .mw-dossier-panel, not .mw-dossier: the shorter class does not exist,
       // so every click inside the open file fell through to the hit test and
@@ -32,9 +41,11 @@ export default function Dossier({ specimens = [] as any[] }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSelected(-1);
     };
+    window.addEventListener("mousedown", onDown);
     window.addEventListener("click", onClick);
     window.addEventListener("keydown", onKey);
     return () => {
+      window.removeEventListener("mousedown", onDown);
       window.removeEventListener("click", onClick);
       window.removeEventListener("keydown", onKey);
     };

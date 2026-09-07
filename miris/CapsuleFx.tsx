@@ -91,116 +91,70 @@ export function LightShaft({
   );
 }
 
-/* Bubbles rising through the fluid. Three sparse layers on a cylinder just
-   inside the glass: each cell either holds a bubble or does not, and the whole
-   grid slides upward, so nothing has to be simulated or stored. */
-const BUBBLE_FRAG = `
+/* The fluid pulses. Every few seconds a band of the capsule's own colour
+   rises through it, ripples slightly on its way up, and is gone; between
+   pulses the tube barely breathes. Each capsule runs on its own clock so the
+   six never fire together. Additive, so it reads as light in the fluid rather
+   than paint on the glass. */
+const PULSE_FRAG = `
   varying vec2 vUv;
-  varying vec3 vNormalV;
-  varying vec3 vPosV;
   uniform float uTime;
   uniform vec3 uColor;
-  uniform float uCircum;
-  uniform float uHeight;
-
-  float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-
-  float layer(vec2 uv, float cols, float rows, float speed, float seed) {
-    vec2 g = vec2(uv.x * cols, (uv.y - uTime * speed) * rows);
-    vec2 id = floor(g);
-    vec2 f = fract(g) - 0.5;
-    float h = hash(id + seed);
-    // Most cells stay empty, so the fluid reads as still water with the odd bubble.
-    float present = step(0.78, h);
-    // Wobble, because a bubble does not rise in a straight line.
-    f.x += sin(uTime * 1.7 + h * 30.0) * 0.16;
-
-    // Round means round in world units, not in cell counts. This tube's
-    // circumference is a little over twice its height, so a cell is wider
-    // than it is tall; correcting by cols/rows instead over-corrected by
-    // about half again and stretched every bubble into a vertical oval.
-    float aspect = (uCircum / cols) / (uHeight / rows);
-    vec2 d2 = f * vec2(aspect, 1.0);
-    float r = 0.10 + 0.10 * fract(h * 41.0);
-    float d = length(d2);
-
-    // A bubble is a shell: bright where the eye looks through its edge, almost
-    // clear through the middle, with one small highlight off to a side. Filling
-    // the whole disc is what made these read as sparks rather than air.
-    float shell = smoothstep(r, r * 0.82, d) * smoothstep(r * 0.5, r * 0.78, d);
-    float fill = smoothstep(r, r * 0.2, d) * 0.10;
-    float spec = smoothstep(r * 0.34, 0.0, length(d2 - vec2(-0.30, 0.34) * r));
-    return present * (shell * 0.55 + fill + spec * 0.5);
-  }
+  uniform float uSeed;
 
   void main() {
-    float a = layer(vUv, 9.0, 5.0, 0.030, 0.0);
+    // Period differs per capsule, so the room does not blink in unison.
+    float period = 4.5 + uSeed * 3.0;
+    float t = mod(uTime + uSeed * 17.0, period);
+    float travel = 1.6;
+    float live = 1.0 - step(travel, t);
+    float pos = t / travel;
 
-    // The far wall of the tube is seen through the fluid, so it gets the one
-    // coarse layer at a third strength while the near wall gets the detail.
-    // This mesh is double sided, so that is half the fragments in the pass for
-    // nothing anyone can point at, and it also stops the two walls' bubbles
-    // reading as one crowded field crossing through itself.
-    if (gl_FrontFacing) {
-      a += layer(vUv, 15.0, 9.0, 0.052, 7.3);
-    } else {
-      a *= 0.35;
-    }
+    // The band ripples around the tube as it climbs, so it reads as a wave in
+    // fluid rather than a scanner line on glass.
+    float ripple = sin(vUv.x * 6.2832 * 3.0 + t * 5.0) * 0.035;
+    float d = vUv.y - pos + ripple;
+    float band = exp(-d * d * 90.0);
+    // Softer trail behind the crest than ahead of it.
+    float trail = exp(-max(d, 0.0) * 14.0) * 0.35;
+    float pulse = live * (band + trail);
+    // Ease in as it leaves the floor and out as it reaches the rim.
+    pulse *= smoothstep(0.0, 0.15, pos) * (1.0 - smoothstep(0.85, 1.0, pos));
 
-    // Thin out at the very top and bottom so bubbles do not pop at the seams.
-    a *= smoothstep(0.0, 0.10, vUv.y) * (1.0 - smoothstep(0.90, 1.0, vUv.y));
-    a = clamp(a, 0.0, 1.0) * 0.85;
-    // Mostly water, faintly the capsule's colour.
-    vec3 col = mix(vec3(0.85, 0.95, 1.0), uColor, 0.35) * a;
+    // Faint idle breathing so the fluid never looks switched off.
+    float idle = 0.035 + 0.025 * sin(uTime * 0.9 + vUv.y * 4.0 + uSeed * 6.2832);
 
-    // The glass rim rides along in this pass rather than getting a mesh of its
-    // own. Glass is near invisible face on and bright where you look along its
-    // curve, and that band at the silhouette is the whole reason the eye reads
-    // a round tube instead of a flat tinted panel. Six more transparent
-    // cylinders is the one thing this room cannot afford, and the fluid
-    // already draws one four centimetres inside the glass.
-    float facing = abs(dot(normalize(vNormalV), normalize(-vPosV)));
-    float rim = pow(1.0 - facing, 3.0) * 0.55;
-    col += uColor * rim;
-
-    gl_FragColor = vec4(col, clamp(a + rim, 0.0, 1.0));
+    float a = (pulse * 0.85 + idle);
+    a *= smoothstep(0.0, 0.08, vUv.y) * (1.0 - smoothstep(0.92, 1.0, vUv.y));
+    gl_FragColor = vec4(uColor * a, a);
   }
 `;
 
-export function Bubbles({ radius = 0.86, height = 2.5, color = 0xd8f2ff }) {
+export function Pulse({ radius = 0.86, height = 2.5, color = 0xd8f2ff, seed = Math.random() }) {
   const mat = useMemo(
     () =>
       new ShaderMaterial({
         vertexShader: VERT,
-        fragmentShader: BUBBLE_FRAG,
-        uniforms: {
-          uTime: { value: 0 },
-          uColor: { value: [0, 0, 0] },
-          // What the shader needs to keep a bubble round: the tube's real
-          // proportions, so changing the radius or height here cannot silently
-          // go back to stretching them.
-          uCircum: { value: 2 * Math.PI * radius },
-          uHeight: { value: height },
-        },
+        fragmentShader: PULSE_FRAG,
+        uniforms: { uTime: { value: 0 }, uColor: { value: [0, 0, 0] }, uSeed: { value: seed } },
         transparent: true,
         depthWrite: false,
         blending: AdditiveBlending,
         side: DoubleSide,
       }),
-    [radius, height],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
   useMemo(() => {
     const c = color;
     mat.uniforms.uColor.value = [((c >> 16) & 255) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255];
   }, [mat, color]);
-  const started = useRef(Math.random() * 40);
   useFrame((_, dt) => {
-    started.current += dt;
-    mat.uniforms.uTime.value = started.current;
+    mat.uniforms.uTime.value += dt;
   });
   return (
     <mesh position={[0, 1.66, 0]} material={mat}>
-      <cylinderGeometry args={[radius, radius, height, 28, 1, true]} />
+      <cylinderGeometry args={[radius, radius, height, 36, 1, true]} />
     </mesh>
   );
 }
