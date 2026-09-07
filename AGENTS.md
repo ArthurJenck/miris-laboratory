@@ -61,8 +61,12 @@ Re-pin to a registry version once this build ships to npm.
 `@miris-inc/core` is a peer dependency of `@miris-inc/three`. Nothing imports it
 directly, so it looks removable from `package.json`. It is not.
 
-WebContainer drops binary files on import. Attendees running in bolt.new may see
-the chooser artwork and fonts missing; that is the platform, not the repo.
+WebContainer keeps binary files on GitHub import. This note used to say the
+opposite, and blamed missing chooser artwork and fonts on the platform. Measured
+in bolt on 2026-09-07 against `budget-lab-test`: all six Geist `.woff2` faces and
+both SDK tarballs (5MB and 10MB) arrived byte-identical, and `npm install`
+resolved the vendored SDK. If artwork goes missing in bolt, the cause is
+somewhere else — do not write it off as the platform.
 
 `optimizeDeps.include` in `vite.config.ts` is load-bearing, not tidying. The SDK
 is in `optimizeDeps.exclude` so esbuild leaves its WASM paths alone, but that
