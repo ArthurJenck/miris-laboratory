@@ -101,7 +101,7 @@ export const STEPS: Step[] = [
         num: "2.4",
         title: "Make your Miris account",
         body:
-          "Streaming needs an account, and your six meshes need somewhere to live. Sign up at app.miris.com while the series grows. When the tray offers the archive, download it: six .glb files, numbered in growth order. Upload all six, then come back. Processing takes a few minutes of its own, so start early.",
+          "Streaming needs an account, and your six meshes need somewhere to live. Sign up at app.miris.com while the series grows. When the tray offers the archive, download it: six .glb files, numbered in growth order. Upload all six, then come back. You will scope a viewer key to them once they have processed. Processing takes a few minutes of its own, so start early.",
         link: { href: PORTAL_URL, label: "Open Miris" },
       },
       {
@@ -124,14 +124,16 @@ export const STEPS: Step[] = [
         num: "3.1",
         title: "Upload your specimen",
         body:
-          "You started this at step 2.4. Back in the Miris portal, check all six uploads have finished processing. You need seven values in total: the asset uuid from each of the six asset pages, and one viewer key from your account settings. The viewer key is what lets a browser read your assets without logging anyone in, and the same one works for all six.",
+          "You started this at step 2.4. Back in the Miris portal, check all six uploads have finished processing and copy the asset uuid from each of the six asset pages. Then create a viewer key scoped to those six assets, rather than one that can read everything in your account. One scoped key covers all six capsules.",
         link: { href: PORTAL_URL, label: "Open Miris" },
+        explain:
+          "A viewer key is not a password. It is what lets a browser read your assets with nobody logged in, which means it ships inside the page: anyone who opens your deployed lab can read it out of the source in a few seconds. That is fine, and it is the point, but it decides what the key should be allowed to reach. An account wide key hands every reader of your page the ability to fetch anything you ever upload, including work that has nothing to do with this workshop. A key scoped to these six assets can fetch exactly these six and nothing else, so the worst case is that someone streams the creature you just built on purpose. Scope is the thing you control here, not secrecy.",
       },
       {
         num: "3.2",
         title: "Put it in the glass",
         body:
-          "Pick a capsule, paste the uuid for that stage, and seal it. Work along the row in growth order so the life cycle reads round the room. The viewer key only needs pasting once.",
+          "Pick a capsule, paste the uuid for that stage, and seal it. Work along the row in growth order so the life cycle reads round the room. Your scoped viewer key only needs pasting once, and every capsule reads through it.",
         capsuleUuid: true,
         check: "capsuleUuid",
         explain:

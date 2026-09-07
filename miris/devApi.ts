@@ -83,7 +83,7 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
   },
 
   async capsuleUuid() {
-    const { specimens, active } = await readData(MIRIS_DIR);
+    const { specimens, active, viewerKey } = await readData(MIRIS_DIR);
     const slot = (specimens as any[])?.[Number(active) || 0];
     const uuid = slot?.uuid ?? "";
     if (!uuid) return "That capsule has no asset id yet. Paste your uuid and viewer key above.";
@@ -91,6 +91,13 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
       return `That uuid does not look like one: "${uuid}". Copy just the id from the asset page.`;
     if (uuid === DEMO_UUID)
       return "That capsule still holds the demo specimen. Paste your own asset id from the portal.";
+    // The key is checked here rather than at 3.1 because 3.1 happens in the
+    // portal, where there is nothing on disk to look at. A capsule reading
+    // through the demo key streams the demo, whatever uuid is next to it.
+    if (!viewerKey)
+      return "No viewer key yet. Paste the key you scoped to your six assets; every capsule reads through it.";
+    if (viewerKey === VIEWER_KEY)
+      return "That is still the workshop's demo viewer key, which cannot read your assets. Paste the one you scoped to your six.";
     return null;
   },
 

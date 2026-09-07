@@ -340,7 +340,7 @@ export function CapsuleForm({ data, onDone }: { data: any; onDone: () => void })
     <div className="mw-build mw-capsule">
       <p className="l12">Capsule {slot?.id ?? "01"}</p>
       <input value={uuid} onChange={(e) => setUuid(e.target.value)} placeholder="asset uuid" spellCheck={false} />
-      <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="viewer key" spellCheck={false} />
+      <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="scoped viewer key" spellCheck={false} />
       <button className="btn btn-primary btn-sm" disabled={busy || !uuid.trim()} onClick={save}>
         {busy ? "Sealing" : "Seal the capsule"}
       </button>
