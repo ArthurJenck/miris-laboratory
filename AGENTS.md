@@ -150,6 +150,14 @@ added, so the guard adds those two getters and starts the controller then.
 Worth filing against the SDK; if it starts the controller itself, the guard
 can go.
 
+**Glass and splats cannot be depth-sorted against each other.** The SDK draws
+all six specimens as one splat mesh with no depth write, so a tube's glass is
+either over every creature or under every creature. Under, a tube's own near
+wall never tinted the creature behind it; over, a tube across the room tinted a
+creature in front of it. `miris/GlassOrder.tsx` decides per tube per frame from
+the readout's screen boxes: over, unless a nearer capsule overlaps it on
+screen. It finds the glass by the `glass-N` name the capsule snippet gives it.
+
 **What the room costs, measured.** With the splat budget pinned and the canvas
 at six times its size so nothing sits at the frame cap, every category of
 scene object was shown alone: glass, shafts, pulses, glows, rings, door, the
