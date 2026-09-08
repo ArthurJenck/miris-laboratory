@@ -67,9 +67,9 @@ const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
               <meshStandardMaterial
                 color={TINTS[i]}
                 emissive={TINTS[i]}
-                emissiveIntensity={0.35}
+                emissiveIntensity={0.12}
                 transparent
-                opacity={0.16}
+                opacity={0.05}
                 roughness={0.2}
                 metalness={0.1}
                 depthWrite={false}

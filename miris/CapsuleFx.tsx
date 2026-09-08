@@ -98,6 +98,8 @@ export function LightShaft({
    than paint on the glass. */
 const PULSE_FRAG = `
   varying vec2 vUv;
+  varying vec3 vNormalV;
+  varying vec3 vPosV;
   uniform float uTime;
   uniform vec3 uColor;
   uniform float uSeed;
@@ -135,7 +137,16 @@ const PULSE_FRAG = `
     // fluid glowing around the specimen rather than the glass being painted.
     idle += uHover * 0.2 * (1.0 - abs(vUv.y - 0.5) * 2.0);
 
-    float a = pulse * 0.85 + idle;
+    // The tint is the wall itself, seen at a grazing angle: strong at the
+    // silhouette, gone in the middle, so the creature is never looked at
+    // through colour. Fine horizontal lines ride on it, like a mesh in the
+    // glass, and fade with it toward the centre.
+    float facing = abs(dot(normalize(vNormalV), normalize(-vPosV)));
+    float rim = pow(1.0 - facing, 2.2);
+    float lines = 0.5 + 0.5 * sin(vUv.y * 180.0);
+    float wall = rim * (0.26 + 0.16 * lines);
+
+    float a = pulse * 0.6 + idle + wall;
     a *= smoothstep(0.0, 0.08, vUv.y) * (1.0 - smoothstep(0.92, 1.0, vUv.y));
     gl_FragColor = vec4(uColor * a, a);
   }
