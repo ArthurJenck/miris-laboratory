@@ -4,7 +4,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test tests/*.test.mjs",
+    "reference": "node scripts/workshop-reference.mjs"
   },
   "dependencies": {
     "@miris-inc/core": "file:vendor/miris-inc-core-0.0.9-budget-lab.bd3d02d.tgz",

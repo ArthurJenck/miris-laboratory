@@ -9,8 +9,13 @@ npm install
 npm run dev
 ```
 
-Then follow the guide on the right. It writes most of the code for you if you
-ask it to, and explains what it wrote either way.
+Then follow the guide on the right. The scene starts empty: add each lesson’s
+code, run it, and try its variation. You can type, ask your agent, or use the
+recovery button. Supplied room components handle the detailed geometry; you
+compose them and implement the stream fitting, dossier and shader.
+
+The welcome film and `/?view=reference` show the completed destination without
+changing your code or saved specimens.
 
 ## Before you arrive
 
@@ -55,11 +60,16 @@ enough. Do not wait for the tray to finish before starting step 2.
 React, Vite, React Three Fiber and drei. Not Next: the App Router cannot run
 in WebContainer, which is where most attendees run this.
 
-- `app/stage.tsx` is your file. It ships with `miris:` marker comments and the
+- `app/stage.tsx` is your file. Its lesson blocks start empty or with the
+  small placeholders needed to compile. It ships with `miris:` markers and the
   guide writes between them when you press **Or paste it for me**. Everything
   outside the markers is yours and is never touched.
-- `app/main.tsx` mounts the stage and the guide. You edit it once, at the end,
-  to remove the guide.
+- `app/main.tsx` mounts the stage and guide. Production explicitly hides the
+  guide; no closing edit is required. It also hosts the separate reference view.
+- `miris/stage.template.tsx` is the identical clean starter.
+  `miris/stage.reference.tsx` is generated from that template by applying the
+  curriculum’s code lessons in order. Run `npm run reference` after changing
+  the template or snippets; `npm test` detects drift.
 - `miris/` is the workshop's machinery: the guide, the curriculum, the
   snippets, the dev API that proxies fal, and a handful of scene helpers.
   Nothing in it needs editing to finish the workshop.
@@ -133,10 +143,11 @@ off and ACES could come back.
 
 The dev API is Vite middleware, so a built site has no endpoint behind it:
 nothing there can spend a fal key or rewrite a file. `miris/snapshot.ts` freezes
-`data.json` into `dist/api/miris` at build time so the published lab renders
-exactly what the attendee built. The guide detects the missing API by content
-type (a static host answers an unknown path with 200 and `text/html`) and
-renders nothing, so publishing with the guide still mounted is harmless.
+`data.json` into `dist/miris-scene.json` at build time, including only the
+scene’s specimen IDs, dossier content and scoped viewer key. The production
+stage reads this JSON file, and the guide renders nothing in production.
+A legacy `dist/api/miris` copy is also emitted. Check the public link on a phone
+in portrait and landscape, including a streamed specimen and its pedestal.
 
 ### Known risks
 
@@ -158,6 +169,12 @@ fills in on its own once processing finishes.
 
 ### Testing
 
-Browser verification lives outside this repo so a fork carries no Playwright:
+`npm test` checks the empty starter, curriculum/snippet coverage, preservation
+of customized fitting code when File is added, clear-block dependencies, and
+type-checks every intermediate lesson. It also verifies that the completed
+reference is exactly the cumulative lesson result. `npm run build` checks the
+production bundle.
+
+Additional browser verification lives outside this repo so a fork carries no Playwright:
 see `verify-stage.mjs` and `measure-seat.mjs` in the sibling `miris-atelier`
 checkout. `AGENTS.md` carries the measurement method for frame costs.

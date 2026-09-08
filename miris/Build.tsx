@@ -400,17 +400,18 @@ export function CapsuleAuto({ data, onDone, preset = "" }: { data: any; onDone: 
     setBusy(true);
     setError("");
     setFound(null);
+    let scene: any;
     try {
       const { MirisScene } = await import("@miris-inc/three");
-      const scene: any = new (MirisScene as any)({ viewerKey: key.trim() });
+      scene = new (MirisScene as any)({ viewerKey: key.trim() });
       if (scene.ready) await scene.ready;
       const assets = await scene.fetchAssets();
-      scene.dispose?.();
       if (!assets?.length) throw new Error("That key cannot see any assets. Check it is the key you scoped, and that the uploads finished.");
       setFound([...assets].sort((a: any, b: any) => orderOf(a.name) - orderOf(b.name) || String(a.name).localeCompare(String(b.name))));
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
+      scene?.dispose();
       setBusy(false);
     }
   };

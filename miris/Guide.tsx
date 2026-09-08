@@ -43,6 +43,10 @@ async function readApi(res: Response): Promise<ApiResult> {
 
 
 export default function MirisGuide() {
+  return import.meta.env.PROD ? null : <WorkshopGuide />;
+}
+
+function WorkshopGuide() {
   const [open, setOpen] = useState(true);
   const [absent, setAbsent] = useState(false);
 

@@ -91,11 +91,12 @@ export default function Start({ onChoose, note }: { onChoose: (id: string) => vo
         <section className="mw-welcome-intro" aria-labelledby="mw-welcome-title">
           <p className="mw-welcome-location">Welcome to Sublevel 7</p>
           <h1 id="mw-welcome-title">Build a living laboratory.</h1>
-          <p className="mw-welcome-description">Imagine a creature. Watch it grow through six life stages. Give it a world anyone can step into.</p>
+          <p className="mw-welcome-description">Start with an empty scene. Build the laboratory in code, connect six life stages through Miris, then add an HTML screen and a TSL shader.</p>
           <button type="button" className="mw-welcome-enter" onClick={enter} disabled={entering}>
             {entering ? "Opening the laboratory…" : "Enter the laboratory"}<span aria-hidden="true">↗</span>
           </button>
-          <p className="mw-welcome-detail">Your idea. Your specimens. Your corner of the web.</p>
+          <p className="mw-welcome-detail">The film shows the finished example. Your build starts without it.</p>
+          <a className="mw-reference-link" href="/?view=reference" target="_blank" rel="noopener noreferrer">Explore the completed reference ↗</a>
           {(error || note) && <p className="mw-welcome-note" role="status">{error || note}</p>}
         </section>
         <LaboratoryReel />

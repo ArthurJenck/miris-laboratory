@@ -2,6 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
+import { applyLesson, clearLesson } from "./lessonSource.mjs";
 import { readMarker, replaceMarker } from "./markers.mjs";
 import { readData, writeData } from "./store.mjs";
 import { CLEARS_TO, EMPTY_BLOCKS, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
@@ -421,7 +422,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       const marker = MARKER_FOR[body.snippetId as keyof typeof MARKER_FOR];
       if (!snippet) return fail(`unknown snippet: ${body.snippetId}`);
       const source = await readFile(STAGE, "utf8");
-      await writeFile(STAGE, replaceMarker(source, marker, snippet));
+      await writeFile(STAGE, applyLesson(source, body.snippetId));
       return ok({ ok: true, marker });
     }
 
@@ -432,10 +433,8 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
 
       // One step back, not the whole marker.
       const back = CLEARS_TO[id as keyof typeof CLEARS_TO];
-      const cleared = back ? SNIPPETS[back as keyof typeof SNIPPETS] : EMPTY_BLOCKS[marker as keyof typeof EMPTY_BLOCKS];
       const source = await readFile(STAGE, "utf8");
-      let next = replaceMarker(source, marker, cleared);
-      if (["fit", "file", "markup"].includes(id)) next = replaceMarker(next, "card", EMPTY_BLOCKS.card);
+      const next = clearLesson(source, id);
       await writeFile(STAGE, next);
       return ok({ ok: true, marker, back: back ?? null });
     }

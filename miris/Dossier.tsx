@@ -15,7 +15,7 @@ export default function Dossier({ specimens = [] as any[] }) {
        walked off to it. Anything that moved more than a few pixels between
        down and up is the orbit, not a choice. */
     let downAt: [number, number] | null = null;
-    const onDown = (e: MouseEvent) => {
+    const onDown = (e: PointerEvent) => {
       downAt = [e.clientX, e.clientY];
     };
     const onClick = (e: MouseEvent) => {
@@ -47,11 +47,11 @@ export default function Dossier({ specimens = [] as any[] }) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSelected(-1);
     };
-    window.addEventListener("mousedown", onDown);
+    window.addEventListener("pointerdown", onDown);
     window.addEventListener("click", onClick);
     window.addEventListener("keydown", onKey);
     return () => {
-      window.removeEventListener("mousedown", onDown);
+      window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("click", onClick);
       window.removeEventListener("keydown", onKey);
     };

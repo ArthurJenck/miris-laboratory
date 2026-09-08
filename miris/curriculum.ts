@@ -79,7 +79,7 @@ export const STEPS: Step[] = [
         stretch:
           "Change floorMaps(14) to floorMaps(8) above the return in app/stage.tsx. The scanned floor tiles get larger without changing the size of the room.",
         body:
-          "This branch includes the finished laboratory. These scene steps rebuild it a layer at a time. In app/stage.tsx, replace the contents of the miris:scene block with VaultFloor to start with the deck, enclosing shell, wall ribs and ceiling lights. Clear block removes that lesson layer; later scene steps clear back to the preceding layer.",
+          "Your stage starts with an empty scene block. Add VaultFloor between the miris:scene comments in app/stage.tsx to make the deck, enclosing shell, wall ribs and ceiling lights appear for the first time. The welcome film and separate reference show the destination. Clear block removes that lesson layer; later scene steps clear back to the preceding layer.",
         fill: "floor",
         check: "floor",
         explain:
@@ -115,7 +115,7 @@ export const STEPS: Step[] = [
         stretch:
           "Give one mirisStream a rotation prop. It is a scene node like the glass around it, so it turns like anything else.",
         body:
-          "Add the stream map after the capsule housings. Each entry needs an asset id and viewer key; if those are not connected yet, the tube stays empty until section 3. The completed example on this branch already includes FitInGlass, which sizes and centers each stream.",
+          "Add the stream map after the capsule housings. Each entry needs an asset id and viewer key; if those are not connected yet, the tube stays empty until section 3. The starter FitInGlass only positions its children. The next lesson adds measurement, centering and rotation. With no connected asset IDs yet, the housings remain empty until section 3.",
         fill: "streams",
         check: "streams",
         explain:
@@ -127,7 +127,7 @@ export const STEPS: Step[] = [
         stretch:
           "Change 0.08 in the rotation line to 0.04 for one turn about every 157 seconds, or to 0.16 for about 39 seconds. Leave fill at 0.7 while comparing the motion.",
         body:
-          "Replace FitInGlass in the miris:parts block with this version, or inspect the version already present in the completed example. It measures each arriving stream, fits it inside the glass and starts a slow turn once it has settled. Clearing this helper also removes the pedestal mounting so it cannot call a File component that is no longer present; section 4 adds it again.",
+          "Replace the placeholder FitInGlass in the miris:parts block with this version. It measures each arriving stream, fits it inside the glass and starts a slow turn once it has settled. If you have not connected assets yet, you will see that behavior at 3.3. Clearing this helper also removes the pedestal mounting so it cannot call a File component that is no longer present; section 4 adds it again.",
         fill: "fit",
         check: "fit",
         explain:
@@ -139,7 +139,7 @@ export const STEPS: Step[] = [
         stretch:
           "Set position to [0, 6, 0] and fov to 90 and you are looking down on the ring from the ceiling. Then put it back: the walk to a capsule starts from eye height.",
         body:
-          "No button for this one. You are in the middle of the laboratory: dragging turns you on the spot rather than flying you around the ring, and clicking a capsule walks you over to it. Open app/stage.tsx and find the camera prop on Canvas. The middle number of position is your eye height, so 1.7 is standing and 0.9 is crouched beside the plinths. fov is how much you see at once: raise it to 70 and the room wraps around you, drop it to 35 and you are looking down a lens at one capsule.",
+          "No button for this one. You are in the middle of the laboratory: dragging turns you on the spot rather than flying you around the ring, and you will add click-to-approach selection with the pedestal in 4.3. Open app/stage.tsx and find the camera prop on Canvas. The middle number of position is your eye height, so 1.7 is standing and 0.9 is crouched beside the plinths. fov is how much you see at once: raise it to 70 and the room wraps around you, drop it to 35 and you are looking down a lens at one capsule.",
         code: "camera={{ position: [0, 1.7, 0.02], fov: 55 }}",
         explain:
           "The camera sits at the origin and OrbitControls is aimed two centimetres in front of it. That is the whole trick: orbiting a target that close rotates the view in place instead of swinging it around the room, which is why panning and zooming are switched off and why rotateSpeed is negative. Drag left and you look left, the way you would expect standing in a room rather than holding a model in your hand.",
@@ -173,6 +173,15 @@ export const STEPS: Step[] = [
       {
         num: "3.3",
         title: "Fill the capsules",
+        code: `const scene = new MirisScene({ viewerKey });
+try {
+  await scene.ready;
+  const assets = await scene.fetchAssets();
+  console.table(assets);
+} finally {
+  scene.dispose();
+}`,
+
         stretch:
           "Watch a capsule as it fills. The first thing to arrive is the whole creature at low detail, not the top half at full detail. That is a stream, not a download.",
         body:
@@ -180,7 +189,7 @@ export const STEPS: Step[] = [
         capsuleUuid: true,
         check: "capsuleUuid",
         explain:
-          "This is the whole integration: one component, two strings. Nothing about your scene changed except where the geometry comes from. The glass, the rings, the walkway, the camera and the render loop are identical. Streaming is a delivery change, not a rendering change. You did not load a file that happened to be big. You subscribed to something that arrives at whatever detail the view justifies. Each specimen then sits itself: FitInGlass measures it as it arrives and scales it to the glass. MirisStream.getBounds reports in world space with the current scale already applied, which makes the correction proportional, measure, multiply, measure again, and stop resizing when it settles. Its outer group then keeps rotating slowly. Fitting to a reported box is only as good as the box, so how much of the glass a specimen takes is the fill prop on FitInGlass in app/stage.tsx, and one uses the full fitting allowance while keeping the horizontal diagonal inside the glass.",
+          "The form above uses MirisScene to discover the assets before your MirisStream JSX consumes their IDs. MirisScene extends three.js Scene; MirisStream extends Group, so the SDK objects fit familiar scene-graph APIs. extend({ MirisStream }) registers the JSX tag; it is not JavaScript class inheritance. The stream itself needs an asset ID and viewer key. Nothing about your scene changed except where the geometry comes from. The glass, the rings, the walkway, the camera and the render loop are identical. Streaming is a delivery change, not a rendering change. You did not load a file that happened to be big. You subscribed to something that arrives at whatever detail the view justifies. Each specimen then sits itself: FitInGlass measures it as it arrives and scales it to the glass. MirisStream.getBounds reports in world space with the current scale already applied, which makes the correction proportional, measure, multiply, measure again, and stop resizing when it settles. Its outer group then keeps rotating slowly. Fitting to a reported box is only as good as the box, so how much of the glass a specimen takes is the fill prop on FitInGlass in app/stage.tsx, and one uses the full fitting allowance while keeping the horizontal diagonal inside the glass.",
       },
     ],
   },
@@ -192,7 +201,7 @@ export const STEPS: Step[] = [
         num: "4.1",
         title: "Write the file's markup",
         stretch:
-          "Change the terminal header text in fileMarkup, then select a pedestal to see it painted into the scene. Keep the content within the fixed 640 by 400 pixel screen.",
+          "Change the terminal header text in fileMarkup. You will see it on a pedestal after mounting the file in 4.3. Keep the content within the fixed 640 by 400 pixel screen.",
         body:
           "The specimen file is plain HTML styled in miris/lab.css. Put this function in the miris:markup block above the return in app/stage.tsx. It lays out an identity panel, six-stage strip, stats, notes and terminal header and footer.",
         fill: "markup",
@@ -209,13 +218,13 @@ export const STEPS: Step[] = [
           "Now the part that gives the step its name. This goes under FitInGlass in the miris:parts block. It takes markup, hands it to a hook that paints it, and puts the result on a plane.",
         fill: "file",
         check: "file",
-        renderPath: true,
         explain:
-          "useHtmlTexture is the hinge between the two worlds. It lays the markup out offscreen, then paints the element into a canvas with drawElementImage, the HTML-in-Canvas API: one call turns a laid-out element into pixels. Where the browser does not have the API yet, the same markup goes through an SVG foreignObject and is painted the same way; the badge on this step says which path yours took. Back comes a three.js texture and the element's size in scene units, and from there it is the most ordinary thing in three: a plane with that texture on it. The plane is centred on its origin; the pedestal in the next step scales it to fit its screen. toneMapped off, because the pixels are already the colours the browser chose.",
+          "useHtmlTexture is the hinge between the two worlds. It lays the markup out offscreen, then paints the element into a canvas with drawElementImage, the HTML-in-Canvas API: one call turns a laid-out element into pixels. Where the browser does not have the API yet, the same markup goes through an SVG foreignObject and is painted the same way; the badge in step 4.3 reports the path after you mount the file. Back comes a three.js texture and the element's size in scene units, and from there it is the most ordinary thing in three: a plane with that texture on it. The plane is centred on its origin; the pedestal in the next step scales it to fit its screen. toneMapped off, because the pixels are already the colours the browser chose.",
       },
       {
         num: "4.3",
         title: "Put it on the pedestal",
+        renderPath: true,
         body:
           "Put these two lines in the miris:card block inside Canvas. Dossier enables selection. Pedestals places a metal CRT terminal in front of each tube and asks File to paint its dossier. Click a tube to approach the organism, click a screen to read it, or press Escape to return.",
         fill: "card",
@@ -247,7 +256,7 @@ export const STEPS: Step[] = [
         num: "5.2",
         title: "Read the budget",
         body:
-          "No code for this one. The readout you just added has a second line, bottom right: how many splats the six streams are drawing this frame, how many the budget allows, and the frame time. Drag the slider down to 40k and watch the capsules behind you go coarse before the one in front; drag it up and watch the frame time climb. Press Release and the controller starts again and finds its own level.",
+          "The readout you just added shows how many splats are being drawn, the allowed budget, and frame time. From one viewpoint, compare 40k with a higher budget and describe what changes. The result depends on the assets, view and device; this is a rendering-detail control, not a network-speed control. Press Release and the controller starts again and finds its own level.",
         explain:
           "The adaptive controller adjusts the total splat budget using frame time, and the engine distributes detail according to the view. Pinning the slider stops that controller; Release starts a fresh one from 250k and lets it settle. The readout sums visible detail nodes and measures the render loop delta, because the SDK already owns the GPU timer query. The host room has its own costs too: repeated ribs, bolts and floor marks share instanced geometry, pedestal updates follow selection, and the CRT copy runs only while its screen is selected, at most 30 times per second. Floor anisotropy stays at four taps and the main canvas caps pixel ratio at 1.5. These keep the room inexpensive while the controller manages the more variable streaming load.",
         stretch:
@@ -259,7 +268,7 @@ export const STEPS: Step[] = [
         stretch:
           "Comment the line out again and click a pedestal: the screen shows the file exactly as painted. Everything the next step adds is the difference.",
         body:
-          "TSL cannot share a canvas with a stream, so the glitch gets a renderer of its own. Add this line at the bottom of app/stage.tsx, outside the Canvas, in the miris:effect block. Nothing changes until the next step hands it a graph.",
+          "This lab gives the TSL glitch its own renderer so it can coexist with the SDK stream renderer. Add this line at the bottom of app/stage.tsx, outside the Canvas, in the miris:effect block. Nothing changes until the next step hands it a graph.",
         fill: "effect",
         check: "overlay",
         explain:
@@ -287,11 +296,11 @@ export const STEPS: Step[] = [
         num: "6.1",
         title: "Ship it",
         body:
-          "Press Publish, top right in Bolt, wait for your link, and send it to someone. What they load is not a model file, it is six specimens streaming to them at whatever detail their screen and connection justify. Leave the guide where it is: the published lab has no workshop API behind it, and without one the guide renders nothing. Then press Finish.",
+          "Press Publish, top right in Bolt, wait for your link, and send it to someone. What they load is not a model file, it is six specimens streaming to them at whatever detail their screen and connection justify. Leave the guide where it is: production builds explicitly hide it. Open the shared link on a phone and check a stream and a physical pedestal before finishing. Then press Finish.",
         explain:
-          "A published build has no dev server, so nothing in it can spend a fal key or rewrite a file, whatever the guide's buttons say. What it does have is a snapshot: miris/snapshot.ts freezes data.json into dist/api/miris at build time, so the stage's one fetch gets the same answer the dev server would have given, and the room renders exactly what you built. The file is deliberately extensionless with no content type. Response.json() parses on the body alone, so the stage is happy, while the guide decides whether the workshop API exists by content type, sees text and stays out of the way. One artefact, both readings right.",
+          "A published build has no dev server, so nothing in it can spend a fal key or rewrite a file, whatever the guide's buttons say. miris/snapshot.ts writes the scene data to dist/miris-scene.json. The production stage fetches that JSON file, while development uses /api/miris. The snapshot includes specimen IDs, dossier content and the scoped viewer key, without generation jobs or archive paths. The completed reference is a separate view; publishing uses the code you wrote in app/stage.tsx.",
         stretch:
-          "Open your link on a phone. The same six streams arrive at a fraction of the detail, and the room is the same room.",
+          "Open your link on a phone. Turn the phone between portrait and landscape, tap a tube and a pedestal, then pinch to inspect the screen. Tap empty space to return to the room. Confirm the published scene works without the guide.",
       },
     ],
   },

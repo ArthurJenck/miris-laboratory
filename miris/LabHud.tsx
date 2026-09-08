@@ -205,7 +205,7 @@ export default function LabHud({ specimens = [] as any[] }) {
   const stage = hover >= 0 ? specimens[hover]?.stage : null;
 
   return (
-    <div className="mw-hud" aria-hidden="true">
+    <div className="mw-hud">
       <div className="mw-hud-tl">
         <b>Vivarium · Sublevel 7</b>
         <span>Directorate of Applied Genetics</span>

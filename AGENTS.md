@@ -16,6 +16,13 @@ step.
 `miris/` is the workshop's machinery: the guide, curriculum copy, snippets, the
 dev API, config. Nothing in it needs editing to complete the workshop.
 
+The committed starter has empty lesson blocks. The finished lab lives at
+`/?view=reference`, using `miris/stage.reference.tsx`. Generate it with
+`npm run reference`; never copy the finished scene back into the starter.
+`npm test` verifies that the curriculum's ordered snippets produce that
+reference and that every intermediate lesson compiles. File insertion must
+preserve the fitting code attendees customized earlier.
+
 Attendees read these files by hand, so keep comments to roughly one line per
 file. The curriculum's WHY texts already explain the concepts; a comment
 repeating one is noise in front of the code it explains.

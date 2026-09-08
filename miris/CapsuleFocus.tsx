@@ -2,7 +2,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useRef } from "react";
 import { Vector3 } from "three";
 import { getSelected, getSelectedPart } from "./labState";
-import { screenFrame } from "./Pedestals";
+import { SCREEN, screenFrame } from "./Pedestals";
 
 const RING = 4.2;
 const EYE = 1.7;
@@ -23,7 +23,6 @@ export const FOCUS_DISTANCE = RING - STANDOFF;
 const GLASS_MIDDLE = 1.66;
 const TRAVEL = 0.9; // seconds
 
-const home = new Vector3(0, EYE, 0);
 const fromPos = new Vector3();
 const fromTarget = new Vector3();
 const toPos = new Vector3();
@@ -37,16 +36,26 @@ const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 
 /** Walks the camera to whichever capsule is open, and back to the middle of
  *  the room when it closes. Mounted inside the Canvas; renders nothing. */
 export default function CapsuleFocus() {
-  const { camera, controls } = useThree() as any;
+  const { camera, controls, size } = useThree() as any;
   const last = useRef<string | null>(null);
+  const previousSelection = useRef(-1);
+  const home = useRef(camera.position.clone()).current;
   const t = useRef(1);
 
   useFrame((_, dt) => {
     const i = getSelected();
     const part = getSelectedPart();
-    const key = `${i}:${part}`;
+    const key = `${i}:${part}:${size.width}:${size.height}`;
+    const readingDistance = Math.max(READING, SCREEN.w * 1.12 / (2 * Math.tan(camera.fov * Math.PI / 360) * camera.aspect));
 
     if (last.current !== key) {
+      if (i < 0 && previousSelection.current < 0) {
+        last.current = key;
+        t.current = 1;
+        return;
+      }
+      if (i >= 0 && previousSelection.current < 0) home.copy(camera.position);
+      previousSelection.current = i;
       // A new destination: remember where the move starts from, so the ease
       // runs between two fixed points instead of chasing a moving one.
       fromPos.copy(camera.position);
@@ -63,7 +72,7 @@ export default function CapsuleFocus() {
         // Straight down the screen's normal, at reading distance: the file
         // fills the frame the way a plaque does when you lean over it.
         const f = screenFrame(i);
-        toPos.copy(f.center).addScaledVector(f.normal, READING);
+        toPos.copy(f.center).addScaledVector(f.normal, readingDistance);
         toTarget.copy(f.center);
       } else {
         const a = (i / 6) * Math.PI * 2;
@@ -86,7 +95,7 @@ export default function CapsuleFocus() {
         controls.enableZoom = i >= 0;
         const reading = i >= 0 && part === "pedestal";
         controls.minDistance = i < 0 ? 0 : reading ? READ_NEAREST : NEAREST;
-        controls.maxDistance = i < 0 ? Infinity : reading ? READ_FARTHEST : FARTHEST;
+        controls.maxDistance = i < 0 ? Infinity : reading ? Math.max(READ_FARTHEST, readingDistance * 1.4) : FARTHEST;
       }
     }
 

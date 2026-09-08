@@ -135,6 +135,15 @@
 }
 .mw-hud-budget button:hover { color: #e8f4f8; border-color: #6f838d; }
 
+@media (max-width: 720px) {
+  .mw-hud { font-size: 10px; letter-spacing: 0.12em; }
+  .mw-hud-bl { bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .mw-hud-br { left: 22px; right: auto; bottom: calc(36px + env(safe-area-inset-bottom)); }
+  .mw-hud-budget { left: 22px; right: 22px; bottom: calc(56px + env(safe-area-inset-bottom)); justify-items: start; }
+  .mw-hud-budget input[type="range"] { height: 44px; background: linear-gradient(#2a3a44, #2a3a44) center / 100% 2px no-repeat; }
+  .mw-hud-budget button { min-height: 44px; }
+}
+
 /* Four corner marks on the hovered capsule, drawn as borders on one box so
    there is no arithmetic to get wrong when the camera moves. */
 .mw-brackets { position: absolute; }
