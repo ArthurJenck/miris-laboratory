@@ -383,7 +383,7 @@ const orderOf = (name: string) => {
   return m ? Number(m[1]) : Number.MAX_SAFE_INTEGER;
 };
 
-/** Step 3.3. A scoped key already knows which assets it can read, so asking
+/** Step 3.5. A scoped key already knows which assets it can read, so asking
  *  for six uuids as well was asking the attendee to retype what the key could
  *  answer for itself. Paste the key, look at what it found, seal all six. */
 export function CapsuleAuto({ data, onDone, preset = "" }: { data: any; onDone: () => void; preset?: string }) {

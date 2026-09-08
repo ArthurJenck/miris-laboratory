@@ -2,10 +2,8 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useRef } from "react";
 import { Vector3 } from "three";
 import { getSelected, getSelectedPart } from "./labState";
-import { SCREEN, screenFrame } from "./Pedestals";
+import { EYE, GLASS_CENTRE, RING, SCREEN, angleOf, screenFrame } from "./layout";
 
-const RING = 4.2;
-const EYE = 1.7;
 /* Where the camera comes to rest. Capsules stand 4.2 apart, so an orbit of
    radius 3.7 around one swept straight through its neighbours; 3.1 clears
    them. The wheel then zooms between the two limits below. */
@@ -19,8 +17,6 @@ const READ_NEAREST = 0.45;
 const READ_FARTHEST = 2.2;
 /** How far the camera rests from the glass; the placard sizes itself to it. */
 export const FOCUS_DISTANCE = RING - STANDOFF;
-/* The capsule interior runs y 0.36 to 2.96; this is its middle. */
-const GLASS_MIDDLE = 1.66;
 const TRAVEL = 0.9; // seconds
 
 const fromPos = new Vector3();
@@ -75,13 +71,13 @@ export default function CapsuleFocus() {
         toPos.copy(f.center).addScaledVector(f.normal, readingDistance);
         toTarget.copy(f.center);
       } else {
-        const a = (i / 6) * Math.PI * 2;
+        const a = angleOf(i);
         const cx = Math.cos(a);
         const cz = Math.sin(a);
         toPos.set(cx * STANDOFF, EYE, cz * STANDOFF);
         // Aim at the middle of the glass, so orbiting once arrived turns
         // around the specimen rather than around a point beside it.
-        toTarget.set(cx * RING, GLASS_MIDDLE, cz * RING);
+        toTarget.set(cx * RING, GLASS_CENTRE, cz * RING);
       }
       last.current = key;
       t.current = 0;

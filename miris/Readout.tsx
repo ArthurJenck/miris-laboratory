@@ -5,10 +5,10 @@ import { anchor } from "./anchor";
 import { budgetVersion, getBudget, pinBudget, reportBudget, subscribeBudget } from "./budget";
 import "./lab.css";
 import { type Box, getBoxes, getHover, getHoverPart, getPedestalBoxes, getReticle, getSelected, getSelectedPart, labVersion, setBoxes, setHover, setPedestalBoxes, setReticle, subscribeLab } from "./labState";
-import { screenFrame } from "./Pedestals";
+import { GLASS, GLASS_TOP, RING, angleOf, screenFrame } from "./layout";
+import useLab from "./useLab";
 
-const RING = 4.2; // where the capsules stand
-const GLASS = 0.95; // a little wider than the glass, so brackets clear it
+const SLACK = 0.95; // a little wider than the glass, so brackets clear it
 const TOP = 3.1;
 const BOTTOM = 0.3;
 
@@ -22,7 +22,7 @@ const UP = new Vector3(0, 1, 0);
 /** A cylinder standing at capsule i, as the camera sees it: its two silhouette
  *  edges, perpendicular to the line of sight, at the given top and bottom. */
 function silhouetteOf(i: number, camera: any, w: number, h: number, radius: number, bottom: number, top: number): Box | null {
-  const a = (i / 6) * Math.PI * 2;
+  const a = angleOf(i);
   const cx = Math.cos(a) * RING;
   const cz = Math.sin(a) * RING;
   toGlass.set(cx - camera.position.x, 0, cz - camera.position.z).normalize();
@@ -52,7 +52,7 @@ function silhouetteOf(i: number, camera: any, w: number, h: number, radius: numb
  *  square footprint, which at any angle project up to forty percent outside
  *  the glass, so the reticle stood well clear of the tube it was bracketing. */
 function boxOf(i: number, camera: any, w: number, h: number): Box | null {
-  return silhouetteOf(i, camera, w, h, GLASS, BOTTOM, TOP);
+  return silhouetteOf(i, camera, w, h, SLACK, BOTTOM, TOP);
 }
 
 /** Screen box of a world-space box: the specimen, as its stream reports it. */
@@ -141,7 +141,7 @@ export function CapsuleProbe() {
     const bounds = streamIn(scene, i)?.getBounds?.();
     const creature = bounds?.size?.[1] > 1e-6 ? projectBox(bounds.center, bounds.size, camera, size.width, size.height) : null;
     setReticle(creature);
-    const b = creature ?? silhouetteOf(i, camera, size.width, size.height, 0.9, 0.36, 2.96);
+    const b = creature ?? silhouetteOf(i, camera, size.width, size.height, GLASS.radius, GLASS.bottom, GLASS_TOP);
     if (!b) {
       anchor.seen = false;
       return;
@@ -159,7 +159,8 @@ export function CapsuleProbe() {
 /** The laboratory's readout. Lives OUTSIDE the canvas: a fixed element inside
  *  drei's fullscreen layer anchors to that layer's transform and ends up
  *  floating in the scene rather than pinned to the window. */
-export default function LabHud({ specimens = [] as any[] }) {
+export default function Readout() {
+  const { specimens, ready } = useLab();
   useSyncExternalStore(subscribeLab, labVersion, labVersion);
   useSyncExternalStore(subscribeBudget, budgetVersion, budgetVersion);
   const boxes = getBoxes();
@@ -197,6 +198,9 @@ export default function LabHud({ specimens = [] as any[] }) {
     window.addEventListener("pointermove", onMove);
     return () => window.removeEventListener("pointermove", onMove);
   }, []);
+
+  // Nothing to read out until the room itself is drawn.
+  if (!ready) return null;
 
   const live = specimens.filter((s) => s?.uuid).length;
   const onPedestal = hover >= 0 && getHoverPart() === "pedestal";

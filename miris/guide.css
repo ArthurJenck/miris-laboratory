@@ -268,21 +268,6 @@ a:hover { text-decoration: underline; }
 }
 
 
-.mw-lod {
-  display: grid;
-  grid-template-rows: repeat(4, 1fr);
-  gap: 2px;
-  height: 26px;
-  margin-top: 5px;
-}
-
-.mw-lod i {
-  background: var(--mono-800);
-  border-radius: var(--radius-xs);
-}
-.mw-now .mw-lod i:nth-child(-n + 3) { background: var(--track); }
-.mw-now .mw-lod i:nth-child(3) { opacity: 0.45; }
-
 
 /* Closed by default. The explanations are the longest thing in a card and the
    step above them is what the attendee came to do, so the reasoning is offered
@@ -780,8 +765,6 @@ a:hover { text-decoration: underline; }
 .mw-now > .mw-next { align-self: stretch; }
 .mw-now-eb { display: flex; align-items: center; gap: 8px; }
 .mw-now-eb .l12 { color: var(--accent); }
-.mw-now-eb .mw-lod { margin-left: auto; grid-auto-flow: column; grid-template-rows: none; height: 10px; }
-.mw-now-eb .mw-lod i { width: 3px; }
 .mw-now-title {
   margin: 0;
   font-family: var(--sans);
@@ -938,6 +921,11 @@ a:hover { text-decoration: underline; }
 
 .mw-bar-label,
 .mw-bar-change { position: relative; z-index: 1; }
+.mw-bar-change + .mw-bar-change { margin-left: 14px; }
+
+/* The one question the guide asks before it does something you cannot undo. */
+.mw-reset { padding: 12px 20px 14px; border-bottom: 1px solid var(--mw-line, #182329); }
+.mw-reset p { margin: 0 0 10px; color: #c8d4da; font-size: 13px; line-height: 1.5; }
 .mw-bar-label { color: var(--accent); }
 
 @media (prefers-reduced-motion: reduce) {

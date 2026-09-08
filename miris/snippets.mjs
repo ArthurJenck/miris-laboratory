@@ -1,185 +1,203 @@
-const FLOOR = `      <VaultFloor floor={floor} />`;
+/* The code each step adds to app/stage.tsx, and where it goes. */
 
-const WALKWAY = `      <VaultWalkway walk={walk} wear={wear} />`;
+// Inside <Scene>: one line per part of the room.
+const FLOOR = `        <Floor />`;
+const PLATFORM = `        <Platform />`;
+const WALKWAY = `        <Walkway />`;
+const DOOR = `        <Door />`;
+const SPECIMENS = `        {specimens.map((specimen, index) => <Specimen key={index} />)}`;
+const STREAMS = `        {specimens.map((specimen, index) => (
+          <Specimen key={index}>
+            <mirisStream args={[{ uuid: specimen.uuid, viewerKey }]} scale={specimen.scale} />
+          </Specimen>
+        ))}`;
+const SCREENS = `        {specimens.map((specimen, index) => (
+          <Specimen key={index}>
+            <mirisStream args={[{ uuid: specimen.uuid, viewerKey }]} scale={specimen.scale} />
+            <Screen>
+              <File />
+            </Screen>
+          </Specimen>
+        ))}`;
 
-const CAPSULES_SNIPPET = `      {specimens.map((s, i) => <VaultCapsule key={s.id} index={i} />)}`;
-
-const STREAMS = `      {specimens.map((s, i) => {
-        if (!s.uuid) return null;
-        const angle = (i / 6) * Math.PI * 2;
-        return (
-          <FitInGlass key={s.id} position={[Math.cos(angle) * 4.2, 1.66, Math.sin(angle) * 4.2]} fill={0.7}>
-            <mirisStream args={[{ uuid: s.uuid, viewerKey: data.viewerKey || DEMO_KEY }]} />
-          </FitInGlass>
-        );
-      })}`;
-
-
-const HUD = `    <LabHud specimens={specimens} />`;
-
-const EFFECT = `    <ScreenFx node={glitch} />`;
+// After <Scene>: on the page, not in the canvas.
+const HUD = `      <Readout />`;
+const EFFECT = `      <ScreenFx node={glitch} />`;
 
 const FIELD = `  const glitch = useMemo(() => Fn(() => {
-    const p = uv();
+    const point = uv();
     const tick = time.mul(0.55).floor();
     const live = step(float(0.83), hash(tick.add(3))).mul(step(time.mul(0.55).fract(), float(0.055)));
-    const band = step(p.y.sub(hash(tick)).abs(), float(0.018));
+    const band = step(point.y.sub(hash(tick)).abs(), float(0.018));
     const shift = band.mul(live).mul(0.014);
-    const q = vec2(p.x.add(shift), p.y);
-    const c = texture(screen, q);
-    const phosphor = c.r.mul(0.21).add(c.g.mul(0.72)).add(c.b.mul(0.07));
-    const scan = p.y.mul(1131).sin().mul(0.035).add(0.965);
+    const shifted = vec2(point.x.add(shift), point.y);
+    const color = texture(screenTexture, shifted);
+    const phosphor = color.r.mul(0.21).add(color.g.mul(0.72)).add(color.b.mul(0.07));
+    const scan = point.y.mul(1131).sin().mul(0.035).add(0.965);
     const flicker = time.mul(8).sin().mul(0.006).add(0.994);
-    const edge = p.x.mul(p.x.oneMinus()).mul(p.y).mul(p.y.oneMinus()).mul(16).pow(0.12);
-    const glow = texture(screen, q.add(vec2(0.0015, 0))).g.mul(0.08);
+    const edge = point.x.mul(point.x.oneMinus()).mul(point.y).mul(point.y.oneMinus()).mul(16).pow(0.12);
+    const glow = texture(screenTexture, shifted.add(vec2(0.0015, 0))).g.mul(0.08);
     return vec4(vec3(0.48, 0.78, 1).mul(phosphor.add(glow)).mul(scan).mul(flicker).mul(edge), float(1));
   })(), []);`;
 
-const MARKUP = `  // The file is HTML. The browser lays it out with the guide's own CSS, then
-  // paints it into a canvas, and that canvas becomes a texture on a plane.
-  const fileMarkup = (d: any) => \`
-    <div class="mw-dossier mw-screen">
-      <header class="mw-d-terminal">MIRIS BIOLOGY DIVISION <span>M-06 / RECORD ACCESS</span></header>
-      <div>
-        <p class="mw-d-code">\${d.designation} / \${d.series}</p>
-        <h3>\${d.name}</h3>
-        <p class="mw-d-class">\${d.classification}</p>
-        <ol class="mw-d-series">
-          \${d.stages.map((name: string, k: number) => \`
-            <li class="\${k === d.index ? "on" : ""}"><b>\${String(k + 1).padStart(2, "0")}</b><span>\${name}</span></li>\`).join("")}
-        </ol>
-        <p class="mw-d-stage">Stage \${d.index + 1} of \${d.stages.length}: \${d.stage}</p>
-        <ul class="mw-d-stats">
-          \${(d.stats || []).map((s: any) => \`
-            <li><span>\${s.label}</span><i><b style="width:\${s.value}%"></b></i><span>\${s.value}</span></li>\`).join("")}
-        </ul>
-      </div>
-      <div>
-        <p class="mw-d-head">Field observations</p>
-        <p class="mw-d-notes">\${d.notes}</p>
-      </div>
-      <footer class="mw-d-terminal">BIOLOGICAL RECORD / READ ONLY <span>TERMINAL \${String(d.index + 1).padStart(2, "0")} / 06</span></footer>
-    </div>\`;`;
+const MARKUP = `// The file is HTML. The browser lays it out with the lab's own CSS; the next
+// step draws it into a canvas, and that canvas becomes a texture on a plane.
+const fileMarkup = (dossier: any) => \`
+  <div class="mw-dossier mw-screen">
+    <header class="mw-d-terminal">MIRIS BIOLOGY DIVISION <span>M-06 / RECORD ACCESS</span></header>
+    <div>
+      <p class="mw-d-code">\${dossier.designation} / \${dossier.series}</p>
+      <h3>\${dossier.name}</h3>
+      <p class="mw-d-class">\${dossier.classification}</p>
+      <ol class="mw-d-series">
+        \${dossier.stages.map((stageName: string, stageIndex: number) => \`
+          <li class="\${stageIndex === dossier.index ? "on" : ""}"><b>\${String(stageIndex + 1).padStart(2, "0")}</b><span>\${stageName}</span></li>\`).join("")}
+      </ol>
+      <p class="mw-d-stage">Stage \${dossier.index + 1} of \${dossier.stages.length}: \${dossier.stage}</p>
+      <ul class="mw-d-stats">
+        \${(dossier.stats || []).map((stat: any) => \`
+          <li><span>\${stat.label}</span><i><b style="width:\${stat.value}%"></b></i><span>\${stat.value}</span></li>\`).join("")}
+      </ul>
+    </div>
+    <div>
+      <p class="mw-d-head">Field observations</p>
+      <p class="mw-d-notes">\${dossier.notes}</p>
+    </div>
+    <footer class="mw-d-terminal">BIOLOGICAL RECORD / READ ONLY <span>TERMINAL \${String(dossier.index + 1).padStart(2, "0")} / 06</span></footer>
+  </div>\`;`;
 
-const FIT = `function FitInGlass({ position, fill = 0.7, children }: any) {
-  const turntable = useRef<Group>(null);
-  const box = useRef<Group>(null);
-  const settled = useRef(false);
-  useFrame((_, dt) => {
-    const g = box.current;
-    if (!g || !turntable.current) return;
-    if (settled.current) {
-      turntable.current.rotation.y = (turntable.current.rotation.y + Math.min(dt, 0.1) * 0.08) % (Math.PI * 2);
-      return;
-    }
-    let stream: any = null;
-    g.traverse((o: any) => { if (!stream && o.getBounds) stream = o; });
-    const b = stream?.getBounds();
-    if (!b || !(b.size[1] > 0)) return;
-    // Fit the horizontal diagonal so every angle clears the glass.
-    const want = Math.min((2.6 * fill) / b.size[1], (1.8 * fill) / Math.hypot(b.size[0], b.size[2]));
-    if (Math.abs(want - 1) < 0.01) {
-      g.position.x += position[0] - b.center[0];
-      g.position.y += position[1] - b.center[1];
-      g.position.z += position[2] - b.center[2];
-      settled.current = true;
-      return;
-    }
-    g.scale.multiplyScalar(1 + (want - 1) * 0.6);
-    g.position.x += (position[0] - b.center[0]) * 0.6;
-    g.position.y += (position[1] - b.center[1]) * 0.6;
-    g.position.z += (position[2] - b.center[2]) * 0.6;
-  });
-  return <group ref={turntable} position={position}><group ref={box}>{children}</group></group>;
-}`;
+const FILE = `// Lay the file out as real HTML inside a canvas, draw it in whenever it
+// paints, and wear that canvas as the texture of a plane.
+function File({ dossier }: any) {
+  const [texture, setTexture] = useState<CanvasTexture | null>(null);
 
-const FILE = `// Paint the markup into a canvas and wear it as a texture. The browser lays
-// the HTML out, drawElementImage copies the pixels, and three samples them.
-function File({ html }: { html: string }) {
-  const { texture, width, height } = useHtmlTexture(html);
+  useEffect(() => {
+    const canvas = document.createElement("canvas");
+    canvas.setAttribute("layoutsubtree", "");
+    canvas.width = 1280;
+    canvas.height = 800;
+    // On the page but under the room: only what the browser paints can be drawn.
+    canvas.style.cssText = "position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none";
+    canvas.innerHTML = fileMarkup(dossier);
+    document.body.append(canvas);
+
+    const painted = new CanvasTexture(canvas);
+    painted.colorSpace = SRGBColorSpace;
+    canvas.onpaint = () => {
+      const context = canvas.getContext("2d")!;
+      context.setTransform(2, 0, 0, 2, 0, 0);
+      context.drawElementImage(canvas.firstElementChild!, 0, 0);
+      painted.needsUpdate = true;
+    };
+    canvas.requestPaint?.();
+    setTexture(painted);
+
+    return () => {
+      canvas.remove();
+      painted.dispose();
+    };
+  }, [dossier]);
+
   if (!texture) return null;
   return (
     <mesh>
-      <planeGeometry args={[width, height]} />
+      <planeGeometry args={[1.6, 1]} />
       <meshBasicMaterial map={texture} toneMapped={false} />
     </mesh>
   );
 }`;
 
-const CARD_PANEL = `      <Dossier specimens={specimens} />
-      <Pedestals specimens={specimens}>{(d: any) => <File html={fileMarkup(d)} />}</Pedestals>`;
-
-export const SNIPPETS = {
-  floor: FLOOR,
-  walkway: `${FLOOR}\n${WALKWAY}`,
-  capsules: `${FLOOR}\n${WALKWAY}\n${CAPSULES_SNIPPET}`,
-  streams: `${FLOOR}\n${WALKWAY}\n${CAPSULES_SNIPPET}\n${STREAMS}`,
-  fit: FIT,
-  file: `${FIT}\n\n${FILE}`,
-  hud: HUD,
-  effect: EFFECT,
-  field: FIELD,
-  markup: MARKUP,
-  card: CARD_PANEL,
-};
-
-/* What each step actually adds. SNIPPETS is cumulative because the scene ones
-   share a marker, so showing an attendee SNIPPETS.capsules would show them the
-   walkway they already have. The Fill button writes the cumulative block; the
-   card shows the part. */
-export const PARTS = {
-  floor: FLOOR,
-  walkway: WALKWAY,
-  capsules: CAPSULES_SNIPPET,
-  streams: STREAMS,
-  fit: FIT,
-  file: FILE,
-  hud: HUD,
-  effect: EFFECT,
-  field: FIELD,
-  markup: MARKUP,
-  card: CARD_PANEL,
-};
-
-/* Clearing a step puts the block back to the step before it, not to empty.
-   Four steps share the `scene` marker because the snippets are cumulative, so
-   a marker-wide clear at 2.2 would take 2.1's deck with it. null means there is
-   nothing before it and the block returns to its empty lesson state. */
-export const EMPTY_BLOCKS = {
-  scene: "",
-  card: "",
-  hud: "",
-  effect: "",
-  field: "  const glitch = null;",
-  markup: "  const fileMarkup = undefined;",
-  parts: `function FitInGlass({ position, children }: any) {
-  return <group position={position}>{children}</group>;
+/* The function the starter ships with, so the stage compiles and Screen has
+   something to hand the file to from the first step. */
+export const PLACEHOLDERS = {
+  file: `function File({ dossier }: any) {
+  return null;
 }`,
 };
 
+/* app/specimens.json as the starter ships it: six slots, no ids, life size. */
+export const EMPTY_SPECIMENS = Array.from({ length: 6 }, () => ({ uuid: "", scale: 1 }));
+
+const stack = (...lines) => lines.join("\n");
+
+/* What Fill writes. The scene and hud markers are shared by several steps, so
+   those snippets are cumulative: filling the platform writes the floor too,
+   and each version of the specimen map replaces the one before it. */
+export const SNIPPETS = {
+  floor: FLOOR,
+  platform: stack(FLOOR, PLATFORM),
+  walkway: stack(FLOOR, PLATFORM, WALKWAY),
+  door: stack(FLOOR, PLATFORM, WALKWAY, DOOR),
+  specimens: stack(FLOOR, PLATFORM, WALKWAY, DOOR, SPECIMENS),
+  streams: stack(FLOOR, PLATFORM, WALKWAY, DOOR, STREAMS),
+  screens: stack(FLOOR, PLATFORM, WALKWAY, DOOR, SCREENS),
+  file: FILE,
+  markup: MARKUP,
+  field: FIELD,
+  hud: HUD,
+  effect: stack(HUD, EFFECT),
+};
+
+/* What each step actually adds: the part the card shows. */
+export const PARTS = {
+  floor: FLOOR,
+  platform: PLATFORM,
+  walkway: WALKWAY,
+  door: DOOR,
+  specimens: SPECIMENS,
+  streams: STREAMS,
+  screens: SCREENS,
+  file: FILE,
+  markup: MARKUP,
+  field: FIELD,
+  hud: HUD,
+  effect: EFFECT,
+};
+
+/* A block with nothing in it yet. */
+export const EMPTY_BLOCKS = {
+  scene: "",
+  hud: "",
+  field: "  const glitch = null;",
+  markup: `const fileMarkup = (dossier: any) => "";`,
+  parts: PLACEHOLDERS.file,
+};
+
+/* Clearing a step puts its block back to the step before it, not to empty, so
+   a clear at 2.2 does not take 2.1's floor with it. null means there is
+   nothing before it and the block returns to its empty state. */
 export const CLEARS_TO = {
-  card: null,
   floor: null,
-  walkway: "floor",
-  capsules: "walkway",
-  streams: "capsules",
-  fit: null,
-  file: "fit",
-  hud: null,
-  effect: null,
+  platform: "floor",
+  walkway: "platform",
+  door: "walkway",
+  specimens: "door",
+  streams: "specimens",
+  screens: "streams",
+  file: null,
+  markup: null,
   field: null,
+  hud: null,
+  effect: "hud",
 };
 
 export const MARKER_FOR = {
-  fit: "parts",
+  floor: "scene",
+  platform: "scene",
+  walkway: "scene",
+  door: "scene",
+  specimens: "scene",
+  streams: "scene",
+  screens: "scene",
   file: "parts",
   markup: "markup",
-  card: "card",
-  floor: "scene",
-  walkway: "scene",
-  capsules: "scene",
-  streams: "scene",
-  hud: "hud",
-  effect: "effect",
   field: "field",
+  hud: "hud",
+  effect: "hud",
+};
+
+/* Steps that replace one named function inside the parts block, leaving
+   whatever else the attendee put there alone. */
+export const PART_NAME = {
+  file: "File",
 };

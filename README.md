@@ -12,7 +12,7 @@ npm run dev
 Then follow the guide on the right. The scene starts empty: add each lesson’s
 code, run it, and try its variation. You can type, ask your agent, or use the
 recovery button. Supplied room components handle the detailed geometry; you
-compose them and implement the stream fitting, dossier and shader.
+compose them and write the dossier and the shader.
 
 The welcome film and `/?view=reference` show the completed destination without
 changing your code or saved specimens.
@@ -27,11 +27,10 @@ Five minutes now saves twenty in the room.
    You will paste it in step 1.1.
 2. **A Miris account.** Sign up at app.miris.com. You upload six files to it
    in step 3.1, and the signup is quicker done at home than on conference wifi.
-3. **Chrome, with one flag on.** Step 4.2 paints live HTML into the scene with
-   `ctx.drawElementImage`, which Chrome ships behind
-   `chrome://flags/#canvas-draw-element`. Turn it on and relaunch. Every other
-   browser falls back to an SVG path that works but looks plainer, and you
-   would be watching the fallback for the whole step.
+3. **Chrome, with one flag on.** Step 4.2 draws live HTML into the scene with
+   `drawElementImage`, which Chrome ships behind
+   `chrome://flags/#canvas-draw-element`. Turn it on and relaunch. There is no
+   fallback: without the flag the pedestal screens stay dark.
 4. **A charger.** Chrome caps rendering at 30fps once a laptop hits 20%
    battery, browser-wide, and the room will feel slow for no reason in the code.
 5. **Node 20 or newer** if you run it locally. In Bolt nothing to install.
@@ -46,9 +45,9 @@ capsules from a series the presenters grew in advance.
 | Step | You | Running in the background |
 |---|---|---|
 | 01 Set up | Paste your fal key. Describe a creature. | The series grows: about twelve minutes. |
-| 02 The laboratory | Build the deck, walkway and six capsules in three.js. Write the fit. | Still growing. Make your Miris account if you have not. |
-| 03 Go live | Download the archive, upload six files, scope a viewer key, seal the capsules. | Portal processing. |
-| 04 The dossier | Write HTML for the specimen's file, paint it into a canvas, hang it in the room. | |
+| 02 Build the room | Add the floor, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
+| 03 Add the streams | Download the archive, upload six files, tag them and a viewer key, add the six specimens and their streams, paste the ids, fit each creature. | Portal processing. |
+| 04 The specimen file | Write HTML for the specimen's file, draw it into a canvas, put it on the screen. | |
 | 05 The readout | Add the HUD, read the streaming budget, write a TSL field on a second canvas. | |
 | 06 Ship it | Publish, send the link. | |
 
@@ -60,22 +59,31 @@ enough. Do not wait for the tray to finish before starting step 2.
 React, Vite, React Three Fiber and drei. Not Next: the App Router cannot run
 in WebContainer, which is where most attendees run this.
 
-- `app/stage.tsx` is your file. Its lesson blocks start empty or with the
-  small placeholders needed to compile. It ships with `miris:` markers and the
-  guide writes between them when you press **Or paste it for me**. Everything
-  outside the markers is yours and is never touched.
-- `app/main.tsx` mounts the stage and guide. Production explicitly hides the
-  guide; no closing edit is required. It also hosts the separate reference view.
+- `app/stage.tsx` is your file. It imports the room's parts by their plain
+  names from `../miris` (`Scene`, `Floor`, `Platform`, `Walkway`, `Door`,
+  `Specimen`, `Readout`) and composes them; the camera, lights, controls and
+  renderer settings live inside `Scene`, so the file carries none of it. The
+  viewer key is one constant at the top, and the six specimens (asset id and
+  scale) are `app/specimens.json`, imported beside it; step 3.6 fills both in
+  by hand. Its lesson blocks start empty or with the small placeholders needed
+  to compile.
+  It ships with `miris:` markers and the guide writes between them when you
+  press **Or paste it for me**. Everything outside the markers is yours and is
+  never touched.
+- `app/main.tsx` is one line: it mounts your stage inside `Workshop`, which
+  adds the guide and hosts the reference view. Production hides the guide, so
+  no closing edit is required.
 - `miris/stage.template.tsx` is the identical clean starter.
   `miris/stage.reference.tsx` is generated from that template by applying the
   curriculum’s code lessons in order. Run `npm run reference` after changing
   the template or snippets; `npm test` detects drift.
 - `miris/` is the workshop's machinery: the guide, the curriculum, the
-  snippets, the dev API that proxies fal, and a handful of scene helpers.
+  snippets, the dev API that proxies fal, and the room's own components.
   Nothing in it needs editing to finish the workshop.
 
 ### Money and time
 
+The whole run is one fal workflow, `workflows/dexhonsa/miris-growth-series-v2`.
 The image renders cost cents. Each mesh is about $1.40 and four to five
 minutes on fal's `meshy/v7/image-to-3d`; the six renders run in series, each
 one editing the last so the creature stays the same creature, and each mesh

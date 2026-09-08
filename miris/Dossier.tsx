@@ -4,8 +4,8 @@ import { getBoxes, getPedestalBoxes, getSelected, labVersion, type Part, setSele
 
 /** Click to open a capsule's file, Escape or click away to close it. Lives
  *  outside the canvas because it reads the pointer against projected boxes;
- *  the file it opens stands on the pedestal, drawn by Pedestals. */
-export default function Dossier({ specimens = [] as any[] }) {
+ *  the file it opens stands on the pedestal, drawn by Specimen. */
+export default function Dossier() {
   useSyncExternalStore(subscribeLab, labVersion, labVersion);
   const i = getSelected();
 
@@ -57,9 +57,8 @@ export default function Dossier({ specimens = [] as any[] }) {
     };
   }, []);
 
-  // The file itself is drawn in the scene by Pedestals; this only decides
+  // The file itself is drawn in the scene by Specimen; this only decides
   // which capsule is open.
-  void specimens;
   void i;
   return null;
 }

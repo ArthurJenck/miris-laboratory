@@ -36,13 +36,13 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
           frequent tears, or change the blue phosphor tint in <code>vec3(0.48, 0.78, 1)</code>.
         </li>
         <li>
-          Change the rotation speed in <code>FitInGlass</code> from <code>0.08</code> to <code>0.04</code>
-          radians per second. Each centered specimen now takes about 157 seconds to turn.
+          In <code>app/specimens.json</code>, halve one creature's <code>scale</code>. The page reloads with
+          only that tube changed.
         </li>
         <li>
-          If you want the guide gone from the published lab, comment out <code>&lt;MirisGuide /&gt;</code> in{" "}
-          <code>app/main.tsx</code> and publish again. Leaving it in costs nothing: without the workshop API it
-          renders nothing.
+          If you want the guide gone from the published lab, pass <code>guide=&#123;false&#125;</code> to{" "}
+          <code>Workshop</code> in <code>app/main.tsx</code> and publish again. Leaving it in costs nothing: without
+          the workshop API it renders nothing.
         </li>
       </ul>
 
@@ -50,8 +50,10 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
       <ul className="c14 mw-finished-list">
         <li>
           <code>app/stage.tsx</code> composes the laboratory between the <code>miris:</code> comments.
-          The prepared room and door are in <code>miris/VaultRoom.tsx</code>; repeated hardware is batched
-          by <code>miris/StaticInstances.tsx</code>.
+          Each part it names is one file in <code>miris/</code>: <code>Scene</code>, <code>Floor</code>,{" "}
+          <code>Platform</code>, <code>Walkway</code>, <code>Door</code>, <code>Specimen</code> and{" "}
+          <code>Screen</code>; repeated
+          hardware is batched by <code>miris/StaticInstances.tsx</code>.
         </li>
         <li>
           The Miris SDK: <a href="https://www.npmjs.com/package/@miris-inc/three" target="_blank" rel="noopener noreferrer">@miris-inc/three</a>.
@@ -60,8 +62,9 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
         </li>
         <li>
           HTML-in-Canvas: the{" "}
-          <a href="https://github.com/WICG/html-in-canvas" target="_blank" rel="noopener noreferrer">WICG explainer</a>.
-          The fallback in <code>miris/htmlInCanvas.ts</code> is what every browser without the flag ran.
+          <a href="https://html-in-canvas.dev" target="_blank" rel="noopener noreferrer">spec site and demos</a>.
+          Your File is the whole implementation: a canvas with <code>layoutsubtree</code>,{" "}
+          <code>drawElementImage</code> on paint, and a <code>CanvasTexture</code>. There is no fallback.
         </li>
         <li>
           TSL: the{" "}

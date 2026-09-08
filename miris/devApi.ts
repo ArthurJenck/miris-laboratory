@@ -2,14 +2,14 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
-import { applyLesson, clearLesson } from "./lessonSource.mjs";
+import { applyLesson, clearLesson, mergeSpecimens, readViewerKey, specimensJson, withViewerKey } from "./lessonSource.mjs";
 import { readMarker, replaceMarker } from "./markers.mjs";
 import { readData, writeData } from "./store.mjs";
-import { CLEARS_TO, EMPTY_BLOCKS, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
+import { CLEARS_TO, EMPTY_BLOCKS, EMPTY_SPECIMENS, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
 import { emptyBank, normaliseBank } from "./specimens.mjs";
 import { zipSync } from "./zip.mjs";
 import { tinyGlb } from "./tinyGlb.mjs";
-import { DEMO_UUID, STAGES, STATUSES, STAT_LABELS, IMAGE_FRAMING, IMAGE_MODEL, LABEL_LLM, LABEL_MODEL, MODEL_3D, VIEWER_KEY } from "./config";
+import { DEMO_UUID, GROWTH_WORKFLOW, STAGES, STATUSES, STAT_LABELS, VIEWER_KEY } from "./config";
 import { TRACKS } from "./tracks";
 
 /* Dev only, by construction: configureServer has no production counterpart, so
@@ -18,6 +18,9 @@ import { TRACKS } from "./tracks";
 const ROOT = process.cwd();
 const MIRIS_DIR = join(ROOT, "miris");
 const STAGE = join(ROOT, "app", "stage.tsx");
+const SPECIMENS = join(ROOT, "app", "specimens.json");
+/* What the stage returns to on reset: the file attendees start from. */
+const TEMPLATE = join(ROOT, "miris", "stage.template.tsx");
 const ZIP = join(ROOT, "miris", "specimens.zip");
 /* Offline builds its own archive rather than overwriting the real one: the
    129MB of creature meshes from a paid run are not worth losing to a rehearsal. */
@@ -31,31 +34,33 @@ const FIXTURES = join(MIRIS_DIR, "fixtures.json");
    told the attendee they had not done a step they had just done. A check that
    blames the person for the repo's own drift is worse than no check. */
 const PROOF = {
-  floor: "<VaultFloor",
-  walkway: "<VaultWalkway",
-  capsules: "<VaultCapsule",
+  floor: "<Floor",
+  platform: "<Platform",
+  walkway: "<Walkway",
+  door: "<Door",
+  specimens: "<Specimen",
   streams: "mirisStream",
-  hud: "LabHud",
+  screens: "<Screen",
+  hud: "Readout",
   overlay: "ScreenFx",
   field: "Fn(",
-  cardOverlay: "Dossier",
   markup: "mw-dossier",
-  fit: "getBounds",
-  file: "useHtmlTexture",
+  file: "drawElementImage",
 };
 
 /** Which snippet each proof has to appear in. */
 const PROOF_IN: Record<keyof typeof PROOF, keyof typeof SNIPPETS> = {
   floor: "floor",
+  platform: "platform",
   walkway: "walkway",
-  capsules: "capsules",
+  door: "door",
+  specimens: "specimens",
   streams: "streams",
+  screens: "screens",
   hud: "hud",
   overlay: "effect",
   field: "field",
-  cardOverlay: "card",
   markup: "markup",
-  fit: "fit",
   file: "file",
 };
 
@@ -74,21 +79,56 @@ const auditProofs = () => {
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const MESHY_INPUT = {
-  should_texture: true,
-  enable_pbr: true,
-  model_type: "standard",
-  ultra_mode: true,
-  topology: "triangle",
-  target_polycount: 300000,
-  symmetry_mode: "auto",
-  enable_safety_checker: true,
-};
 
 /* One check per step that has something verifiable on disk. Each returns null
  * when the step is done, or the sentence the attendee needs to read. Steps that
  * happen elsewhere entirely, signing up or deploying, have no entry: the Done
  * button just moves them on rather than pretending to know. */
+/** app/specimens.json as it is on disk; the empty six if it is missing or broken. */
+async function readSpecimensFile(): Promise<{ uuid?: string; scale?: number }[]> {
+  try {
+    const parsed = JSON.parse(await readFile(SPECIMENS, "utf8"));
+    return Array.isArray(parsed) ? parsed : EMPTY_SPECIMENS;
+  } catch {
+    return EMPTY_SPECIMENS;
+  }
+}
+
+/** Lays ids (and scales, when given) over app/specimens.json and sets the key
+ *  in app/stage.tsx, so the room streams what data.json says it should. */
+async function writeStageSpecimens(viewerKey: string | undefined, entries: { uuid?: string; scale?: number }[]) {
+  const current = await readSpecimensFile();
+  const next = specimensJson(mergeSpecimens(current, entries));
+  if (next !== specimensJson(current)) await writeFile(SPECIMENS, next);
+  if (viewerKey !== undefined) {
+    const source = await readFile(STAGE, "utf8");
+    const keyed = withViewerKey(source, viewerKey);
+    if (keyed !== source) await writeFile(STAGE, keyed);
+  }
+}
+
+/** Copies the key and ids the attendee has in their files into data.json, so the
+ *  readout's count and the tray agree with what is streaming even when the ids
+ *  were typed in rather than sealed. */
+async function followStage(viewerKey: string, entries: { uuid?: string }[]) {
+  const stored = await readData(MIRIS_DIR);
+  const bank = normaliseBank(stored.specimens as any[]);
+  let changed = stored.viewerKey !== viewerKey;
+  bank.forEach((slot, i) => {
+    const uuid = String(entries[i]?.uuid ?? "").trim();
+    if (!uuid || slot.uuid === uuid) return;
+    bank[i] = { ...slot, uuid, status: "live" };
+    changed = true;
+  });
+  if (changed) await writeData(MIRIS_DIR, { specimens: bank, viewerKey });
+}
+
+/** A check that passes once `proof` appears in the attendee's `marker` block. */
+const inBlock = (marker: string, proof: string, problem: string) => async () => {
+  const block = readMarker(await readFile(STAGE, "utf8"), marker);
+  return block.includes(proof) ? null : problem;
+};
+
 const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
   async falKey(mode) {
     return falKey(mode)
@@ -108,213 +148,86 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     return "Nothing grown yet. Describe your creature and press Grow the series.";
   },
 
-  async floor() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes(PROOF.floor)
-      ? null
-      : "The scene block in app/stage.tsx has no deck in it yet. Paste the snippet between the miris:scene comments, or let the step do it.";
-  },
+  floor: inBlock("scene", PROOF.floor, "The scene block in app/stage.tsx has no floor in it yet. Add the line between the miris:scene comments, or let the step do it."),
+  platform: inBlock("scene", PROOF.platform, "No platform in the scene block yet. Add it under the floor, or let the step do it."),
+  walkway: inBlock("scene", PROOF.walkway, "No walkway in the scene block yet. Add it under the platform, or let the step do it."),
+  door: inBlock("scene", PROOF.door, "No door in the scene block yet. Add it under the walkway, or let the step do it."),
+  specimens: inBlock("scene", PROOF.specimens, "No specimens in the scene block yet. Add the map under the door, or let the step do it."),
+  streams: inBlock("scene", PROOF.streams, "Nothing is streaming into the capsules yet. Replace the specimen line with the version that holds a stream, or let the step do it."),
+  screens: inBlock("scene", PROOF.screens, "No Screen inside the Specimens yet. Replace the specimen line with the version that holds one, or let the step do it."),
 
-  async walkway() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes(PROOF.walkway)
-      ? null
-      : "No walkway in the scene block yet. Add it under the deck, or let the step do it.";
-  },
-
-  async capsules() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes(PROOF.capsules)
-      ? null
-      : "No capsules in the scene block yet. Add them under the walkway, or let the step do it.";
-  },
-
-  async streams() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "scene");
-    return block.includes(PROOF.streams)
-      ? null
-      : "Nothing is streaming into the capsules yet. Add the block under the capsules, or let the step do it.";
-  },
-
-  async capsuleUuid() {
-    const { specimens, active, viewerKey } = await readData(MIRIS_DIR);
-    const slot = (specimens as any[])?.[Number(active) || 0];
-    const uuid = slot?.uuid ?? "";
-    if (!uuid) return "The capsules are not sealed yet. Paste your scoped viewer key above and press Find my specimens.";
-    if (!UUID_RE.test(uuid))
-      return `That uuid does not look like one: "${uuid}". Copy just the id from the asset page.`;
-    if (uuid === DEMO_UUID)
-      return "That capsule still holds the demo specimen. Paste your own asset id from the portal.";
-    // The key is checked here rather than at 3.1 because 3.1 happens in the
-    // portal, where there is nothing on disk to look at. A capsule reading
-    // through the demo key streams the demo, whatever uuid is next to it.
-    if (!viewerKey)
-      return "No viewer key yet. Paste the key you scoped to your six assets; every capsule reads through it.";
-    if (viewerKey === VIEWER_KEY)
-      return "That is still the workshop's demo viewer key, which cannot read your assets. Paste the one you scoped to your six.";
+  async ids() {
+    // What streams is what the check reads: the ids in app/specimens.json and
+    // the key in app/stage.tsx, however they got there.
+    const entries = await readSpecimensFile();
+    const viewerKey = readViewerKey(await readFile(STAGE, "utf8"));
+    const { active } = await readData(MIRIS_DIR);
+    const uuid = String(entries[Number(active) || 0]?.uuid ?? "").trim();
+    if (!uuid) return "No ids yet. Copy each asset's id from the portal into app/specimens.json, in growth order.";
+    if (!UUID_RE.test(uuid)) return `That uuid does not look like one: "${uuid}". Copy just the id from the asset page.`;
+    if (uuid === DEMO_UUID) return "That capsule still holds the demo specimen. Paste your own asset id from the portal.";
+    if (!viewerKey) return "No viewer key yet. Paste the key you tagged workshop into viewerKey at the top of app/stage.tsx.";
+    if (viewerKey === VIEWER_KEY) return "That is still the workshop's demo viewer key, which cannot read your assets. Paste the one you made.";
+    await followStage(viewerKey, entries);
     return null;
   },
 
-  async hud() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "hud");
-    return block.includes(PROOF.hud)
-      ? null
-      : "No LabHud in the miris:hud block yet. Add the line, or let the step do it.";
-  },
-
-  async overlay() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "effect");
-    return block.includes(PROOF.overlay)
-      ? null
-      : "No ScreenFx in the miris:effect block yet. Add the line, or let the step do it.";
-  },
+  hud: inBlock("hud", PROOF.hud, "No Readout in the miris:hud block yet. Add the line, or let the step do it."),
+  overlay: inBlock("hud", PROOF.overlay, "No ScreenFx in the miris:hud block yet. Add the line under Readout, or let the step do it."),
 
   async field() {
     const src = await readFile(STAGE, "utf8");
-    if (!readMarker(src, "effect").includes("ScreenFx"))
-      return "No ScreenFx yet. Step 5.3 puts it there.";
+    if (!readMarker(src, "hud").includes(PROOF.overlay)) return "No ScreenFx yet. Step 5.3 puts it there.";
     return readMarker(src, "field").includes(PROOF.field)
       ? null
-      : "The overlay is mounted but the field is still null. Write the TSL, or let the step do it.";
+      : "The effect is mounted but the glitch is still null. Write the TSL, or let the step do it.";
   },
 
-  async fit() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "parts");
-    return block.includes(PROOF.fit)
-      ? null
-      : "FitInGlass does not measure anything yet. Replace the placeholder in the miris:parts block, or let the step do it.";
-  },
-
-  async file() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "parts");
-    return block.includes(PROOF.file)
-      ? null
-      : "No File component yet. Add it under FitInGlass in the miris:parts block, or let the step do it.";
-  },
-
-  async markup() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "markup");
-    return block.includes(PROOF.markup)
-      ? null
-      : "No file markup yet. Put fileMarkup in the miris:markup block near the top of app/stage.tsx, or let the step do it.";
-  },
-
-  async cardOverlay() {
-    const block = readMarker(await readFile(STAGE, "utf8"), "card");
-    return block.includes(PROOF.cardOverlay)
-      ? null
-      : "Nothing in the miris:card block yet. Add the two lines inside the Canvas, or let the step do it.";
-  },
-
+  file: inBlock("parts", PROOF.file, "File does not draw anything yet. Replace the placeholder in the miris:parts block, or let the step do it."),
+  markup: inBlock("markup", PROOF.markup, "No file markup yet. Replace the empty fileMarkup in the miris:markup block at the top of app/stage.tsx, or let the step do it."),
 };
-
-/* The register that used to live in miris/skills/curator.md, when writing the
- * label meant pasting that file into a coding agent. Same rules, smaller
- * ceremony: one button, one model call on the attendee's own fal key. */
-/* The register that turns one sentence into an archive record. Everything the
-   dossier panel draws comes from here, which is why the shape is pinned: four
-   stats and nothing else can be laid out as bars. */
-const REGISTRAR =
-  "You are the registrar of a genetics laboratory, writing the file for one specimen. " +
-  "Reply with ONLY a JSON object, no code fences, no commentary: " +
-  '{"designation": "two letters, a dash, two digits", "series": "one word in caps", ' +
-  '"name": "one invented word, caps", "classification": "two or three latinate words, sentence case", ' +
-  '"status": "one of STABLE, DORMANT, VOLATILE, BREACHED", "generation": 1-12, "viability": 0-100 with one decimal, ' +
-  '"stats": [{"label": "VITALITY", "value": 0-100}, {"label": "AGGRESSION", "value": 0-100}, ' +
-  '{"label": "BIOELECTRIC", "value": 0-100}, {"label": "COHESION", "value": 0-100}], ' +
-  '"traits": ["three entries, two or three words each"], ' +
-  '"notes": "three or four sentences of handler observation"}. ' +
-  "The four stats appear in exactly that order. The notes read as a working scientist's file: " +
-  "specific incidents, a containment detail, a behaviour under a named condition. " +
-  "Write as though the specimen has always existed. Never mention that it was generated, " +
-  "never use the word digital, and use no em dashes.";
 
 const clamp = (n: unknown, lo: number, hi: number, fallback: number) => {
   const v = Number(n);
   return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : fallback;
 };
 
-const parseDossier = (raw: unknown) => {
-  if (typeof raw !== "string") return null;
-  // Models fence JSON out of habit however firmly they are told not to.
-  const text = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  try {
-    const d = JSON.parse(text);
-    if (typeof d?.name !== "string" || !d.name.trim()) return null;
-    if (typeof d?.notes !== "string" || !d.notes.trim()) return null;
-    const status = String(d?.status ?? "").toUpperCase();
-    const byLabel = new Map(
-      (Array.isArray(d?.stats) ? d.stats : []).map((x: any) => [String(x?.label ?? "").toUpperCase(), x?.value]),
-    );
-    return {
-      designation: String(d?.designation ?? "SP-00").trim().toUpperCase().slice(0, 8),
-      series: String(d?.series ?? "ARC").trim().toUpperCase().slice(0, 10),
-      name: d.name.trim().toUpperCase().slice(0, 24),
-      classification: String(d?.classification ?? "").trim().slice(0, 60),
-      status: (STATUSES as readonly string[]).includes(status) ? status : "STABLE",
-      generation: Math.round(clamp(d?.generation, 1, 12, 1)),
-      viability: Math.round(clamp(d?.viability, 0, 100, 90) * 10) / 10,
-      // Always the four labels, in order, whatever the model returned.
-      stats: STAT_LABELS.map((label) => ({ label, value: Math.round(clamp(byLabel.get(label), 0, 100, 50)) })),
-      traits: (Array.isArray(d?.traits) ? d.traits : []).map((t: any) => String(t).trim()).filter(Boolean).slice(0, 3),
-      notes: d.notes.trim(),
-    };
-  } catch {
-    return null;
-  }
+/* The registrar's file for one stage, pinned to the shape the screen can lay
+   out: four stats and nothing else can be drawn as bars. */
+const normaliseDossier = (d: any) => {
+  if (typeof d?.name !== "string" || !d.name.trim()) return null;
+  if (typeof d?.notes !== "string" || !d.notes.trim()) return null;
+  const status = String(d?.status ?? "").toUpperCase();
+  const byLabel = new Map(
+    (Array.isArray(d?.stats) ? d.stats : []).map((x: any) => [String(x?.label ?? "").toUpperCase(), x?.value]),
+  );
+  return {
+    designation: String(d?.designation ?? "SP-00").trim().toUpperCase().slice(0, 8),
+    series: String(d?.series ?? "ARC").trim().toUpperCase().slice(0, 10),
+    name: d.name.trim().toUpperCase().slice(0, 24),
+    classification: String(d?.classification ?? "").trim().slice(0, 60),
+    status: (STATUSES as readonly string[]).includes(status) ? status : "STABLE",
+    generation: Math.round(clamp(d?.generation, 1, 12, 1)),
+    viability: Math.round(clamp(d?.viability, 0, 100, 90) * 10) / 10,
+    // Always the four labels, in order, whatever the model returned.
+    stats: STAT_LABELS.map((label) => ({ label, value: Math.round(clamp(byLabel.get(label), 0, 100, 50)) })),
+    traits: (Array.isArray(d?.traits) ? d.traits : []).map((t: any) => String(t).trim()).filter(Boolean).slice(0, 3),
+    notes: d.notes.trim(),
+  };
 };
 
-/* One concept becomes six bodies. The model is asked for a growth series
-   rather than six variations, because the capsules read left to right as a
-   life cycle and six unrelated creatures would say nothing. */
-/* The planner. It used to be asked only for "six stages, earliest to most
-   developed", which produced Larva, Juvenile, Adolescent, Mature, Elder,
-   Ancient for every creature alike: insect terms and mammal terms in one
-   series, no egg, and a last two stages that were just bigger. Deciding the
-   clade first, and naming stages from that clade's real life cycle, is what
-   keeps an egg layer starting as an egg and a mammal starting as a fetus. */
-const EMBRYOLOGIST =
-  "You are a developmental biologist planning the growth series of one organism for a laboratory archive. " +
-  "Work in this order. First decide what kind of animal the description implies: its clade, and how animals " +
-  "of that kind actually reproduce and develop. Then name the " + STAGES + " stages that kind of animal really " +
-  "passes through, using that clade's own terminology. Only then describe each body. " +
-  "Reply with ONLY a JSON object, no code fences, no commentary: " +
-  '{"clade": "", "development": "", "anatomy": "", "stages": [{"stage": "", "prompt": "", "carry": "", "change": ""}]} ' +
-  "with exactly " + STAGES + " stages. " +
-  "clade: what kind of animal this is, three to six words. " +
-  "development: its real developmental mode, a few words. " +
-  "anatomy: the adult body plan in one clause, covering limb count, segmentation, plating, markings and " +
-  "colour signature. This is what makes every stage the same species. " +
-  "stage: one or two words, the correct name for that point in this clade's life cycle. " +
-  "prompt: one or two clauses describing the whole body at that stage. " +
-  "carry: which anatomy features are already visible at this stage, or \"none\" for an egg or embryo. " +
-  "change: what visibly differs from the stage before, in a few words, naming something a viewer could point " +
-  "at such as plate thickness, limb length, seam brightness, wear or proportion. Use \"none\" for the first " +
-  "stage. Consecutive adult stages must still differ visibly, never repeat the previous body. " +
-  "Follow the real sequence for the clade you chose. " +
-  "Holometabolous insect: egg, larva, pupa, callow adult, mature adult, senescent adult. " +
-  "Hemimetabolous insect: egg, early nymph, late nymph, subimago, adult, senescent adult. " +
-  "Bird: egg, hatchling, nestling, fledgling, juvenile, adult. " +
-  "Placental mammal: fetus, neonate, nursing infant, juvenile, subadult, adult. " +
-  "Marsupial: embryo, pouch young, furred joey, weanling, subadult, adult. " +
-  "Reptile: egg, hatchling, juvenile, subadult, adult, old adult. " +
-  "Amphibian: egg mass, tadpole, limbed larva, metamorph, juvenile, adult. " +
-  "Bony fish: egg, yolk sac larva, fry, fingerling, juvenile, adult. " +
-  "Cephalopod: egg, paralarva, juvenile, subadult, adult, senescent adult. " +
-  "Crustacean: egg, nauplius, zoea, megalopa, juvenile, adult. " +
-  "Arachnid: egg sac, postembryo, early instar, late instar, subadult, adult. " +
-  "Choosing the clade: limb count, wing count, size and ornament never decide it on their own. Fur, whiskers " +
-  "or live young mean mammal even with six legs; feathers and a beak mean bird; chitin, compound eyes and a " +
-  "segmented exoskeleton mean arthropod; scales and claws mean reptile. When the description names a familiar " +
-  "animal, such as a fox, a moth or a turtle, follow that animal's real biology and treat everything else in " +
-  "the description as variation on it. " +
-  "The first stage is however this animal actually begins: egg layers begin as an egg, placental mammals " +
-  "begin as a fetus and never as an egg. " +
-  "The last two stages are variations on the adult, mature then aged, gravid or senescent. They are not " +
-  "simply larger. Never make the final stages colossal, geological or encrusted ruins. " +
-  "Every stage after the first is the same individual grown: proportions, plating and colour deepen, and the " +
-  "body plan changes only where that clade's real metamorphosis changes it. " +
-  "Do not mention other stages, ages, numbers or the word stage inside a prompt. Use no em dashes.";
+/** The workflow's dossiers node: one JSON array, six files in stage order.
+ *  Models fence JSON out of habit however firmly they are told not to. */
+const parseDossiers = (raw: unknown) => {
+  if (typeof raw !== "string") return [];
+  const text = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
+  try {
+    const list = JSON.parse(text);
+    return Array.isArray(list) ? list.slice(0, STAGES).map(normaliseDossier) : [];
+  } catch {
+    return [];
+  }
+};
 
 type Plan = {
   clade: string;
@@ -323,31 +236,27 @@ type Plan = {
   stages: { stage: string; prompt: string; carry: string; change: string }[];
 };
 
-const parsePlan = (raw: unknown): Plan | null => {
+/** The workflow's plan node answers in lines: Concept, Clade, Development,
+ *  Anatomy, then "Stage N: name | body: ... | carry: ... | change: ...". */
+const parsePlanText = (raw: unknown): Plan | null => {
   if (typeof raw !== "string") return null;
-  const text = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
-  try {
-    const obj = JSON.parse(text);
-    const list = obj?.stages;
-    if (!Array.isArray(list) || list.length !== STAGES) return null;
-    const stages = list.map((x: any) => ({
-      stage: String(x?.stage ?? "").trim().slice(0, 24),
-      prompt: String(x?.prompt ?? "").trim(),
-      carry: String(x?.carry ?? "").trim(),
-      change: String(x?.change ?? "").trim(),
-    }));
-    if (stages.some((x) => !x.stage || !x.prompt)) return null;
-    return {
-      clade: String(obj?.clade ?? "").trim(),
-      development: String(obj?.development ?? "").trim(),
-      // The anchor is what stops stage four drifting into a different animal,
-      // so a plan without one is not worth running six meshes on.
-      anatomy: String(obj?.anatomy ?? "").trim(),
-      stages,
+  const line = (label: string) => raw.match(new RegExp(`^${label}:\\s*(.+)$`, "mi"))?.[1]?.trim() ?? "";
+  const stages: Plan["stages"] = [];
+  for (const match of raw.matchAll(/^Stage\s*(\d)\s*:\s*([^|\r\n]+?)\s*(?:\|(.*))?$/gim)) {
+    const fields: Record<string, string> = {};
+    for (const part of (match[3] ?? "").split("|")) {
+      const [key, ...rest] = part.split(":");
+      if (rest.length) fields[key.trim().toLowerCase()] = rest.join(":").trim();
+    }
+    stages[Number(match[1]) - 1] = {
+      stage: match[2].trim().slice(0, 24),
+      prompt: fields.body ?? "",
+      carry: fields.carry ?? "",
+      change: fields.change ?? "",
     };
-  } catch {
-    return null;
   }
+  if (stages.filter(Boolean).length !== STAGES || stages.some((st) => !st.stage)) return null;
+  return { clade: line("Clade"), development: line("Development"), anatomy: line("Anatomy"), stages };
 };
 
 /* meshy answers with several formats, and `model_glb` has been observed
@@ -416,6 +325,48 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
     throw new Error("fal timed out after 25 minutes");
   }
 
+  /** Runs the growth workflow, calling `onNode` as each node finishes, and
+   *  resolves with the workflow's output map. Streams from fal.run; if no
+   *  stream can be opened it queues the same run instead, and the map arrives
+   *  all at once at the end. Never resubmits: a run costs real money. */
+  async function runWorkflow(input: unknown, onNode: (node: string, output: any) => Promise<void>) {
+    const res = await fetch(`https://fal.run/${GROWTH_WORKFLOW}/stream`, {
+      method: "POST",
+      headers: { ...falHeaders(), Accept: "text/event-stream" },
+      body: JSON.stringify(input),
+    });
+    if (res.status === 400 || res.status === 422) throw new Error(`fal rejected the run: ${(await res.text()).slice(0, 300)}`);
+    if (!res.ok || !res.body) return falRun(GROWTH_WORKFLOW, input);
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let output: unknown = null;
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      let cut: number;
+      while ((cut = buffer.indexOf("\n\n")) !== -1) {
+        const lines = buffer.slice(0, cut).split(/\r?\n/);
+        buffer = buffer.slice(cut + 2);
+        const data = lines.filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim()).join("\n");
+        if (!data) continue;
+        let event: any;
+        try {
+          event = JSON.parse(data);
+        } catch {
+          continue;
+        }
+        if (event?.type === "completion" && typeof event.node_id === "string") await onNode(event.node_id, event.output);
+        else if (event?.type === "output") output = event.output;
+        else if (event?.type === "error") throw new Error(String(event.message ?? event.error ?? "the workflow reported an error"));
+      }
+    }
+    if (!output) throw new Error("The stream from fal ended before the workflow finished. Press the button again.");
+    return output;
+  }
+
   switch (action) {
     case "fill": {
       const snippet = SNIPPETS[body.snippetId as keyof typeof SNIPPETS];
@@ -442,6 +393,16 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
     case "save":
       return ok(await writeData(MIRIS_DIR, body.patch ?? {}));
 
+    /* Every step back to the start: the stage returns to the template and the
+       pointer to 1.1. The series, its uuids and the viewer key stay, so nothing
+       has to be grown or uploaded again. */
+    case "reset": {
+      await writeFile(STAGE, await readFile(TEMPLATE, "utf8"));
+      const stored = await readData(MIRIS_DIR);
+      await writeStageSpecimens(stored.viewerKey, normaliseBank(stored.specimens as any[]));
+      return ok(await writeData(MIRIS_DIR, { step: "1.1", sub: "1.1", active: 0, finished: false }));
+    }
+
     case "check": {
       const check = CHECKS[String(body.check ?? "")];
       // No check for this step is not a failure: it means nothing on disk
@@ -465,6 +426,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       const key = String(body?.viewerKey ?? "").trim();
       if (key) patch.viewerKey = key;
       await writeData(MIRIS_DIR, patch);
+      await writeStageSpecimens(key || (stored.viewerKey as string) || undefined, bank);
       return ok({ ok: true, index: i });
     }
 
@@ -490,12 +452,10 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
 
       if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
 
-      /* The run is written to disk before the planner is called, not after it
-         returns. Nothing was recorded for the first ten to twenty seconds
-         otherwise, so the page could not tell a run had started: the tray
-         stayed hidden and the step gate said nothing had grown, both while
-         six meshes were being paid for. Cleared again if the run falls over,
-         or the app would think it was still growing forever. */
+      /* The run is written to disk before the workflow is called, not after it
+         returns, so the tray can show a run has started while it is being paid
+         for. Cleared again if the run falls over, or the app would think it was
+         still growing forever. */
       await writeData(MIRIS_DIR, { concept, hatchedAt: Date.now(), zipReady: false });
       const abandon = async (e: unknown) => {
         await writeData(MIRIS_DIR, { hatchedAt: 0 });
@@ -503,9 +463,8 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       };
 
       try {
-
         /* Each slot is patched on its own, read-modify-write inside the store's
-           queue, so six concurrent stages cannot clobber one another. */
+           queue, so nodes finishing together cannot clobber one another. */
         const patchSlot = async (i: number, patch: Record<string, unknown>) => {
           const fresh = await readData(MIRIS_DIR);
           const bank = normaliseBank(fresh.specimens as any[]);
@@ -513,174 +472,77 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
           await writeData(MIRIS_DIR, { specimens: bank });
         };
 
-        const plan: any = await falRun(LABEL_MODEL, {
-          model: LABEL_LLM,
-          system_prompt: EMBRYOLOGIST,
-          prompt: `The creature: ${concept}.`,
-          temperature: 0.9,
-        }).catch(abandon);
-        const plan2 = parsePlan(plan?.output);
-        if (!plan2) {
-          await writeData(MIRIS_DIR, { hatchedAt: 0 });
-          return fail("The model did not return a usable growth plan. Press the button again.", 502);
-        }
-        const { anatomy, stages } = plan2;
-
-        const fresh = await readData(MIRIS_DIR);
-        const bank = normaliseBank(fresh.specimens as any[]);
-        stages.forEach((st, i) => {
-          bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "named", imageUrl: "", glb: "", dossier: null };
-        });
-        await writeData(MIRIS_DIR, {
-          concept,
-          clade: plan2.clade,
-          development: plan2.development,
-          anatomy,
-          specimens: bank,
-          zipReady: false,
-          hatchedAt: Date.now(),
-        });
-
-        /* The dossiers are written here, beside the plan, rather than by a button
-         the attendee presses six times later. They come from the same sentence
-         and the same clade the planner just decided, they cost one cheap model
-         call each next to twelve dollars of meshes, and a specimen whose file
-         appears only after a manual step is a specimen that looks unfinished
-         for no reason. Failures are swallowed: a missing dossier costs a panel,
-         and is not worth losing six meshes over. */
-      await Promise.all(
-        stages.map(async (st, i) => {
-          try {
-            const out: any = await falRun(LABEL_MODEL, {
-              model: LABEL_LLM,
-              system_prompt: REGISTRAR,
-              prompt: `The specimen: ${st.prompt} It is the ${st.stage} stage of ${concept}, a ${plan2.clade}.`,
-              temperature: 0.9,
-            });
-            const dossier = parseDossier(out?.output);
-            if (dossier) await patchSlot(i, { dossier });
-          } catch {
-            /* keep going: the meshes matter more than the paperwork */
-          }
-        }),
-      );
-
-      /* The renders run in series, each one editing the last, because six
-           independent text renders of "the same creature" are six different
-           creatures: the recorded run drifted from a translucent larva to a
-           barnacled boulder. The meshes still run together, and each one starts
-           the moment its own render lands rather than waiting for all six, so
-           chaining costs about two minutes rather than the twenty it would if
-           the meshes queued behind the whole chain. */
-        const meshes: Promise<{ name: string; url: string }>[] = [];
-        let previous = "";
-        // Dev flag: six renders cost cents, six meshes cost about twelve dollars,
-        // so the chain can be judged on its own while its prompts are tuned.
-        const imagesOnly = body?.imagesOnly === true;
-
-        for (let i = 0; i < stages.length; i++) {
-          const st = stages[i];
-          const identity = st.carry && !/^none\b/i.test(st.carry) ? ` Visible identity: ${st.carry}.` : "";
-          // Stated outright, because an edit model left to itself returns the
-          // reference almost unchanged and three adult stages come back identical.
-          const delta = st.change && !/^none\b/i.test(st.change) ? ` Clearly show this change from the reference: ${st.change}.` : "";
-          let shot: any;
-
-          if (!previous) {
-            shot = await falRun(IMAGE_MODEL, {
-              prompt: `${track.style}: ${st.prompt}.${identity} ${IMAGE_FRAMING}`,
-              image_size: "square_hd",
-              num_images: 1,
-              quality: "medium",
-            });
-          } else {
-            shot = await falRun(`${IMAGE_MODEL}/edit`, {
-              image_urls: [previous],
-              prompt:
-                `The same individual organism as the reference image, the same species with the same markings ` +
-                `and colour signature, now developed into its next form: ${st.prompt}.${identity}${delta} ` +
-                `Species identity: ${anatomy}. ${track.style}. ${IMAGE_FRAMING}`,
-              image_size: "square_hd",
-              num_images: 1,
-              quality: "medium",
-            });
-          }
-
-          const imageUrl = shot?.images?.[0]?.url;
-          if (!imageUrl) throw new Error(`fal returned no render for ${st.stage}`);
-          previous = imageUrl;
-          await patchSlot(i, { imageUrl, status: "building", modelStartedAt: Date.now() });
-
-          if (imagesOnly) continue;
-
-          meshes.push(
-            (async () => {
-              const mesh: any = await falRun(MODEL_3D, {
-                image_url: imageUrl,
-                texture_prompt: `${track.style}: ${st.prompt}`,
-                ...MESHY_INPUT,
-              });
-              const glb = findGlb(mesh);
-              if (!glb) throw new Error(`fal returned no glb for ${st.stage}. It sometimes answers with fbx only; press the button again.`);
-              await patchSlot(i, { glb, status: "ready", modelStartedAt: 0 });
-              return { name: stageFile(i, st.stage), url: glb };
-            })(),
-          );
-        }
-
-        if (imagesOnly) {
-          // A probe, not a run: leaving the marker set would strand the tray
-          // in a growth that never finishes.
-          await writeData(MIRIS_DIR, { hatchedAt: 0 });
-          const shots = (await readData(MIRIS_DIR)).specimens as any[];
-          return ok({
-            imagesOnly: true,
-            clade: plan2.clade,
-            anatomy,
-            stages: stages.map((st, i) => ({ stage: st.stage, image: shots[i]?.imageUrl ?? "" })),
+        let plan: Plan | null = null;
+        const glbs: string[] = [];
+        const takePlan = async (raw: unknown) => {
+          const parsed = parsePlanText(raw);
+          if (!parsed || plan) return;
+          plan = parsed;
+          const fresh = await readData(MIRIS_DIR);
+          const bank = normaliseBank(fresh.specimens as any[]);
+          parsed.stages.forEach((st, i) => {
+            bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "named", imageUrl: "", glb: "", dossier: null };
           });
-        }
+          await writeData(MIRIS_DIR, { clade: parsed.clade, development: parsed.development, anatomy: parsed.anatomy, specimens: bank });
+        };
+        const takeDossiers = async (raw: unknown) => {
+          const list = parseDossiers(raw);
+          for (let i = 0; i < list.length; i++) if (list[i]) await patchSlot(i, { dossier: list[i] });
+        };
+        const takeRender = async (i: number, url: unknown) => {
+          if (typeof url === "string" && url) await patchSlot(i, { imageUrl: url, status: "building", modelStartedAt: Date.now() });
+        };
+        const takeMesh = async (i: number, glb: string | null) => {
+          if (!glb || glbs[i] === glb) return;
+          glbs[i] = glb;
+          await patchSlot(i, { glb, status: "ready", modelStartedAt: 0 });
+        };
 
-        const glbs = await Promise.all(meshes);
+        /* The whole series is one fal workflow. Its nodes report as they finish,
+           so the tray fills in stage by stage; the output map at the end is the
+           record, and fills any gap the events left. */
+        const output: any = await runWorkflow({ concept }, async (node, out) => {
+          const slot = /^(render|mesh)(\d)$/.exec(node);
+          if (node === "plan") await takePlan(out?.output);
+          else if (node === "dossiers") await takeDossiers(out?.output);
+          else if (slot?.[1] === "render") await takeRender(Number(slot[2]) - 1, out?.images?.[0]?.url);
+          else if (slot?.[1] === "mesh") await takeMesh(Number(slot[2]) - 1, findGlb(out));
+        }).catch(abandon);
+
+        await takePlan(output?.plan);
+        const grown: Plan | null = plan;
+        if (!grown) {
+          await writeData(MIRIS_DIR, { hatchedAt: 0 });
+          return fail("The workflow did not return a usable growth plan. Press the button again.", 502);
+        }
+        await takeDossiers(output?.dossiers);
+        for (let i = 0; i < STAGES; i++) {
+          await takeRender(i, output?.[`image_${i + 1}`]);
+          await takeMesh(i, findGlb(output?.[`model_${i + 1}`]));
+        }
+        const missing = grown.stages.findIndex((_, i) => !glbs[i]);
+        if (missing !== -1) throw new Error(`fal returned no glb for ${grown.stages[missing].stage}. Press the button again.`);
 
         const files = await Promise.all(
-          glbs.map(async (g) => {
-            const r = await fetch(g.url);
-            if (!r.ok) throw new Error(`could not fetch ${g.name}: ${r.status}`);
+          grown.stages.map(async (st, i) => {
+            const r = await fetch(glbs[i]);
+            if (!r.ok) throw new Error(`could not fetch ${stageFile(i, st.stage)}: ${r.status}`);
             const data = Buffer.from(await r.arrayBuffer());
             // Checked here rather than trusted: a mis-typed mesh only shows up
             // as a failed upload in the portal, long after the workshop.
-            if (!isGlb(data)) throw new Error(`${g.name} came back as ${data.toString("ascii", 0, 4)}, not glTF. Press the button again.`);
-            return { name: g.name, data };
+            if (!isGlb(data)) throw new Error(`${stageFile(i, st.stage)} came back as ${data.toString("ascii", 0, 4)}, not glTF. Press the button again.`);
+            return { name: stageFile(i, st.stage), data };
           }),
         );
         await writeFile(ZIP, zipSync(files));
         await writeData(MIRIS_DIR, { zipReady: true });
-        return ok({ stages: stages.map((s2) => s2.stage), files: files.map((f) => f.name) });
+        return ok({ stages: grown.stages.map((st) => st.stage), files: files.map((f) => f.name) });
       } catch (e) {
         // Any failure past this point leaves a run marked as in flight, and
         // the tray would grow forever. Clear the marker, then rethrow.
         await writeData(MIRIS_DIR, { hatchedAt: 0 });
         throw e;
       }
-    }
-
-    /* The growth plan on its own, written nowhere. Six meshes cost about twelve
-       dollars and twelve minutes, so being able to read the biology first, and
-       press again if the clade is wrong, is worth one cheap model call. */
-    case "plan": {
-      if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
-      const concept = String(body?.prompt ?? "").trim();
-      if (!concept) return fail("Describe the creature first.");
-      const out: any = await falRun(LABEL_MODEL, {
-        model: LABEL_LLM,
-        system_prompt: EMBRYOLOGIST,
-        prompt: `The creature: ${concept}.`,
-        temperature: 0.9,
-      });
-      const p = parsePlan(out?.output);
-      if (!p) return fail("The model did not return a usable growth plan. Press the button again.", 502);
-      return ok(p);
     }
 
     /* Skip the generation. Assets already uploaded, with a key already scoped
@@ -744,6 +606,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
         zipReady: true,
         hatchedAt: Date.now(),
       });
+      await writeStageSpecimens(key, bank);
 
       /* Remembered, so a later seed brings the same assets back, but only when
          these are the assets the recording already describes or it has none
@@ -788,6 +651,10 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
         hatchedAt: Date.now(),
         active: 0,
       });
+      await writeStageSpecimens(
+        String(fx.viewerKey || "").trim() || stored.viewerKey || VIEWER_KEY,
+        bank.map((slot, i) => ({ uuid: slot.uuid, scale: fx.stages[i]?.scale })),
+      );
       const real = fx.stages.filter((s2: any) => s2.uuid).length;
       return ok({ seeded: bank.length, realUuids: real, usingDemo: bank.length - real });
     }
@@ -795,6 +662,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
     case "unseed": {
       if (!offline(mode)) return fail("Seeding is offline only. Put MIRIS_OFFLINE=1 in .env.local.");
       await writeData(MIRIS_DIR, { concept: "", specimens: emptyBank(), zipReady: false, hatchedAt: 0, active: 0 });
+      await writeFile(SPECIMENS, specimensJson(EMPTY_SPECIMENS));
       return ok({ ok: true });
     }
 

@@ -1,5 +1,5 @@
 /* The streaming budget as the readout sees it. Written from inside the canvas
-   by BudgetGuard and CapsuleProbe, read outside it by LabHud: a plain store,
+   by BudgetGuard and CapsuleProbe, read outside it by Readout: a plain store,
    like labState, because it moves every frame and one component cares. */
 export interface BudgetView {
   /** Splats the scene drew last frame, summed over visible LOD nodes. */

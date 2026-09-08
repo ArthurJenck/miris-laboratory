@@ -228,3 +228,11 @@ body:has(.mw-panel) .mw-dossier-panel { right: calc(min(408px, 100vw) + 24px); }
 .mw-screen .mw-d-stats span, .mw-screen .mw-d-stats span:last-child { color: #9bcce8; }
 .mw-screen .mw-d-stats i { background: #1b3749; height: 7px; }
 .mw-screen .mw-d-stats i b { background: #a4d5f1; }
+
+/* The stage's canvas fills the window beside the guide. Scene wraps the
+   canvas in this, so the attendee's file carries no layout. */
+.mw-canvas {
+  position: fixed; top: 0; left: 0;
+  width: calc(100vw - var(--mw-side, 0px)); height: 100dvh;
+  touch-action: none;
+}

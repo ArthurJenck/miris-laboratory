@@ -1,4 +1,3 @@
-import { useSyncExternalStore } from "react";
 import { useState } from "react";
 import type { Step, Sub } from "./curriculum";
 import type { Track } from "./tracks";
@@ -7,7 +6,6 @@ import Chevron from "./Chevron";
 import Code from "./highlight";
 import { PARTS } from "./snippets.mjs";
 import { subName } from "./transition";
-import { detect, getPath, subscribePath } from "./htmlInCanvas";
 import { indexOfSub, nextSub, subState } from "./progress";
 
 export interface StepActions {
@@ -50,42 +48,19 @@ export interface StepPaneProps {
 
 const FLAG = "chrome://flags/#canvas-draw-element";
 
-/* Which drawing path actually ran, read from the module store rather than
- * re-detected: detection can say yes and the call can still throw. Shown on the
- * happy path too, so an attendee who did the setup gets confirmation. */
+/* Whether this browser can draw HTML into a canvas. There is no fallback: the
+ * screens stay dark until the flag is on, and this says so before the attendee
+ * writes the code that needs it. */
 function RenderPathBadge() {
-  const path = useSyncExternalStore(subscribePath, getPath, getPath);
-  const { engine, flaggable } = detect();
-
-  if (path === "drawElement") {
-    return (
-      <p className="mw-path" data-native>
-        Drawing your live DOM into the scene
-      </p>
-    );
-  }
-
-  if (path === "failed") {
-    return (
-      <p className="mw-path" data-failed>
-        Neither path could draw the label, so nothing is on the plane. The
-        browser console has the reason.
-      </p>
-    );
-  }
-
-  return (
-    <p className="mw-path">
-      Fallback path, in system-ui rather than Geist.{" "}
-      {flaggable ? (
-        <>
-          Chrome can draw the real thing. Turn on <code>{FLAG}</code> and reload.
-        </>
-      ) : engine === "webkit" ? (
-        <>Safari has no flag for this yet. The card still renders.</>
-      ) : (
-        <>Your browser has no flag for this yet. The card still renders.</>
-      )}
+  const canDraw = typeof CanvasRenderingContext2D !== "undefined" && "drawElementImage" in CanvasRenderingContext2D.prototype;
+  return canDraw ? (
+    <p className="mw-path" data-native>
+      Your browser can draw HTML into a canvas.
+    </p>
+  ) : (
+    <p className="mw-path" data-failed>
+      Your browser cannot draw HTML into a canvas yet, so the screens will stay dark. In Chrome, turn on{" "}
+      <code>{FLAG}</code> and relaunch.
     </p>
   );
 }
@@ -205,9 +180,6 @@ export default function StepPane({
           >
             <div className="mw-now-eb">
               <p className="l12">Step {sub.num}</p>
-              <span className="mw-lod" aria-hidden="true">
-                <i /><i /><i /><i />
-              </span>
             </div>
 
             <h3 className="mw-now-title">{withNoun(sub.title, track.noun)}</h3>

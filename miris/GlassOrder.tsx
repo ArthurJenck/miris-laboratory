@@ -2,8 +2,8 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useRef } from "react";
 import { Vector3 } from "three";
 import { getBoxes } from "./labState";
+import { GLASS_CENTRE, RING, angleOf } from "./layout";
 
-const RING = 4.2;
 const RESCAN = 60; // frames between looks for glass that arrived late
 
 const at = new Vector3();
@@ -30,8 +30,8 @@ export default function GlassOrder() {
     }
     const boxes = getBoxes();
     const dist = boxes.map((_, i) => {
-      const a = (i / 6) * Math.PI * 2;
-      return at.set(Math.cos(a) * RING, 1.66, Math.sin(a) * RING).distanceTo(camera.position);
+      const a = angleOf(i);
+      return at.set(Math.cos(a) * RING, GLASS_CENTRE, Math.sin(a) * RING).distanceTo(camera.position);
     });
     boxes.forEach((b, i) => {
       const g = glass.current[i];

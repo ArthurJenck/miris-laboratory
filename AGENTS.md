@@ -7,11 +7,17 @@ in WebContainer, which is where attendees run this, so the port is deliberate.
 ## The two halves
 
 `app/` is the attendee's. `stage.tsx` is the file they edit all session, and the
-sidebar writes into it between the `miris:` marker comments. It must stay
+sidebar writes into it between the `miris:` marker comments; `specimens.json`
+beside it holds their six ids and scales. It must stay
 byte-identical to `miris/stage.template.tsx`, which the reset action restores
-from. `main.tsx` they need not touch: the guide renders nothing in a
-published build, so removing it is an option the closing pane offers, not a
-step.
+from. It imports everything it names from `../miris` (the barrel in
+`miris/index.tsx`) and is deliberately free of numbers: the camera, lights,
+controls, renderer settings, guards and data loading are all inside `Scene`,
+and each part of the room (`Floor`, `Platform`, `Walkway`, `Door`,
+`Specimen`) takes no props. Shared positions live once, in `miris/layout.ts`.
+`main.tsx` they need not touch: it mounts the stage in `Workshop`, and the
+guide renders nothing in a published build, so removing it is an option the
+closing pane offers, not a step.
 
 `miris/` is the workshop's machinery: the guide, curriculum copy, snippets, the
 dev API, config. Nothing in it needs editing to complete the workshop.
@@ -20,8 +26,29 @@ The committed starter has empty lesson blocks. The finished lab lives at
 `/?view=reference`, using `miris/stage.reference.tsx`. Generate it with
 `npm run reference`; never copy the finished scene back into the starter.
 `npm test` verifies that the curriculum's ordered snippets produce that
-reference and that every intermediate lesson compiles. File insertion must
-preserve the fitting code attendees customized earlier.
+reference and that every intermediate lesson compiles. The function the
+attendee writes, `File`, is replaced by name inside the `parts` block rather
+than by rewriting the block, so anything else they put there survives.
+
+The six asset ids and scales are `app/specimens.json`, imported by the stage;
+the viewer key is one constant in the stage, found by name. Nothing is fetched
+for them. The dev API's adopt, seed and reset actions write both through
+`mergeSpecimens` and `withViewerKey`, which change only the values named so a
+scale tuned by hand survives a reseal; the reference gets the fixture ids and
+scales the same way into `miris/specimens.json`. The file is the truth for what
+streams: the fill-in-your-ids check reads the JSON and the key line, accepts
+ids typed in by hand, and copies them into `data.json`, which still carries
+them for the readout's count and the tray.
+
+`Specimen` takes no props. `Scene` numbers the `Specimen` elements it finds in
+its children, in order, and each one provides its slot through a context.
+Whatever is inside a `Specimen` stands in the middle of its glass; `Screen`
+inside it portals its child onto the pedestal, handing that child the slot's
+dossier as `dossier`. A `mirisStream` with an empty id is left out, so the SDK
+is never asked for nothing. A slot whose stage is named but whose dossier the
+registrar has not written yet gets a pending record with the same shape, so the
+attendee's `File` paints something rather than a black screen; the run's label
+calls swallow their failures, and this is where that used to become invisible.
 
 Attendees read these files by hand, so keep comments to roughly one line per
 file. The curriculum's WHY texts already explain the concepts; a comment
@@ -54,36 +81,38 @@ before pushing, not just `HEAD`.
 
 ## The growth pipeline
 
-The planner decides the clade before it names any stage, because it used to be
-asked only for "six stages, earliest to most developed" and returned Larva,
-Juvenile, Adolescent, Mature, Elder, Ancient for every creature alike: insect
-and mammal terms in one series, no egg, and a last two stages that were only
-bigger. It now emits `clade`, `development`, an `anatomy` anchor, and per stage
-a `carry` (which identity features are visible yet) and a `change` (what
-visibly differs from the stage before). Verified across five clades: a
-six-legged furry fox plans as a placental mammal starting at fetus, a paper
-heron as a bird starting at egg.
+The series is grown by one fal workflow, `workflows/dexhonsa/miris-growth-series-v2`
+(https://fal.ai/workflows/dexhonsa/miris-growth-series-v2): a plan node, a
+dossiers node, six prompt nodes, six chained renders and six meshes, with an
+output map of `plan`, `dossiers`, `image_1..6` and `model_1..6`. Its prompts and
+model settings live on fal, not in this repo; `GROWTH_WORKFLOW` in
+`miris/config.ts` names it. To change what the creatures look like, edit the
+workflow.
 
-Limb count does not decide the clade. A "six-legged desert fox" was classified
-as a holometabolous insect until the prompt was told that fur outranks leg
-count and that a named familiar animal carries its own biology.
+`hatch` in `miris/devApi.ts` streams the run from `fal.run/<workflow>/stream`
+and patches `data.json` as each node reports: the plan names the six stages,
+the dossiers node files all six at once, each render sets an image, each mesh
+a glb. The output map at the end is the record and fills any gap the events
+left, then the six glbs are fetched, checked for the glTF magic and zipped.
+If the stream cannot be opened the same run is queued instead and lands all at
+once; a stream that drops midway is never resubmitted, because a run costs
+about twelve dollars, so the tray clears and the button says press again.
 
-The renders run **in series, each editing the last** through
-`openai/gpt-image-2/edit`, because six independent text renders of "the same
-creature" are six different creatures. The meshes still run together, and each
-starts the moment its own render lands rather than waiting for all six, so
-chaining costs about five minutes rather than the twenty it would if the meshes
-queued behind the whole chain.
+The plan node answers in plain lines, `Clade:`, `Development:`, `Anatomy:`
+and `Stage N: name | body: ... | carry: ... | change: ...`; `parsePlanText`
+reads them. The dossiers node answers with one JSON array of six;
+`parseDossiers` normalises each to the pinned shape (four stats, in order).
 
+Why the workflow's prompts say what they say, kept here because it took a
+run to learn each one: the planner decides the clade before naming any stage,
+because asked only for "six stages" it returned Larva, Juvenile, Adolescent,
+Mature, Elder, Ancient for every creature alike. Limb count does not decide
+the clade; fur outranks leg count, and a named familiar animal carries its own
+biology. The renders run in series, each editing the last, because six
+independent renders of "the same creature" are six different creatures.
 `change` exists because an edit model left alone returns the reference nearly
-untouched and the three adult stages came back identical.
-
-`IMAGE_FRAMING` forbids substrate as well as props: an egg photographed on a
-rock arrives in the capsule as a rock.
-
-Dev flags on `hatch`: `imagesOnly: true` runs the chain and stops, six renders
-costing cents rather than six meshes costing about twelve dollars. The `plan`
-action returns the biology alone, for checking a clade before spending at all.
+untouched. The framing rules forbid substrate as well as props: an egg
+photographed on a rock arrives in the capsule as a rock.
 
 ## Rehearsing without fal
 
@@ -176,15 +205,25 @@ either over every creature or under every creature. Under, a tube's own near
 wall never tinted the creature behind it; over, a tube across the room tinted a
 creature in front of it. `miris/GlassOrder.tsx` decides per tube per frame from
 the readout's screen boxes: over, unless a nearer capsule overlaps it on
-screen. It finds the glass by the `glass-N` name the capsule snippet gives it.
+screen. It finds the glass by the `glass-N` name `Specimen` gives it.
 
 **TSL reaches the pedestal screens by copy, not by sharing a canvas.** The
 glitch graph renders in `miris/ScreenFx.tsx`, a second renderer drawing one
-quad into an unseen canvas with the painted file as input; `Pedestals.tsx`
-swaps that canvas in as the selected pedestal's screen texture each frame.
+quad into an unseen canvas with the painted file as input; the pedestal in
+`Specimen.tsx` swaps that canvas in as the selected screen's texture each frame.
 One screen is one upload a frame; six would be too many, so the other five
-show the file as painted. `screen` is one DataTexture object whose pixels are
-swapped to the active file, so the attendee's graph can name it.
+show the file as painted. `screenTexture` is one CanvasTexture whose canvas is
+swapped to the active file's, and re-uploaded only when that file's texture
+version moves, so the attendee's graph can name it.
+
+**HTML reaches the screens natively, with no fallback.** The attendee's `File`
+is the whole implementation, in `app/stage.tsx`: a `<canvas layoutsubtree>`
+parked off screen with the markup inside it, `drawElementImage` in the canvas's
+`paint` handler at a 2x transform, and a `CanvasTexture` on a 16:10 plane.
+The old SVG `foreignObject` fallback and the render-path store went with
+`htmlInCanvas.ts` and `htmlTexture.ts`; without
+`chrome://flags/#canvas-draw-element` the screens stay dark and the badge on
+4.2 says so. The two primitives are typed in `miris/miris.d.ts`.
 
 **What the room costs, measured.** With the splat budget pinned and the canvas
 at six times its size so nothing sits at the frame cap, every category of

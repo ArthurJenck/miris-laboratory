@@ -76,6 +76,8 @@ function WorkshopGuide() {
   // A finished substep opened for reading. Separate from data.step, which is
   // how far the attendee has actually got.
   const [viewing, setViewing] = useState("");
+  // Start over asks once; the answer is a second click, not a dialog.
+  const [confirmReset, setConfirmReset] = useState(false);
   // What the last Done click found wrong, keyed by substep so browsing the rail
   // does not carry one step's complaint onto another.
   const [problems, setProblems] = useState<Record<string, string>>({});
@@ -292,6 +294,17 @@ function WorkshopGuide() {
     },
   };
 
+  const startOver = async () => {
+    setConfirmReset(false);
+    const r = await post({ action: "reset" });
+    if (!r.ok) return setNote(r.problem!);
+    setViewing("");
+    setSelected(null);
+    // The stage file changed, so Vite reloads the page; this covers the case
+    // where it does not.
+    void load();
+  };
+
   const unfinish = async () => {
     const r = await post({ action: "save", patch: { finished: false } });
     if (!r.ok) return setNote(r.problem!);
@@ -349,10 +362,26 @@ function WorkshopGuide() {
             }}
           />
           <span className="mw-bar-label">{track.label}</span>
+          <button className="mw-bar-change" onClick={() => setConfirmReset(true)}>
+            Start over
+          </button>
           <button className="mw-bar-change" onClick={() => chooseTrack("")}>
             Change
           </button>
         </div>
+        {confirmReset && (
+          <div className="mw-reset" role="alertdialog">
+            <p>Every step goes back to the start and app/stage.tsx returns to the template. Your series and viewer key stay.</p>
+            <div className="mw-row">
+              <button className="btn btn-primary btn-sm" onClick={startOver}>
+                Reset every step
+              </button>
+              <button className="btn btn-ghost btn-sm" onClick={() => setConfirmReset(false)}>
+                Keep going
+              </button>
+            </div>
+          </div>
+        )}
 
 
         <div className="mw-split">

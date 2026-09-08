@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { CanvasTexture, DataTexture, LinearFilter, RGBAFormat, SRGBColorSpace, type Texture, UnsignedByteType } from "three";
+import { CanvasTexture, LinearFilter, SRGBColorSpace, type Texture } from "three";
 import { Mesh, MeshBasicNodeMaterial, OrthographicCamera, PlaneGeometry, Scene, WebGPURenderer } from "three/webgpu";
 import { getSelected, getSelectedPart, subscribeLab } from "./labState";
 
@@ -7,24 +7,32 @@ import { getSelected, getSelectedPart, subscribeLab } from "./labState";
 const W = 1024;
 const H = 640;
 const FRAME_MS = 1000 / 30;
-export const screen = new DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1, RGBAFormat, UnsignedByteType);
-screen.flipY = false;
-screen.colorSpace = SRGBColorSpace;
-screen.minFilter = LinearFilter;
-screen.magFilter = LinearFilter;
-screen.needsUpdate = true;
+/* The painted file as the glitch sees it: one texture whose canvas is swapped
+   to whichever screen is being read, so the attendee's graph can name it. */
+const blank = document.createElement("canvas");
+blank.width = 1;
+blank.height = 1;
+export const screenTexture = new CanvasTexture(blank);
+screenTexture.colorSpace = SRGBColorSpace;
+screenTexture.minFilter = LinearFilter;
+screenTexture.magFilter = LinearFilter;
+screenTexture.generateMipmaps = false;
 
 let source: Texture | null = null;
+let sourceVersion = -1;
 let sourceOwner = -1;
 let output: CanvasTexture | null = null;
 export const getScreenOutput = () => output;
 
-export function setScreenSource(t: Texture, owner: number) {
+/** Points the glitch at a screen's painted texture. Cheap to call every frame:
+ *  nothing is uploaded unless the texture or its painting changed. */
+export function setScreenSource(painted: Texture, owner: number) {
   sourceOwner = owner;
-  if (t === source) return;
-  source = t;
-  screen.image = t.image as any;
-  screen.needsUpdate = true;
+  if (painted === source && painted.version === sourceVersion) return;
+  source = painted;
+  sourceVersion = painted.version;
+  screenTexture.image = painted.image as HTMLCanvasElement;
+  screenTexture.needsUpdate = true;
 }
 
 export default function ScreenFx({ node }: { node: any }) {
@@ -112,9 +120,10 @@ export default function ScreenFx({ node }: { node: any }) {
       geometry?.dispose();
       renderer?.dispose();
       source = null;
+      sourceVersion = -1;
       sourceOwner = -1;
-      screen.image = { data: new Uint8Array([0, 0, 0, 255]), width: 1, height: 1 };
-      screen.needsUpdate = true;
+      screenTexture.image = blank;
+      screenTexture.needsUpdate = true;
     };
   }, [hasNode]);
 
