@@ -1601,3 +1601,23 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 }
 .mw-link:hover { color: var(--mono-200); }
 .mw-link:disabled { opacity: 0.5; cursor: default; }
+
+/* ── the workshop's own series, under "I already have a series" ── */
+.mw-fallbacks { display: flex; flex-direction: column; gap: 6px; }
+.mw-fallbacks .l12 { color: var(--mono-500); }
+.mw-fallbacks .mw-row { flex-wrap: wrap; gap: 6px; margin: 0; justify-content: flex-start; }
+
+/* ── the stretch line on a step ─────────────────────────── */
+.mw-stretch { margin: 0; color: var(--mono-400); }
+.mw-stretch .l12 { color: var(--mono-600); margin-right: 6px; }
+
+/* ── the closing pane ───────────────────────────────────── */
+.mw-finished > .l12 { color: var(--accent); }
+.mw-finished p { max-width: 51ch; }
+.mw-finished em { font-style: normal; color: var(--text-primary); }
+.mw-finished-h { margin: 18px 0 6px; color: var(--text-primary); font-weight: var(--fw-medium); }
+.mw-finished-list { margin: 0; padding-left: 18px; color: var(--text-secondary); display: grid; gap: 8px; }
+.mw-finished-list code { font-family: var(--mono); font-size: 12px; color: var(--mono-200); }
+.mw-finished-list a { color: var(--link); }
+.mw-finished-thanks { margin-top: 18px; color: var(--mono-400); }
+.mw-finished .mw-next { margin-top: 14px; }

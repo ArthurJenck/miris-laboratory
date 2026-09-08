@@ -9,7 +9,9 @@ in WebContainer, which is where attendees run this, so the port is deliberate.
 `app/` is the attendee's. `stage.tsx` is the file they edit all session, and the
 sidebar writes into it between the `miris:` marker comments. It must stay
 byte-identical to `miris/stage.template.tsx`, which the reset action restores
-from. `main.tsx` they touch once, at step 5.5.
+from. `main.tsx` they need not touch: the guide renders nothing in a
+published build, so removing it is an option the closing pane offers, not a
+step.
 
 `miris/` is the workshop's machinery: the guide, curriculum copy, snippets, the
 dev API, config. Nothing in it needs editing to complete the workshop.
@@ -149,6 +151,17 @@ added, so the guard adds those two getters and starts the controller then.
 `Miris._instance._adaptiveBudgetStatus` in the console shows it working.
 Worth filing against the SDK; if it starts the controller itself, the guard
 can go.
+
+The readout's slider (`miris/budget.ts`, step 5.2) pins the budget by hand.
+Pinning has to stop the controller first, because it re-applies its own
+number every 250ms tick and would win; Release calls `_startAdaptiveBudget`
+again, which builds a new controller at its default 250k rather than resuming. Frame time in
+the readout is the render loop's own delta, smoothed: the SDK holds the one
+GPU timer query open, so there is no second one.
+
+`FALLBACK_KEYS` in `miris/config.ts` lists viewer keys scoped to series grown
+in advance, offered under "I already have a series" at 1.2. It ships empty;
+fill it before the day or the buttons never appear.
 
 **Glass and splats cannot be depth-sorted against each other.** The SDK draws
 all six specimens as one splat mesh with no depth write, so a tube's glass is

@@ -28,6 +28,9 @@ export interface Sub {
   check?: string;
   /** Renders the html-in-canvas path badge. */
   renderPath?: boolean;
+  /** One thing to try for whoever finishes early. Shown under the card, never
+   *  checked: a step is done when its check passes, stretch or not. */
+  stretch?: string;
 }
 
 export interface Step {
@@ -44,6 +47,8 @@ export const STEPS: Step[] = [
       {
         num: "1.1",
         title: "Your fal key",
+        stretch:
+          "Open miris/devApi.ts and find falKey. The key is read on every request and never sent to the browser: watch the network tab while the series grows and it is not there.",
         body:
           "Sign in at fal.ai, open Keys, create one, and paste it into a file called .env.local at the top level of this project. Create the file if it is not there. Save it, then press Done: the server reads the key on every request, so there is nothing to restart.",
         code: "FAL_KEY=your-key-here",
@@ -53,6 +58,8 @@ export const STEPS: Step[] = [
       {
         num: "1.2",
         title: "Describe your {noun}",
+        stretch:
+          "Before you press Grow, guess the clade the planner will choose and the six stage names it will use. It weighs fur over leg count, so a six-legged fox plans as a mammal.",
         body:
           "One creature, in one sentence. Everything in the room grows out of this: a model works out what kind of animal it is and how that kind actually develops, then plans six points in its life and renders each one from the one before it. About twelve minutes, and it costs real money, so if you already have a series uploaded you can skip straight to it. Or press the dice.",
         panel: true,
@@ -69,6 +76,8 @@ export const STEPS: Step[] = [
       {
         num: "2.1",
         title: "The deck",
+        stretch:
+          "Change the fog's 20 and 50 to 8 and 30. The deck ends closer and the shell disappears entirely: the room is as big as the fog says it is.",
         body:
           "Sublevel 7 starts as a plated deck running out into fog, and the dark shell around it. Open app/stage.tsx, find the block between the two miris:scene comments, and put this inside it. Everything you write outside those comments is left alone.",
         fill: "floor",
@@ -79,6 +88,8 @@ export const STEPS: Step[] = [
       {
         num: "2.2",
         title: "The walkway",
+        stretch:
+          "Add a third torus at radius 3.2 in white. It should sit exactly on the pale ring already there, which is a flat ringGeometry doing the same job without the thickness.",
         body:
           "A ring you stand on with a lit edge on each side, and a path off it toward a door at the far end. Add it under the deck, inside the same miris:scene block.",
         fill: "walkway",
@@ -89,6 +100,8 @@ export const STEPS: Step[] = [
       {
         num: "2.3",
         title: "The capsules",
+        stretch:
+          "Change i / 6 to i / 7 and the six capsules leave a gap where a seventh would stand. Then move the door into it.",
         body:
           "Six containment capsules, evenly spaced around a circle. Add them under the walkway.",
         fill: "capsules",
@@ -99,6 +112,8 @@ export const STEPS: Step[] = [
       {
         num: "2.4",
         title: "Wire the capsules",
+        stretch:
+          "Give one mirisStream a rotation prop. It is a scene node like the glass around it, so it turns like anything else.",
         body:
           "Add this last, under the capsules. It connects each capsule to a stream, but nothing appears yet: a stream needs an asset id and a viewer key, and those come in the next section. For now the room is finished and the glass is empty.",
         fill: "streams",
@@ -109,6 +124,8 @@ export const STEPS: Step[] = [
       {
         num: "2.5",
         title: "Fit the specimen",
+        stretch:
+          "In the streams block, make fill depend on i: 0.4 + i * 0.1. The series then grows across the ring without a single mesh changing.",
         body:
           "A generated mesh arrives at whatever size the generator chose, so once the capsules fill you may find a speck, or a creature bursting out of the glass. This replaces the placeholder FitInGlass in the miris:parts block, above the Stage function: it asks the stream how big it is and scales it to fit.",
         fill: "fit",
@@ -119,6 +136,8 @@ export const STEPS: Step[] = [
       {
         num: "2.6",
         title: "Stand in the room",
+        stretch:
+          "Set position to [0, 6, 0] and fov to 90 and you are looking down on the ring from the ceiling. Then put it back: the walk to a capsule starts from eye height.",
         body:
           "No button for this one. You are in the middle of the laboratory: dragging turns you on the spot rather than flying you around the ring, and clicking a capsule walks you over to it. Open app/stage.tsx and find the camera prop on Canvas. The middle number of position is your eye height, so 1.7 is standing and 0.9 is crouched beside the plinths. fov is how much you see at once: raise it to 70 and the room wraps around you, drop it to 35 and you are looking down a lens at one capsule.",
         code: "camera={{ position: [0, 1.7, 0.02], fov: 55 }}",
@@ -134,6 +153,8 @@ export const STEPS: Step[] = [
       {
         num: "3.1",
         title: "Upload the series",
+        stretch:
+          "Name the files with a number and the stage, 01-egg.glb. Step 3.3 orders by that number and labels each capsule from the word after it.",
         body:
           "Your six meshes need somewhere to live. Sign in at app.miris.com, or make an account if you did not while the series grew. Download the archive from the tray: six .glb files, numbered in growth order. Upload all six. Processing takes a few minutes; the next step needs it finished.",
         link: { href: PORTAL_URL, label: "Open Miris" },
@@ -141,6 +162,8 @@ export const STEPS: Step[] = [
       {
         num: "3.2",
         title: "Scope a viewer key",
+        stretch:
+          "Make a second key scoped to only three of the six and try it at 3.3. The other three capsules stay empty, and that is the scope working.",
         body:
           "Back in the portal, check all six uploads have finished processing, then create a viewer key scoped to those six assets rather than one that can read everything in your account. That key is the only thing you need to copy: the six uuids come back with it.",
         link: { href: PORTAL_URL, label: "Open Miris" },
@@ -150,6 +173,8 @@ export const STEPS: Step[] = [
       {
         num: "3.3",
         title: "Fill the capsules",
+        stretch:
+          "Watch a capsule as it fills. The first thing to arrive is the whole creature at low detail, not the top half at full detail. That is a stream, not a download.",
         body:
           "Paste your scoped viewer key and press Find my specimens. The key already knows which assets it can read, so it fetches them, orders them by the number in each name, and shows you the order before anything is sealed. Check it reads egg first and adult last, then seal all six. The glass fills.",
         capsuleUuid: true,
@@ -166,6 +191,8 @@ export const STEPS: Step[] = [
       {
         num: "4.1",
         title: "Write the file's markup",
+        stretch:
+          "Add the traits under the stats: a p with class mw-d-traits holding one span per entry of d.traits. The class is already in lab.css.",
         body:
           "The specimen's file is plain HTML: a few elements with classes the guide already styles. Put this in the miris:markup block near the top of the Stage function, above the return. It is a function that takes one dossier and returns markup, and nothing about it is 3D yet.",
         fill: "markup",
@@ -176,6 +203,8 @@ export const STEPS: Step[] = [
       {
         num: "4.2",
         title: "Paint it",
+        stretch:
+          "Swap meshBasicMaterial for meshStandardMaterial with the same map. The file now takes the room's light and reads dimmer for it, which is why basic and toneMapped false are the default.",
         body:
           "Now the part that gives the step its name. This goes under FitInGlass in the miris:parts block. It takes markup, hands it to a hook that paints it, and puts the result on a plane.",
         fill: "file",
@@ -187,6 +216,8 @@ export const STEPS: Step[] = [
       {
         num: "4.3",
         title: "Hang it beside the glass",
+        stretch:
+          "Open a capsule and scroll. The wheel zooms between 1.2 and 3.2 metres from the glass, and only there: standing in the room there is nothing two centimetres ahead worth zooming toward.",
         body:
           "Two lines, in the miris:card block inside the Canvas. The first makes the capsules clickable. The second stands beside whichever capsule is open and asks your File to paint that capsule's markup. Click a capsule: the camera walks over and the file is there in the room. Click away, or press Escape, to come back.",
         fill: "card",
@@ -203,6 +234,8 @@ export const STEPS: Step[] = [
       {
         num: "5.1",
         title: "Wake the instruments",
+        stretch:
+          "Hover a capsule that is half off the edge of the screen. The brackets clip to it, because the box is the projected silhouette, and a capsule beside you has no box at all.",
         body:
           "One line adds the laboratory's own readout: the header, the capsule count, and four corner brackets on whichever capsule your pointer is over. It goes in the miris:hud block, at the bottom of the file outside the Canvas.",
         fill: "hud",
@@ -212,7 +245,19 @@ export const STEPS: Step[] = [
       },
       {
         num: "5.2",
+        title: "Read the budget",
+        body:
+          "No code for this one. The readout you just added has a second line, bottom right: how many splats the six streams are drawing this frame, how many the budget allows, and the frame time. Drag the slider down to 40k and watch the capsules behind you go coarse before the one in front; drag it up and watch the frame time climb. Press Release and the controller starts again and finds its own level.",
+        explain:
+          "This is the part of streaming you cannot see by looking at one creature. Every stream is a tree of detail levels, and the engine picks one level per stream so the total stays under a budget of splats. Left alone, the controller in this SDK build measures frame time and moves that budget: down when frames run long, up while there is headroom, so a laptop on battery and a desktop with a large GPU both hold their frame rate and simply see different amounts of detail. Which stream gives first is decided by how large each one is on screen, which is why the capsules behind you cost almost nothing and the one you walk up to takes most of the budget. Pinning the slider stops the controller and holds the number; Release starts a fresh controller from its default, 250k, and it settles from there. The readout counts the way the controller does, visible detail nodes summed, and the frame time is the render loop's own clock, because the SDK holds the GPU timer open and there is no second one to be had.",
+        stretch:
+          "Pin the budget at 40k, then click a capsule. Watch where the detail goes as the camera arrives, and where it comes from.",
+      },
+      {
+        num: "5.3",
         title: "Add the overlay",
+        stretch:
+          "Resize the window with the guide open, then closed. The overlay tracks the stage rather than the window, because it is sized from its own element.",
         body:
           "TSL cannot share a canvas with a stream, so the containment field gets its own. Add this line at the bottom of app/stage.tsx, outside the Canvas, in the miris:effect block. Nothing shows until the next step hands it a graph.",
         fill: "effect",
@@ -221,8 +266,10 @@ export const STEPS: Step[] = [
           "Splats render through raw GLSL shader materials the SDK builds itself. TSL compiles through a node builder that cannot read those, so putting both in one canvas gives you no splats and a console full of compile errors. A second transparent canvas sidesteps it entirely: the field is screen space, so it never needed the room's depth buffer in the first place. It sits on top, ignores pointer events, and is sized to the stage, so it shrinks when the guide is open. It draws whatever node graph you hand it, one full-screen quad, and nothing at all until you do.",
       },
       {
-        num: "5.3",
+        num: "5.4",
         title: "Write the field",
+        stretch:
+          "Make the scanlines breathe: multiply scan by time.sin().mul(0.5).add(0.5) before the return. Nothing else changes, and the graph is recompiled on save.",
         body:
           "Now the shader. This goes in the miris:field block near the top of app/stage.tsx, above the return. It is JavaScript that builds a shader graph, not a string of shader source, and it reads top to bottom: where the pixel is, the lines, the vignette, the colour.",
         fill: "field",
@@ -240,8 +287,11 @@ export const STEPS: Step[] = [
         num: "6.1",
         title: "Ship it",
         body:
-          "The last step does two things, because the first one makes this panel disappear. Comment out the MirisGuide line in app/main.tsx: the guide goes, your laboratory stays exactly as you built it, and the Miris styling stays too, since index.html loads it. Then press Publish, top right in Bolt, wait for your link, and send it to someone. What they load is not a model file, it is six specimens streaming to them at whatever detail their screen and connection justify.",
-        code: "{/* <MirisGuide /> */}",
+          "Press Publish, top right in Bolt, wait for your link, and send it to someone. What they load is not a model file, it is six specimens streaming to them at whatever detail their screen and connection justify. Leave the guide where it is: the published lab has no workshop API behind it, and without one the guide renders nothing. Then press Finish.",
+        explain:
+          "A published build has no dev server, so nothing in it can spend a fal key or rewrite a file, whatever the guide's buttons say. What it does have is a snapshot: miris/snapshot.ts freezes data.json into dist/api/miris at build time, so the stage's one fetch gets the same answer the dev server would have given, and the room renders exactly what you built. The file is deliberately extensionless with no content type. Response.json() parses on the body alone, so the stage is happy, while the guide decides whether the workshop API exists by content type, sees text and stays out of the way. One artefact, both readings right.",
+        stretch:
+          "Open your link on a phone. The same six streams arrive at a fraction of the detail, and the room is the same room.",
       },
     ],
   },

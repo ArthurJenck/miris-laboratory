@@ -25,6 +25,8 @@ export interface StepActions {
   undo: (subNum: string) => void | Promise<void>;
   /** Returns the pane to whichever step actually holds the pointer. */
   backToProgress: () => void;
+  /** The last substep's Done. Shows the closing pane. */
+  finish: () => void | Promise<void>;
 }
 
 export interface StepPaneProps {
@@ -260,6 +262,15 @@ export default function StepPane({
               </details>
             )}
 
+            {/* One thing to try for anyone who finished early. Never checked,
+                never required: the pointer moves on Done whether or not it
+                was done. */}
+            {sub.stretch && (
+              <p className="mw-stretch c14">
+                <span className="l12">Further</span> {withNoun(sub.stretch, track.noun)}
+              </p>
+            )}
+
             {problems[sub.num] && (
               <p className="mw-snag c14" role="status">
                 {problems[sub.num]}
@@ -277,16 +288,20 @@ export default function StepPane({
                   Back to {currentSubNum}
                 </button>
               </div>
+            ) : upNext ? (
+              <button
+                className="btn btn-secondary btn-sm mw-next"
+                disabled={busy === sub.num}
+                onClick={() => actions.done(sub)}
+              >
+                {busy === sub.num ? "Checking" : "Done"}
+              </button>
             ) : (
-              upNext && (
-                <button
-                  className="btn btn-secondary btn-sm mw-next"
-                  disabled={busy === sub.num}
-                  onClick={() => actions.done(sub)}
-                >
-                  {busy === sub.num ? "Checking" : "Done"}
-                </button>
-              )
+              // The last substep. Nothing to check on disk, so Done becomes
+              // Finish and opens the closing pane rather than stopping dead.
+              <button className="btn btn-primary btn-sm mw-next" onClick={() => actions.finish()}>
+                Finish
+              </button>
             )}
           </article>
         );

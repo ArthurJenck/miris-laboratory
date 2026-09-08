@@ -46,7 +46,7 @@ export default function Stage() {
   // miris:markup-end
 
   // miris:field-start
-  // Step 5.3 goes here.
+  // Step 5.4 goes here.
   const field = null;
   // miris:field-end
 
@@ -108,7 +108,7 @@ export default function Stage() {
     {/* miris:hud-end */}
 
     {/* miris:effect-start */}
-    {/* Step 5.2 goes here. */}
+    {/* Step 5.3 goes here. */}
     {/* miris:effect-end */}
     </>
   );

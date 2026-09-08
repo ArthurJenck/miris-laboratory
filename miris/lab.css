@@ -103,6 +103,32 @@
 
 .mw-hud-br { position: absolute; bottom: 20px; right: calc(22px + var(--mw-side, 0px)); }
 
+/* The budget readout, above the containment line. The one part of the HUD that
+   takes the pointer: the slider pins the splat budget by hand. */
+.mw-hud-budget {
+  position: absolute; bottom: 44px; right: calc(22px + var(--mw-side, 0px));
+  display: grid; gap: 6px; justify-items: end;
+  pointer-events: auto;
+}
+.mw-hud-budget b { color: #c8d4da; font-weight: 500; font-variant-numeric: tabular-nums; }
+.mw-hud-budget label { display: flex; align-items: center; gap: 8px; }
+.mw-hud-budget input[type="range"] {
+  width: 160px; height: 2px; margin: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none; background: #2a3a44; outline: none;
+}
+.mw-hud-budget input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 10px; height: 10px; border-radius: 50%;
+  background: #3bd6fe; border: 0;
+}
+.mw-hud-budget input[type="range"]::-moz-range-thumb {
+  width: 10px; height: 10px; border-radius: 50%; background: #3bd6fe; border: 0;
+}
+.mw-hud-budget button {
+  background: none; border: 1px solid #2a3a44; border-radius: 3px; padding: 2px 6px;
+  color: #6f838d; font: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer;
+}
+.mw-hud-budget button:hover { color: #e8f4f8; border-color: #6f838d; }
+
 /* Four corner marks on the hovered capsule, drawn as borders on one box so
    there is no arithmetic to get wrong when the camera moves. */
 .mw-brackets { position: absolute; }

@@ -8,6 +8,7 @@ import StepPane, { type StepActions } from "./Step";
 import { trackById } from "./tracks";
 import Start from "./Start";
 import { PanelSkeleton } from "./Skeleton";
+import Finished from "./Finished";
 import "./guide.css";
 
 /* The workshop API is Vite dev middleware, so a build has no counterpart for it.
@@ -277,6 +278,20 @@ export default function MirisGuide() {
     },
     reload: () => { void load(); },
     backToProgress: () => setSelected(null),
+    // The last substep has nothing to verify on disk, so Finish just records
+    // that it was pressed. The flag lives in data.json so a reload keeps the
+    // closing pane, and Back to the steps clears it.
+    finish: async () => {
+      const r = await post({ action: "save", patch: { finished: true } });
+      if (!r.ok) return setNote(r.problem!);
+      transition(() => setData((d: any) => ({ ...d, finished: true })));
+    },
+  };
+
+  const unfinish = async () => {
+    const r = await post({ action: "save", patch: { finished: false } });
+    if (!r.ok) return setNote(r.problem!);
+    transition(() => setData((d: any) => ({ ...d, finished: false })));
   };
 
   if (absent) return null;
@@ -344,21 +359,26 @@ export default function MirisGuide() {
                 transition(() => {
                   setViewing("");
                   setSelected(num);
+                  if (data.finished) void unfinish();
                 })
               }
           />
           <div className="mw-scroll" ref={scrollKeeper}>
-            <StepPane
-              step={shownStep}
-              currentSubNum={data.step ?? "1.1"}
-              data={data}
-              track={track}
-              busy={busy}
-              problems={problems}
-              hatch={hatch}
-              openSubNum={openSubNum}
-              actions={actions}
-            />
+            {data.finished ? (
+              <Finished data={data} onBack={unfinish} />
+            ) : (
+              <StepPane
+                step={shownStep}
+                currentSubNum={data.step ?? "1.1"}
+                data={data}
+                track={track}
+                busy={busy}
+                problems={problems}
+                hatch={hatch}
+                openSubNum={openSubNum}
+                actions={actions}
+              />
+            )}
           </div>
         </div>
 

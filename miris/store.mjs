@@ -27,6 +27,9 @@ export const DEFAULT_DATA = {
   // Fill rewrites app/stage.tsx, which forces a full reload: kept in memory,
   // the popover sprang back open on top of the scene at every paste.
   traySmall: false,
+  // Set by the last step's Finish button. The guide shows the closing pane
+  // instead of the steps while it is true; Back to the steps clears it.
+  finished: false,
   specimens: emptyBank(),
 };
 

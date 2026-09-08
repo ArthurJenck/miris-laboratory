@@ -172,7 +172,7 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
   async field() {
     const src = await readFile(STAGE, "utf8");
     if (!readMarker(src, "effect").includes("EffectCanvas"))
-      return "No EffectCanvas yet. Step 5.2 puts it there.";
+      return "No EffectCanvas yet. Step 5.3 puts it there.";
     return readMarker(src, "field").includes(PROOF.field)
       ? null
       : "The overlay is mounted but the field is still null. Write the TSL, or let the step do it.";

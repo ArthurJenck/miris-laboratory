@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { STAGES } from "./config";
+import { FALLBACK_KEYS, STAGES } from "./config";
 import type { Track } from "./tracks";
 
 /* The state lives above the steps, in Guide. It used to live inside step 1.2's
@@ -118,6 +118,7 @@ export function ConceptField({ hatch }: { hatch: HatchState }) {
   const { track, concept, setConcept, running, error, data, refresh, done } = hatch;
   const [skip, setSkip] = useState(false);
   const [again, setAgain] = useState(false);
+  const [preset, setPreset] = useState("");
   if (running) return <p className="mw-note">Growing the series, in the tray to the left.</p>;
 
   /* Once six are grown the form does not come back on its own. It did, with
@@ -142,7 +143,26 @@ export function ConceptField({ hatch }: { hatch: HatchState }) {
           Paste the viewer key you scoped to six assets you have already uploaded. The capsules fill from it, and
           the rest of this step is done.
         </p>
-        <CapsuleAuto data={data} onDone={refresh} />
+        {/* Series the presenters grew in advance. For anyone whose fal account
+            is blocked, whose run failed, or who arrived late: one press and the
+            capsules fill. Hidden when the list in config is empty. */}
+        {FALLBACK_KEYS.length > 0 && (
+          <div className="mw-fallbacks">
+            <span className="l12">Or take one of the workshop's</span>
+            <div className="mw-row">
+              {FALLBACK_KEYS.map((f) => (
+                <button
+                  key={f.key}
+                  className={`btn btn-sm ${preset === f.key ? "btn-secondary" : "btn-ghost"}`}
+                  onClick={() => setPreset(f.key)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        <CapsuleAuto key={preset} data={data} onDone={refresh} preset={preset} />
         <button className="mw-link" onClick={() => setSkip(false)}>
           Grow a new one instead
         </button>
@@ -366,13 +386,15 @@ const orderOf = (name: string) => {
 /** Step 3.3. A scoped key already knows which assets it can read, so asking
  *  for six uuids as well was asking the attendee to retype what the key could
  *  answer for itself. Paste the key, look at what it found, seal all six. */
-export function CapsuleAuto({ data, onDone }: { data: any; onDone: () => void }) {
-  const [key, setKey] = useState(data?.viewerKey ?? "");
+export function CapsuleAuto({ data, onDone, preset = "" }: { data: any; onDone: () => void; preset?: string }) {
+  // A preset is one of the workshop's own keys: it goes straight to the lookup
+  // so the picker is one press, and the found list still shows before sealing.
+  const [key, setKey] = useState(preset || data?.viewerKey || "");
   const [found, setFound] = useState<any[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [manual, setManual] = useState(false);
-  const [again, setAgain] = useState(false);
+  const [again, setAgain] = useState(!!preset);
 
   const find = async () => {
     setBusy(true);
@@ -392,6 +414,12 @@ export function CapsuleAuto({ data, onDone }: { data: any; onDone: () => void })
       setBusy(false);
     }
   };
+
+  useEffect(() => {
+    if (preset) void find();
+    // Once per preset: the component is keyed on it, so a new one remounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preset]);
 
   const seal = async () => {
     setBusy(true);

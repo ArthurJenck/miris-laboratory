@@ -18,6 +18,13 @@ export const MODEL_3D = "meshy/v7/image-to-3d";
 export const LABEL_MODEL = "openrouter/router";
 export const LABEL_LLM = "google/gemini-2.5-flash";
 export const PORTAL_URL = "https://app.miris.com";
+
+/* Viewer keys the presenters scoped to series grown in advance, one per line.
+   Offered under "I already have a series" at step 1.2, so anyone whose fal
+   account is blocked or whose run failed is streaming in a minute. Public by
+   design: a viewer key ships in every published lab anyway. Empty hides the
+   buttons. */
+export const FALLBACK_KEYS: { label: string; key: string }[] = [];
 export const FAL_KEYS_URL = "https://fal.ai/dashboard/keys";
 
 // Authorises every stream. Cold start is 6 to 9s; warming it early does not help.
