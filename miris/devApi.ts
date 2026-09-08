@@ -40,6 +40,8 @@ const PROOF = {
   field: "Fn(",
   cardOverlay: "Dossier",
   markup: "mw-dossier",
+  fit: "getBounds",
+  file: "useHtmlTexture",
 };
 
 /** Which snippet each proof has to appear in. */
@@ -53,6 +55,8 @@ const PROOF_IN: Record<keyof typeof PROOF, keyof typeof SNIPPETS> = {
   field: "field",
   cardOverlay: "card",
   markup: "markup",
+  fit: "fit",
+  file: "file",
 };
 
 const auditProofs = () => {
@@ -172,6 +176,20 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     return readMarker(src, "field").includes(PROOF.field)
       ? null
       : "The overlay is mounted but the field is still null. Write the TSL, or let the step do it.";
+  },
+
+  async fit() {
+    const block = readMarker(await readFile(STAGE, "utf8"), "parts");
+    return block.includes(PROOF.fit)
+      ? null
+      : "FitInGlass does not measure anything yet. Replace the placeholder in the miris:parts block, or let the step do it.";
+  },
+
+  async file() {
+    const block = readMarker(await readFile(STAGE, "utf8"), "parts");
+    return block.includes(PROOF.file)
+      ? null
+      : "No File component yet. Add it under FitInGlass in the miris:parts block, or let the step do it.";
   },
 
   async markup() {

@@ -3,7 +3,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { Vector3 } from "three";
 import { anchor } from "./anchor";
 import "./lab.css";
-import { type Box, getBoxes, getFits, getHover, getSelected, labVersion, setBoxes, setHover, subscribeLab } from "./labState";
+import { type Box, getBoxes, getHover, getSelected, labVersion, setBoxes, setHover, subscribeLab } from "./labState";
 
 const RING = 4.2; // where the capsules stand
 const GLASS = 0.95; // a little wider than the glass, so brackets clear it
@@ -51,27 +51,6 @@ function boxOf(i: number, camera: any, w: number, h: number): Box | null {
   return silhouetteOf(i, camera, w, h, GLASS, BOTTOM, TOP);
 }
 
-/** Screen box of a world-space AABB: the specimen, once FitInGlass has placed it. */
-function projectBox(center: [number, number, number], size: [number, number, number], camera: any, w: number, h: number): Box | null {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  for (const sx of [-1, 1]) {
-    for (const sy of [-1, 1]) {
-      for (const sz of [-1, 1]) {
-        v.set(center[0] + (sx * size[0]) / 2, center[1] + (sy * size[1]) / 2, center[2] + (sz * size[2]) / 2).project(camera);
-        if (v.z >= 1) return null;
-        minX = Math.min(minX, (v.x * 0.5 + 0.5) * w);
-        maxX = Math.max(maxX, (v.x * 0.5 + 0.5) * w);
-        minY = Math.min(minY, (-v.y * 0.5 + 0.5) * h);
-        maxY = Math.max(maxY, (-v.y * 0.5 + 0.5) * h);
-      }
-    }
-  }
-  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
-}
-
 /** Invisible plumbing inside the canvas: projects the six capsules every frame
  *  and feeds the TSL overlay the one under the pointer. Renders nothing. */
 export function CapsuleProbe() {
@@ -83,10 +62,7 @@ export function CapsuleProbe() {
       anchor.seen = false;
       return;
     }
-    const fit = getFits()[i];
-    const b = fit
-      ? projectBox(fit.center, fit.size, camera, size.width, size.height)
-      : silhouetteOf(i, camera, size.width, size.height, 0.9, 0.36, 2.96);
+    const b = silhouetteOf(i, camera, size.width, size.height, 0.9, 0.36, 2.96);
     if (!b) {
       anchor.seen = false;
       return;
@@ -135,6 +111,7 @@ export default function LabHud({ specimens = [] as any[] }) {
   const live = specimens.filter((s) => s?.uuid).length;
   const box = hover >= 0 ? boxes[hover] : null;
   const named = hover >= 0 ? specimens[hover]?.dossier?.name : null;
+  const stage = hover >= 0 ? specimens[hover]?.stage : null;
 
   return (
     <div className="mw-hud" aria-hidden="true">
@@ -151,7 +128,12 @@ export default function LabHud({ specimens = [] as any[] }) {
           <i /><i /><i /><i />
           {/* Hangs above the box, but never over the header or off the top:
               zoomed in, the glass can reach past the edge of the frame. */}
-          {named && <em style={{ left: Math.max(box.x, 22) - box.x, top: Math.max(box.y - 20, 60) - box.y }}>{named}</em>}
+          {named && (
+            <em style={{ left: Math.max(box.x, 22) - box.x, top: Math.max(box.y - 20, 60) - box.y }}>
+              {named}
+              {stage ? ` · ${String(hover + 1).padStart(2, "0")} ${stage}` : ""}
+            </em>
+          )}
         </div>
       )}
     </div>

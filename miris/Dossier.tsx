@@ -4,7 +4,7 @@ import { getBoxes, getSelected, labVersion, setSelected, subscribeLab } from "./
 
 /** Click to open a capsule's file, Escape or click away to close it. Lives
  *  outside the canvas because it reads the pointer against projected boxes;
- *  the card it opens is drawn in the scene by DossierCard. */
+ *  the card it opens is drawn in the scene by Placard. */
 export default function Dossier({ specimens = [] as any[] }) {
   useSyncExternalStore(subscribeLab, labVersion, labVersion);
   const i = getSelected();
@@ -49,7 +49,7 @@ export default function Dossier({ specimens = [] as any[] }) {
     };
   }, []);
 
-  // The card itself is drawn in the scene by DossierCard; this only decides
+  // The card itself is drawn in the scene by Placard; this only decides
   // which capsule is open.
   void specimens;
   void i;

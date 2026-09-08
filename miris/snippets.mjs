@@ -131,6 +131,11 @@ const MARKUP = `  // The file is HTML. The browser lays it out with the guide's 
       <p class="mw-d-code">\${d.designation} / \${d.series}</p>
       <h3>\${d.name}</h3>
       <p class="mw-d-class">\${d.classification}</p>
+      <ol class="mw-d-series">
+        \${d.stages.map((name: string, k: number) => \`
+          <li class="\${k === d.index ? "on" : ""}"><b>\${String(k + 1).padStart(2, "0")}</b><span>\${name}</span></li>\`).join("")}
+      </ol>
+      <p class="mw-d-stage">Stage \${d.index + 1} of \${d.stages.length}: \${d.stage}</p>
       <ul class="mw-d-stats">
         \${(d.stats || []).map((s: any) => \`
           <li><span>\${s.label}</span><i><b style="width:\${s.value}%"></b></i><span>\${s.value}</span></li>\`).join("")}
@@ -139,14 +144,53 @@ const MARKUP = `  // The file is HTML. The browser lays it out with the guide's 
       <p class="mw-d-notes">\${d.notes}</p>
     </div>\`;`;
 
+const FIT = `// A generated mesh arrives at whatever size the generator chose, and a stream
+// reports its bounds in world space, scale included. So: measure, scale
+// toward what fits, measure again, and stop once it has settled.
+function FitInGlass({ position, fill = 0.7, children }: any) {
+  const box = useRef<Group>(null);
+  const settled = useRef(false);
+  useFrame(() => {
+    const g = box.current;
+    if (!g || settled.current) return;
+    let stream: any = null;
+    g.traverse((o: any) => { if (!stream && o.getBounds) stream = o; });
+    const b = stream?.getBounds();
+    if (!b || !(b.size[1] > 0)) return;
+    // The glass is 2.6 tall and 1.8 across; the tighter limit wins.
+    const want = Math.min((2.6 * fill) / b.size[1], (1.8 * fill) / Math.max(b.size[0], b.size[2]));
+    if (Math.abs(want - 1) < 0.01) { settled.current = true; return; }
+    g.scale.multiplyScalar(1 + (want - 1) * 0.6);
+    g.position.x += (position[0] - b.center[0]) * 0.6;
+    g.position.y += (1.66 - b.center[1]) * 0.6;
+    g.position.z += (position[2] - b.center[2]) * 0.6;
+  });
+  return <group ref={box} position={position}>{children}</group>;
+}`;
+
+const FILE = `// Paint the markup into a canvas and wear it as a texture. The browser lays
+// the HTML out, drawElementImage copies the pixels, and three samples them.
+function File({ html }: { html: string }) {
+  const { texture, width, height } = useHtmlTexture(html);
+  if (!texture) return null;
+  return (
+    <mesh position={[width / 2, 0, 0]}>
+      <planeGeometry args={[width, height]} />
+      <meshBasicMaterial map={texture} alphaTest={0.5} toneMapped={false} />
+    </mesh>
+  );
+}`;
+
 const CARD_PANEL = `      <Dossier specimens={specimens} />
-      <DossierCard specimens={specimens} html={fileMarkup} />`;
+      <Placard specimens={specimens}>{(d: any) => <File html={fileMarkup(d)} />}</Placard>`;
 
 export const SNIPPETS = {
   floor: FLOOR,
   walkway: `${FLOOR}\n${WALKWAY}`,
   capsules: `${FLOOR}\n${WALKWAY}\n${CAPSULES_SNIPPET}`,
   streams: `${FLOOR}\n${WALKWAY}\n${CAPSULES_SNIPPET}\n${STREAMS}`,
+  fit: FIT,
+  file: `${FIT}\n\n${FILE}`,
   hud: HUD,
   effect: EFFECT,
   field: FIELD,
@@ -163,6 +207,8 @@ export const PARTS = {
   walkway: WALKWAY,
   capsules: CAPSULES_SNIPPET,
   streams: STREAMS,
+  fit: FIT,
+  file: FILE,
   hud: HUD,
   effect: EFFECT,
   field: FIELD,
@@ -180,12 +226,16 @@ export const CLEARS_TO = {
   walkway: "floor",
   capsules: "walkway",
   streams: "capsules",
+  fit: null,
+  file: "fit",
   hud: null,
   effect: null,
   field: null,
 };
 
 export const MARKER_FOR = {
+  fit: "parts",
+  file: "parts",
   markup: "markup",
   card: "card",
   floor: "scene",

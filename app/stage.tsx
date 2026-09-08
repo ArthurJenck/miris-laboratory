@@ -1,18 +1,18 @@
-import { useEffect, useMemo, useState } from "react";
-import { Canvas, extend } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, extend, useFrame } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { MirisStream } from "@miris-inc/three";
 import { TINTS, VIEWER_KEY as DEMO_KEY } from "../miris/config";
-import { DoubleSide, NoToneMapping } from "three";
+import { DoubleSide, Group, NoToneMapping } from "three";
 import { Fn, float, smoothstep, time, uv, vec2, vec3, vec4 } from "three/tsl";
 import Dossier from "../miris/Dossier";
 import LabHud, { CapsuleProbe } from "../miris/LabHud";
 import CapsuleFocus from "../miris/CapsuleFocus";
-import DossierCard from "../miris/DossierCard";
+import Placard from "../miris/Placard";
+import useHtmlTexture from "../miris/htmlTexture";
 import HdrGuard from "../miris/HdrGuard";
 import BudgetGuard from "../miris/BudgetGuard";
 import GlassOrder from "../miris/GlassOrder";
-import FitInGlass from "../miris/FitInGlass";
 import { FloorGlow, LightShaft, Pulse, RadialGlow } from "../miris/CapsuleFx";
 import { floorMaps, walkwayTexture, wearMap } from "../miris/textures";
 import EffectCanvas, { screenAspect } from "../miris/EffectCanvas";
@@ -20,6 +20,13 @@ import { StageSkeleton } from "../miris/Skeleton";
 
 // A Miris stream is now a scene node: <mirisStream args={[{ uuid, viewerKey }]} />
 extend({ MirisStream });
+
+// miris:parts-start
+// Steps 2.5 and 4.2 go here. Until 2.5, a stream shows at the size it arrived.
+function FitInGlass({ position, children }: any) {
+  return <group position={position}>{children}</group>;
+}
+// miris:parts-end
 
 // Your file. Each step's code goes between the miris: comments below.
 export default function Stage() {
@@ -78,7 +85,7 @@ export default function Stage() {
       {/* miris:scene-end */}
 
       {/* miris:card-start */}
-      {/* Step 4.2 goes here. */}
+      {/* Step 4.3 goes here. */}
       {/* miris:card-end */}
 
 

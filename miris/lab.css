@@ -60,6 +60,30 @@
 
 .mw-d-notes { margin: 0; color: #9fb0b8; }
 
+/* The growth series: six cells, the one this file describes lit. */
+.mw-d-series {
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px;
+  list-style: none; margin: 12px 0 4px; padding: 0;
+}
+
+.mw-d-series li {
+  border: 1px solid #182329; border-radius: 3px; padding: 5px 2px 4px;
+  text-align: center; color: #56707c; overflow: hidden;
+}
+
+.mw-d-series li b { display: block; font-weight: 500; font-size: 11px; letter-spacing: 0.08em; }
+
+.mw-d-series li span {
+  display: block; font-size: 8px; letter-spacing: 0.04em; text-transform: uppercase;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.mw-d-series li.on { border-color: #41d0f8; color: #e8f4f8; background: rgba(65, 208, 248, 0.12); }
+
+.mw-d-series li.on b { color: #41d0f8; }
+
+.mw-d-stage { margin: 0 0 8px; color: #c8d4da; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+
 /* The laboratory's readout, painted over the canvas. Monospace and heavily
    letterspaced, dim enough to read as instrumentation rather than interface. */
 .mw-hud {

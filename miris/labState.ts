@@ -10,13 +10,6 @@ export interface Box {
    reads it. A plain store rather than React state: this changes 60 times a
    second and only two components care. */
 let boxes: (Box | null)[] = [null, null, null, null, null, null];
-/* World-space bounds of each specimen once FitInGlass has settled it, so the
-   hover glow can wrap the creature rather than the tank it is in. */
-export interface Fit {
-  center: [number, number, number];
-  size: [number, number, number];
-}
-let fits: (Fit | null)[] = [null, null, null, null, null, null];
 let hover = -1;
 let selected = -1;
 let version = 0;
@@ -28,10 +21,6 @@ export const subscribeLab = (f: () => void) => {
 };
 export const labVersion = () => version;
 export const getBoxes = () => boxes;
-export const getFits = () => fits;
-export const setFit = (i: number, fit: Fit | null) => {
-  fits[i] = fit;
-};
 export const getHover = () => hover;
 export const getSelected = () => selected;
 

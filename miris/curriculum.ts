@@ -104,10 +104,20 @@ export const STEPS: Step[] = [
         fill: "streams",
         check: "streams",
         explain:
-          "A stream is not a file you load, it is a subscription. What appears first is a coarse version of the whole specimen, and it sharpens as more arrives, so there is never a moment where you wait on a download. The extend call at the top of app/stage.tsx is what buys you that: it registers MirisStream as a JSX tag, so a stream takes position and scale like any other three.js object and React Three Fiber draws it in the same pass as the glass around it. FitInGlass around it measures whatever arrives and scales it to the glass, because a generated mesh comes out at whatever size the generator chose. Six capsules means six subscriptions, each arriving at whatever detail its distance from the camera justifies. That is the part worth noticing: the far capsules cost less than the near ones without you doing anything about it.",
+          "A stream is not a file you load, it is a subscription. What appears first is a coarse version of the whole specimen, and it sharpens as more arrives, so there is never a moment where you wait on a download. The extend call at the top of app/stage.tsx is what buys you that: it registers MirisStream as a JSX tag, so a stream takes position and scale like any other three.js object and React Three Fiber draws it in the same pass as the glass around it. Six capsules means six subscriptions, each arriving at whatever detail its distance from the camera justifies. That is the part worth noticing: the far capsules cost less than the near ones without you doing anything about it. FitInGlass around each one is a placeholder for now, a plain group. The next step makes it measure.",
       },
       {
         num: "2.5",
+        title: "Fit the specimen",
+        body:
+          "A generated mesh arrives at whatever size the generator chose, so once the capsules fill you may find a speck, or a creature bursting out of the glass. This replaces the placeholder FitInGlass in the miris:parts block, above the Stage function: it asks the stream how big it is and scales it to fit.",
+        fill: "fit",
+        check: "fit",
+        explain:
+          "The one call that matters is getBounds. A stream reports its bounding box in world space with its current scale already applied, which makes the correction proportional: if it is twice as tall as the glass allows, the group wants to be half its current scale. So measure, move part of the way, measure again. The 0.6 is how far to move each frame, which is why it eases into place over a few frames rather than snapping, and the check against 0.01 stops the loop once it has settled, so a stream sharpening later does not make the creature breathe. The centre is corrected the same way, because a mesh's origin is rarely where its middle is. Until the stream has arrived the bounds are empty, and the guard against a zero height is what stops the first frame from dividing by nothing and throwing the specimen to infinity. Change 0.7 and save: it is how much of the glass the creature fills.",
+      },
+      {
+        num: "2.6",
         title: "Stand in the room",
         body:
           "No button for this one. You are in the middle of the laboratory: dragging turns you on the spot rather than flying you around the ring, and clicking a capsule walks you over to it. Open app/stage.tsx and find the camera prop on Canvas. The middle number of position is your eye height, so 1.7 is standing and 0.9 is crouched beside the plinths. fov is how much you see at once: raise it to 70 and the room wraps around you, drop it to 35 and you are looking down a lens at one capsule.",
@@ -157,22 +167,32 @@ export const STEPS: Step[] = [
         num: "4.1",
         title: "Write the file's markup",
         body:
-          "The specimen's file is plain HTML: a few elements with classes the guide already styles. Put this in the miris:markup block near the top of app/stage.tsx, above the return. It is a function that takes one dossier and returns markup, and nothing about it is 3D yet.",
+          "The specimen's file is plain HTML: a few elements with classes the guide already styles. Put this in the miris:markup block near the top of the Stage function, above the return. It is a function that takes one dossier and returns markup, and nothing about it is 3D yet.",
         fill: "markup",
         check: "markup",
         explain:
-          "This is the HTML-in-Canvas idea, in two halves, and this is the first. It is ordinary markup laid out by the browser with ordinary CSS, so anything you can do on a web page you can do here: each stat bar is a b element with a width, the cyan comes from a class in lab.css, the text wraps because text wraps. The browser is doing the layout work that a 3D text library would make you do by hand, which is the whole point of the API. The next step paints the result into a canvas and hangs it in the room. Change a word, add a line, or give the notes a class of your own in lab.css, save, and click the capsule again: the file repaints from your markup. If your function throws mid-edit, the designed file shows instead, so you cannot break the room while you experiment.",
+          "This is the HTML-in-Canvas idea in three parts, and this is the first: ordinary markup laid out by the browser with ordinary CSS, so anything you can do on a web page you can do here. Each stat bar is a b element with a width, the growth series is a list of six items with a class on the one this file describes, the cyan comes from a class in lab.css, the text wraps because text wraps. The browser is doing the layout work that a 3D text library would make you do by hand, which is the whole point of the API. The next step paints the result; the one after hangs it in the room. Change a word, add a line, or give the notes a class of your own in lab.css, save, and click the capsule again: the file repaints from your markup.",
       },
       {
         num: "4.2",
-        title: "Hang it beside the glass",
+        title: "Paint it",
         body:
-          "Two lines, in the miris:card block inside the Canvas. The first makes the capsules clickable. The second takes your markup, paints it, and stands it beside whichever capsule is open. Click a capsule: the camera walks over and the file is there in the room. Click away, or press Escape, to come back.",
-        fill: "card",
-        check: "cardOverlay",
+          "Now the part that gives the step its name. This goes under FitInGlass in the miris:parts block. It takes markup, hands it to a hook that paints it, and puts the result on a plane.",
+        fill: "file",
+        check: "file",
         renderPath: true,
         explain:
-          "The second half. DossierCard calls your fileMarkup, lays the result out offscreen, and paints it into a canvas with drawElementImage, the HTML-in-Canvas API: one call turns a laid-out element into pixels. Where the browser does not have the API yet, the same markup goes through an SVG foreignObject and paints the same way; the badge on this step says which path yours took. The canvas is then a texture on a plane, and a plane is a thing in the room: it stands to the right of the glass, hinged on its inner edge and angled toward you, it recedes with everything else, and you can orbit around it. It is drawn opaque and depth-writing on purpose, so the specimen sits in front of it when it should. Clicking is decided from the pointer against the capsules' projected outlines, so your glass never carries a click handler, and the same click hands the camera a destination it eases toward over about a second.",
+          "useHtmlTexture is the hinge between the two worlds. It lays the markup out offscreen, then paints the element into a canvas with drawElementImage, the HTML-in-Canvas API: one call turns a laid-out element into pixels. Where the browser does not have the API yet, the same markup goes through an SVG foreignObject and is painted the same way; the badge on this step says which path yours took. Back comes a three.js texture and the element's size in scene units, and from there it is the most ordinary thing in three: a plane with that texture on it. The plane is placed half its width to the right so its left edge sits at the group's origin, which is where the next step hinges it. alphaTest rather than transparent, on purpose: the card draws as a solid, so the specimen sits in front of it when it should. toneMapped off, because the pixels are already the colours the browser chose.",
+      },
+      {
+        num: "4.3",
+        title: "Hang it beside the glass",
+        body:
+          "Two lines, in the miris:card block inside the Canvas. The first makes the capsules clickable. The second stands beside whichever capsule is open and asks your File to paint that capsule's markup. Click a capsule: the camera walks over and the file is there in the room. Click away, or press Escape, to come back.",
+        fill: "card",
+        check: "cardOverlay",
+        explain:
+          "Placard knows where a file stands: to the right of the open glass, hinged on its inner edge and angled toward you, sized to fit the frame at whatever width your window is, with a dark plate behind it so the reverse is a slab and not text read backwards. It knows nothing about what the file shows; it calls your function with the dossier and hangs whatever comes back. A plane is a thing in the room: it recedes with everything else and you can orbit around it. Clicking is decided from the pointer against the capsules' projected outlines, so your glass never carries a click handler, and the same click hands the camera a destination it eases toward over about a second. If your markup or your File throws mid-edit, the card goes blank until you fix it and the room carries on.",
       },
     ],
   },

@@ -1,7 +1,7 @@
 // The label marker lives in the function body, where a JSX comment is a syntax
 // error, so it takes plain // form. Everything inside the returned JSX keeps
 // the JSX comment form.
-const JS_MARKERS = new Set(["label", "field", "markup"]);
+const JS_MARKERS = new Set(["label", "field", "markup", "parts"]);
 export const start = (m) => (JS_MARKERS.has(m) ? `// miris:${m}-start` : `{/* miris:${m}-start */}`);
 export const end = (m) => (JS_MARKERS.has(m) ? `// miris:${m}-end` : `{/* miris:${m}-end */}`);
 

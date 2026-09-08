@@ -1,13 +1,15 @@
-import { useThree } from "@react-three/fiber";
-import { useSyncExternalStore } from "react";
-import { FrontSide } from "three";
-import { dossierHtml } from "./Card";
+import { useFrame, useThree } from "@react-three/fiber";
+import { Component, type ReactNode, useRef, useSyncExternalStore } from "react";
+import { FrontSide, Mesh } from "three";
 import { FOCUS_DISTANCE } from "./CapsuleFocus";
-import useHtmlTexture from "./htmlTexture";
 import { getSelected, labVersion, subscribeLab } from "./labState";
 
 const RING = 4.2;
 const MIDDLE = 1.66;
+/* The markup is 340px wide and the shared px-to-units ratio is 0.0045, so the
+   card is this wide before SCALE. The frame fit needs it before the child has
+   painted, and the plate behind it is sized from the child once it has. */
+const CARD_WIDTH = 340 * 0.0045;
 /* The placard's inner edge stands this far from the capsule's axis: just
    outside the glass, so the tube never hides it. */
 const EDGE = 1.0;
@@ -46,38 +48,42 @@ function fitToFrame(width: number, k: number): { tilt: number; scale: number; ed
   return { tilt: STEEPEST, scale, edge };
 }
 
-/** The specimen's file, standing in the room beside its capsule. The markup is
- *  the same as the flat panel used, painted into a canvas and sampled as a
- *  texture, so the card lives in the scene: it has a place, it recedes and
- *  parallaxes with everything else, and it can be occluded.
- *
- *  A placard, not a billboard. It stands to the right of the glass as seen
- *  from the middle of the room, turned to face the middle, and stays there:
- *  orbit and you walk around it like anything else in the room. Front face
- *  only, with a dark plate behind it, so from behind you see a slab and never
- *  the text reversed. */
-export default function DossierCard({ specimens = [] as any[], html }: { specimens?: any[]; html?: (d: any) => string }) {
+/** Where the specimen's file stands: to the right of the open capsule, hinged
+ *  on its inner edge and turned to face the room, sized and tilted to fit the
+ *  frame. What it shows is the child's business: step 4.2's File paints the
+ *  markup and hangs a plane at the hinge. A dark plate behind it, sized to
+ *  whatever plane the child made, keeps the reverse a slab rather than text
+ *  read backwards. */
+export default function Placard({ specimens = [] as any[], children }: { specimens?: any[]; children: (d: any) => ReactNode }) {
   useSyncExternalStore(subscribeLab, labVersion, labVersion);
   const i = getSelected();
   const d = i >= 0 ? specimens[i]?.dossier : null;
-  // The attendee's markup when they have written it, the designed file when
-  // not, and the designed file again if theirs throws mid-edit.
-  let markup: string | null = null;
-  if (d) {
-    try {
-      markup = (html ?? dossierHtml)(d);
-    } catch (e) {
-      console.warn("fileMarkup threw, showing the default file instead", e);
-      markup = dossierHtml(d);
-    }
-  }
-  const { texture, width, height } = useHtmlTexture(markup);
   const camera = useThree((s) => s.camera) as any;
   const aspect = useThree((s) => s.size.width / s.size.height);
+  const group = useRef<any>(null);
+  const plate = useRef<Mesh>(null);
 
-  if (i < 0 || !texture) return null;
+  useFrame(() => {
+    const g = group.current;
+    const p = plate.current;
+    if (!g || !p) return;
+    let plane: any = null;
+    g.traverse((o: any) => {
+      if (!plane && o !== p && o.isMesh && o.geometry?.type === "PlaneGeometry") plane = o;
+    });
+    const w = plane?.geometry?.parameters?.width ?? 0;
+    const h = plane?.geometry?.parameters?.height ?? 0;
+    p.visible = w > 0 && h > 0;
+    p.scale.set(w, h, 1);
+    p.position.set(w / 2, 0, -0.02);
+  });
+
+  if (i < 0 || !d) return null;
+  // One object for the child: the dossier, plus where this specimen sits in
+  // the series, since a file that cannot say which stage it is fails at its job.
+  const file = { ...d, stage: specimens[i]?.stage ?? "", index: i, stages: specimens.map((s: any) => s?.stage ?? "") };
   const k = Math.tan((camera.fov * Math.PI) / 360) * aspect * MARGIN;
-  const { tilt, scale, edge } = fitToFrame(width, k);
+  const { tilt, scale, edge } = fitToFrame(CARD_WIDTH, k);
   const a = (i / 6) * Math.PI * 2;
   // Right of the capsule as seen from the middle of the room: the outward
   // vector is (cos a, sin a), so right is (-sin a, cos a).
@@ -88,19 +94,30 @@ export default function DossierCard({ specimens = [] as any[], html }: { specime
   const yaw = Math.atan2(-Math.cos(a), -Math.sin(a)) + tilt;
 
   return (
-    <group position={[x, MIDDLE, z]} rotation={[0, yaw, 0]} scale={scale}>
-      {/* Opaque and depth-writing on purpose. Drawn transparent and late it
-          painted over the specimen from behind: splats write no depth, so
-          nothing stopped it. As a solid in the opaque pass the splats blend
-          over it when they are in front and sit behind it when they are not. */}
-      <mesh position={[width / 2, 0, 0]}>
-        <planeGeometry args={[width, height]} />
-        <meshBasicMaterial map={texture} alphaTest={0.5} toneMapped={false} side={FrontSide} />
-      </mesh>
-      <mesh position={[width / 2, 0, -0.02]} rotation={[0, Math.PI, 0]}>
-        <planeGeometry args={[width, height]} />
+    <group ref={group} position={[x, MIDDLE, z]} rotation={[0, yaw, 0]} scale={scale}>
+      <Quietly>{children(file)}</Quietly>
+      <mesh ref={plate} rotation={[0, Math.PI, 0]} visible={false}>
+        <planeGeometry args={[1, 1]} />
         <meshStandardMaterial color={0x0b1016} roughness={0.7} metalness={0.3} side={FrontSide} />
       </mesh>
     </group>
   );
+}
+
+/* The child is the attendee's code mid-edit. A throw there should cost the
+   card, not the room. */
+class Quietly extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(e: unknown) {
+    console.warn("The file's markup or paint threw; showing no card until it is fixed.", e);
+  }
+  componentDidUpdate(prev: { children: ReactNode }) {
+    if (this.state.failed && prev.children !== this.props.children) this.setState({ failed: false });
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
 }
