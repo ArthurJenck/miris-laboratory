@@ -3,7 +3,7 @@ import { useEffect, useSyncExternalStore } from "react";
 import { Vector3 } from "three";
 import { anchor } from "./anchor";
 import "./lab.css";
-import { type Box, getBoxes, getHover, getSelected, labVersion, setBoxes, setHover, subscribeLab } from "./labState";
+import { type Box, getBoxes, getHover, getReticle, getSelected, labVersion, setBoxes, setHover, setReticle, subscribeLab } from "./labState";
 
 const RING = 4.2; // where the capsules stand
 const GLASS = 0.95; // a little wider than the glass, so brackets clear it
@@ -51,18 +51,59 @@ function boxOf(i: number, camera: any, w: number, h: number): Box | null {
   return silhouetteOf(i, camera, w, h, GLASS, BOTTOM, TOP);
 }
 
+/** Screen box of a world-space box: the specimen, as its stream reports it. */
+function projectBox(center: number[], size: number[], camera: any, w: number, h: number): Box | null {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const sx of [-1, 1]) {
+    for (const sy of [-1, 1]) {
+      for (const sz of [-1, 1]) {
+        v.set(center[0] + (sx * size[0]) / 2, center[1] + (sy * size[1]) / 2, center[2] + (sz * size[2]) / 2).project(camera);
+        if (v.z >= 1) return null;
+        minX = Math.min(minX, (v.x * 0.5 + 0.5) * w);
+        maxX = Math.max(maxX, (v.x * 0.5 + 0.5) * w);
+        minY = Math.min(minY, (-v.y * 0.5 + 0.5) * h);
+        maxY = Math.max(maxY, (-v.y * 0.5 + 0.5) * h);
+      }
+    }
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+/** The stream standing at capsule i, found by where it stands rather than by
+ *  a prop, so the attendee's snippet stays as it is. */
+const streamAt = new Vector3();
+function streamIn(scene: any, i: number): any {
+  let found: any = null;
+  scene.traverse((o: any) => {
+    if (found || typeof o?.getBounds !== "function") return;
+    o.getWorldPosition(streamAt);
+    const slot = Math.round(((Math.atan2(streamAt.z, streamAt.x) / (Math.PI * 2)) * 6 + 6)) % 6;
+    if (slot === i) found = o;
+  });
+  return found;
+}
+
 /** Invisible plumbing inside the canvas: projects the six capsules every frame
  *  and feeds the TSL overlay the one under the pointer. Renders nothing. */
 export function CapsuleProbe() {
-  const { camera, size } = useThree();
+  const { camera, size, scene } = useThree();
   useFrame(() => {
     setBoxes(Array.from({ length: 6 }, (_, i) => boxOf(i, camera, size.width, size.height)));
     const i = getHover();
     if (i < 0) {
       anchor.seen = false;
+      setReticle(null);
       return;
     }
-    const b = silhouetteOf(i, camera, size.width, size.height, 0.9, 0.36, 2.96);
+    // The brackets frame the creature, from the bounds its stream reports;
+    // the glass silhouette stands in until it has reported one.
+    const bounds = streamIn(scene, i)?.getBounds?.();
+    const creature = bounds?.size?.[1] > 1e-6 ? projectBox(bounds.center, bounds.size, camera, size.width, size.height) : null;
+    setReticle(creature);
+    const b = creature ?? silhouetteOf(i, camera, size.width, size.height, 0.9, 0.36, 2.96);
     if (!b) {
       anchor.seen = false;
       return;
@@ -109,7 +150,7 @@ export default function LabHud({ specimens = [] as any[] }) {
   }, []);
 
   const live = specimens.filter((s) => s?.uuid).length;
-  const box = hover >= 0 ? boxes[hover] : null;
+  const box = hover >= 0 ? getReticle() ?? boxes[hover] : null;
   const named = hover >= 0 ? specimens[hover]?.dossier?.name : null;
   const stage = hover >= 0 ? specimens[hover]?.stage : null;
 

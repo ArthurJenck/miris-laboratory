@@ -10,6 +10,10 @@ export interface Box {
    reads it. A plain store rather than React state: this changes 60 times a
    second and only two components care. */
 let boxes: (Box | null)[] = [null, null, null, null, null, null];
+/* Screen box of the hovered specimen itself, from the stream's own bounds, so
+   the brackets frame the creature and not the tube it stands in. Null when
+   nothing is hovered or the stream has not reported a size yet. */
+let reticle: Box | null = null;
 let hover = -1;
 let selected = -1;
 let version = 0;
@@ -22,6 +26,13 @@ export const subscribeLab = (f: () => void) => {
 export const labVersion = () => version;
 export const getBoxes = () => boxes;
 export const getHover = () => hover;
+export const getReticle = () => reticle;
+export const setReticle = (b: Box | null) => {
+  const p = reticle;
+  const same = !b || !p ? b === p : Math.abs(b.x - p.x) < 1 && Math.abs(b.y - p.y) < 1 && Math.abs(b.w - p.w) < 1 && Math.abs(b.h - p.h) < 1;
+  reticle = b;
+  if (!same) bump();
+};
 export const getSelected = () => selected;
 
 const bump = () => {
