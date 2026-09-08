@@ -1,88 +1,109 @@
+import { useEffect, useRef, useState } from "react";
 import { STEPS } from "./curriculum";
 import { TRACKS } from "./tracks";
+import "./start.css";
 
-export default function Start({
-  onChoose,
-  note,
-}: {
-  onChoose: (id: string) => void;
-  /* Failures during track selection used to be invisible here: the guide's note
-   * bar lives inside the panel, which does not exist until a track is picked, so
-   * a tap that failed produced no output at all. */
-  note?: string;
-}) {
+const SHOTS = ["Inside Sublevel 7", "Along the walkway", "Life in containment", "The specimen archive"];
+
+function LaboratoryReel() {
+  const video = useRef<HTMLVideoElement>(null);
+  const [preferences, setPreferences] = useState({ reduced: true, saveData: true });
+  const [visible, setVisible] = useState(true);
+  const [requested, setRequested] = useState<boolean | null>(null);
+  const [playing, setPlaying] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [seconds, setSeconds] = useState(0);
+  const load = requested === true || (!preferences.reduced && !preferences.saveData);
+  const play = visible && (requested ?? load);
+
+  useEffect(() => {
+    const motion = matchMedia("(prefers-reduced-motion: reduce)");
+    const connection = (navigator as Navigator & { connection?: EventTarget & { saveData?: boolean } }).connection;
+    const update = () => setPreferences({ reduced: motion.matches, saveData: connection?.saveData === true });
+    const visibility = () => setVisible(!document.hidden);
+    update(); visibility();
+    motion.addEventListener("change", update);
+    connection?.addEventListener("change", update);
+    document.addEventListener("visibilitychange", visibility);
+    return () => {
+      motion.removeEventListener("change", update);
+      connection?.removeEventListener("change", update);
+      document.removeEventListener("visibilitychange", visibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    const element = video.current;
+    if (!element) return;
+    if (play) void element.play().catch(() => setPlaying(false));
+    else element.pause();
+  }, [load, play, failed]);
+
   return (
-    <div className="mw-start">
-      <header>
-        <span>Miris · Spatial Streaming</span>
+    <figure className="mw-reel">
+      <div className="mw-reel-picture">
+        <img src="/tracks/laboratory-poster.jpg" width="1280" height="720"
+          alt="The actual workshop laboratory: blue-lit specimen capsules, steel walkway and research terminals."
+          fetchPriority="high" decoding="async" />
+        {load && !failed && <video ref={video} src="/tracks/laboratory-reel.mp4" muted loop playsInline
+          preload="metadata" aria-label="Four camera views of the completed laboratory" aria-describedby="mw-reel-caption"
+          onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)}
+          onError={() => { setFailed(true); setPlaying(false); }}
+          onTimeUpdate={event => setSeconds(event.currentTarget.currentTime)} />}
+        <div className="mw-reel-controls">
+          <span>{SHOTS[Math.min(3, Math.floor(seconds / 6))]}</span>
+          {!failed && <button type="button" aria-label={playing ? "Pause lab film" : "Play lab film"}
+            onClick={() => {
+              setRequested(!playing);
+              if (playing) video.current?.pause();
+              else void video.current?.play().catch(() => setPlaying(false));
+            }}>
+            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+              {playing ? <path d="M5 4h3v12H5zm7 0h3v12h-3z" /> : <path d="m6 3 11 7-11 7z" />}
+            </svg>
+            {playing ? "Pause" : "Play film"}
+          </button>}
+        </div>
+        <div className="mw-reel-progress" aria-hidden="true"><i style={{ width: `${Math.min(100, seconds / 24 * 100)}%` }} /></div>
+      </div>
+      <figcaption id="mw-reel-caption"><span>This is what you’ll build.</span><span>Captured in the workshop · 24-second film</span></figcaption>
+    </figure>
+  );
+}
+
+export default function Start({ onChoose, note }: { onChoose: (id: string) => void | Promise<void>; note?: string }) {
+  const [entering, setEntering] = useState(false);
+  const [error, setError] = useState("");
+  const enter = async () => {
+    if (entering) return;
+    setEntering(true); setError("");
+    try { await onChoose(TRACKS[0].id); }
+    catch { setError("The laboratory could not open. Please try again."); }
+    finally { setEntering(false); }
+  };
+  return (
+    <main className="mw-welcome">
+      <header className="mw-welcome-header">
+        <img src="/kit/assets/miris-logo-white.svg" alt="Miris" width="84" height="28" />
+        <span>Spatial streaming workshop <i aria-hidden="true">/</i> 2 hours</span>
       </header>
-
-      <div className="mw-ask">
-        <h1>Sublevel 7 is yours.</h1>
-        <p>
-          Six containment capsules stand empty around the walkway. Describe what grows in them, watch it get
-          built, then publish the whole laboratory streaming to anyone with the link.
-        </p>
-      </div>
-
-      {note && (
-        <p className="mw-start-note l12" role="status">
-          {note}
-        </p>
-      )}
-
-      <div className="mw-doors mw-doors-one">
-        {TRACKS.map((track, i) => (
-          <button
-            key={track.id}
-            className="mw-door"
-            style={{ ["--a" as string]: track.accent, ["--i" as string]: i, ["--focal" as string]: track.focal } as React.CSSProperties}
-            onClick={() => onChoose(track.id)}
-          >
-            {/* The renders are on a pure black ground with no alpha, so the CSS
-                screen-blends them: the artwork's black resolves to the page's
-                own ground and the subject reads as lit by the same room. */}
-            <span className="mw-specimen">
-              <img
-                src={track.image}
-                alt={track.imageAlt}
-                width={track.imageWidth}
-                height={track.imageHeight}
-                loading="eager"
-                decoding="async"
-                draggable={false}
-                /* WebContainer drops binary files on import, so in bolt this photograph
-                   may never arrive. Hide the broken image and let the plate's own
-                   gradient stand in, rather than showing alt text and an icon. */
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
-              />
-            </span>
-
-            <span className="mw-rail" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <i />
-            </span>
-
-            <span className="mw-door-body">
-              <b>{track.label}</b>
-              <p>{track.blurb}</p>
-              <span className="mw-begin">Enter the {track.label} &rarr;</span>
-            </span>
+      <div className="mw-welcome-main">
+        <section className="mw-welcome-intro" aria-labelledby="mw-welcome-title">
+          <p className="mw-welcome-location">Welcome to Sublevel 7</p>
+          <h1 id="mw-welcome-title">Build a living laboratory.</h1>
+          <p className="mw-welcome-description">Imagine a creature. Watch it grow through six life stages. Give it a world anyone can step into.</p>
+          <button type="button" className="mw-welcome-enter" onClick={enter} disabled={entering}>
+            {entering ? "Opening the laboratory…" : "Enter the laboratory"}<span aria-hidden="true">↗</span>
           </button>
-        ))}
+          <p className="mw-welcome-detail">Your idea. Your specimens. Your corner of the web.</p>
+          {(error || note) && <p className="mw-welcome-note" role="status">{error || note}</p>}
+        </section>
+        <LaboratoryReel />
       </div>
-
-      <footer>
-        {STEPS.map((step) => (
-          <span key={step.num}>
-            <code>{step.num}</code> {step.title}
-          </span>
-        ))}
+      <footer className="mw-welcome-footer">
+        <p>A world from start to stream.</p>
+        <ol aria-label="Workshop chapters">{STEPS.map(step => <li key={step.num}><span>{step.num}</span>{step.title}</li>)}</ol>
       </footer>
-    </div>
+    </main>
   );
 }
