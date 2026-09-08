@@ -1,97 +1,8 @@
-const FLOOR = `      <fog attach="fog" args={[0x02050a, 20, 50]} />
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]}>
-        <circleGeometry args={[46, 96]} />
-        <meshStandardMaterial {...floor} roughness={0.85} metalness={0.6} normalScale={[0.9, 0.9]} />
-      </mesh>
-      <mesh position={[0, 6.9, 0]}>
-        <cylinderGeometry args={[46, 46, 14, 64, 1, false]} />
-        <meshStandardMaterial color={0x04070b} roughness={1} metalness={0} side={DoubleSide} />
-      </mesh>`;
+const FLOOR = `      <VaultFloor floor={floor} />`;
 
-const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
-        <ringGeometry args={[2.6, 3.8, 64]} />
-        <meshStandardMaterial map={walk} roughnessMap={wear} roughness={0.5} metalness={0.55} />
-      </mesh>
-      {[2.6, 3.8].map((r) => (
-        <mesh key={r} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-          <torusGeometry args={[r, 0.022, 8, 128]} />
-          <meshBasicMaterial color={0x3bd6fe} toneMapped={false} />
-        </mesh>
-      ))}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
-        <ringGeometry args={[3.12, 3.28, 64]} />
-        <meshBasicMaterial color={0xd9e6ec} toneMapped={false} />
-      </mesh>
-      <mesh position={[0, 0.02, -10.7]}>
-        <boxGeometry args={[2.4, 0.04, 14.2]} />
-        <meshStandardMaterial color={0x0b1119} roughness={0.45} metalness={0.6} />
-      </mesh>
-      {[-1.22, 1.22].map((x) => (
-        <mesh key={x} position={[x, 0.05, -10.7]}>
-          <boxGeometry args={[0.05, 0.02, 14.2]} />
-          <meshBasicMaterial color={0x3bd6fe} toneMapped={false} />
-        </mesh>
-      ))}
-      <group position={[0, 0, -18.1]}>
-        <mesh position={[0, 1.9, 0]}>
-          <boxGeometry args={[3.8, 4.0, 0.6]} />
-          <meshStandardMaterial color={0x0a0e14} roughness={0.55} metalness={0.45} />
-        </mesh>
-        <mesh position={[0, 1.8, 0.31]}>
-          <planeGeometry args={[2.7, 3.3]} />
-          <meshBasicMaterial color={0x1f5aa8} toneMapped={false} />
-        </mesh>
-        <group position={[0, 1.65, 0.33]} scale={[1, 1.35, 1]}>
-          <RadialGlow radius={2.9} color={0x3f8fe0} opacity={0.85} />
-          <RadialGlow radius={1.7} color={0x7fbaff} opacity={0.9} />
-          <RadialGlow radius={0.85} color={0xe2f2ff} opacity={1} />
-        </group>
-        <pointLight position={[0, 1.2, 1.6]} intensity={110} distance={24} decay={2} color={0x7cc0ff} />
-        <group position={[0, 0, 2.6]}>
-          <FloorGlow radius={3.6} color={0x9ad4ff} opacity={0.95} />
-        </group>
-      </group>`;
+const WALKWAY = `      <VaultWalkway walk={walk} wear={wear} />`;
 
-const CAPSULES_SNIPPET = `      {specimens.map((s, i) => {
-        const angle = (i / 6) * Math.PI * 2;
-        const x = Math.cos(angle) * 4.2;
-        const z = Math.sin(angle) * 4.2;
-        return (
-          <group key={s.id} position={[x, 0, z]}>
-            <mesh position={[0, 0.18, 0]}>
-              <cylinderGeometry args={[1.05, 1.18, 0.36, 32]} />
-              <meshStandardMaterial color={0x0b0d10} roughness={0.6} metalness={0.35} />
-            </mesh>
-            <mesh position={[0, 1.66, 0]} name={"glass-" + i}>
-              <cylinderGeometry args={[0.9, 0.9, 2.6, 40, 1, true]} />
-              <meshStandardMaterial
-                color={TINTS[i]}
-                emissive={TINTS[i]}
-                emissiveIntensity={0.12}
-                transparent
-                opacity={0.05}
-                roughness={0.2}
-                metalness={0.1}
-                depthWrite={false}
-                side={DoubleSide}
-              />
-            </mesh>
-            <LightShaft />
-            <Pulse color={TINTS[i]} seed={i / 6} />
-            <FloorGlow color={TINTS[i]} />
-            {[0.36, 2.96].map((y) => (
-              <mesh key={y} position={[0, y, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                <torusGeometry args={[0.9, 0.022, 6, 48]} />
-                <meshBasicMaterial color={0x3f93b0} toneMapped={false} />
-              </mesh>
-            ))}
-            <mesh position={[0, 4.9, 0]} rotation={[Math.PI / 2, 0, 0]}>
-              <circleGeometry args={[0.34, 24]} />
-              <meshBasicMaterial color={0xa9d6e8} toneMapped={false} />
-            </mesh>
-          </group>
-        );
-      })}`;
+const CAPSULES_SNIPPET = `      {specimens.map((s, i) => <VaultCapsule key={s.id} index={i} />)}`;
 
 const STREAMS = `      {specimens.map((s, i) => {
         if (!s.uuid) return null;
@@ -108,34 +19,27 @@ const HUD = `    <LabHud specimens={specimens} />`;
 
 const EFFECT = `    <ScreenFx node={glitch} />`;
 
-const FIELD = `  // TSL: JavaScript that builds a shader graph. Each call is a node, and the
-  // graph runs once per pixel of the screen, every frame, on the GPU.
-  const glitch = useMemo(() => Fn(() => {
-    // The painted file is the texture \`screen\`; p is where this pixel is on it.
+const FIELD = `  const glitch = useMemo(() => Fn(() => {
     const p = uv();
-    // A clock that ticks every second and a half. hash turns a tick into a
-    // number that holds still until the next one; only about one tick in
-    // four earns a tear, and it lasts a tenth of the tick.
-    const tick = time.mul(0.66).floor();
-    const rare = step(float(0.75), hash(tick.add(3)));
-    const live = step(time.mul(0.66).fract(), float(0.1)).mul(rare);
-    const band = hash(tick).mul(0.8).add(0.1);
-    const inBand = step(p.y.sub(band).abs(), float(0.03));
-    const shift = inBand.mul(live).mul(hash(tick.add(11)).sub(0.5)).mul(0.08);
-    // Sample the file with the torn rows slid sideways, red pulled a little further.
+    const tick = time.mul(0.55).floor();
+    const live = step(float(0.83), hash(tick.add(3))).mul(step(time.mul(0.55).fract(), float(0.055)));
+    const band = step(p.y.sub(hash(tick)).abs(), float(0.018));
+    const shift = band.mul(live).mul(0.014);
     const q = vec2(p.x.add(shift), p.y);
     const c = texture(screen, q);
-    const r = texture(screen, q.add(vec2(shift.mul(0.6), float(0)))).r;
-    // Faint scanlines and a softer flicker, so it reads as a screen and stays legible.
-    const scan = p.y.mul(400).sin().mul(0.5).add(0.5).mul(0.06).oneMinus();
-    const flicker = time.mul(9).sin().mul(0.01).add(0.99);
-    return vec4(vec3(r, c.g, c.b).mul(scan).mul(flicker), float(1));
+    const phosphor = c.r.mul(0.21).add(c.g.mul(0.72)).add(c.b.mul(0.07));
+    const scan = p.y.mul(1131).sin().mul(0.035).add(0.965);
+    const flicker = time.mul(8).sin().mul(0.006).add(0.994);
+    const edge = p.x.mul(p.x.oneMinus()).mul(p.y).mul(p.y.oneMinus()).mul(16).pow(0.12);
+    const glow = texture(screen, q.add(vec2(0.0015, 0))).g.mul(0.08);
+    return vec4(vec3(0.48, 0.78, 1).mul(phosphor.add(glow)).mul(scan).mul(flicker).mul(edge), float(1));
   })(), []);`;
 
 const MARKUP = `  // The file is HTML. The browser lays it out with the guide's own CSS, then
   // paints it into a canvas, and that canvas becomes a texture on a plane.
   const fileMarkup = (d: any) => \`
     <div class="mw-dossier mw-screen">
+      <header class="mw-d-terminal">MIRIS BIOLOGY DIVISION <span>M-06 / RECORD ACCESS</span></header>
       <div>
         <p class="mw-d-code">\${d.designation} / \${d.series}</p>
         <h3>\${d.name}</h3>
@@ -151,33 +55,42 @@ const MARKUP = `  // The file is HTML. The browser lays it out with the guide's 
         </ul>
       </div>
       <div>
-        <p class="mw-d-head">Handler notes</p>
+        <p class="mw-d-head">Field observations</p>
         <p class="mw-d-notes">\${d.notes}</p>
       </div>
+      <footer class="mw-d-terminal">BIOLOGICAL RECORD / READ ONLY <span>TERMINAL \${String(d.index + 1).padStart(2, "0")} / 06</span></footer>
     </div>\`;`;
 
-const FIT = `// A generated mesh arrives at whatever size the generator chose, and a stream
-// reports its bounds in world space, scale included. So: measure, scale
-// toward what fits, measure again, and stop once it has settled.
-function FitInGlass({ position, fill = 0.7, children }: any) {
+const FIT = `function FitInGlass({ position, fill = 0.7, children }: any) {
+  const turntable = useRef<Group>(null);
   const box = useRef<Group>(null);
   const settled = useRef(false);
-  useFrame(() => {
+  useFrame((_, dt) => {
     const g = box.current;
-    if (!g || settled.current) return;
+    if (!g || !turntable.current) return;
+    if (settled.current) {
+      turntable.current.rotation.y = (turntable.current.rotation.y + Math.min(dt, 0.1) * 0.08) % (Math.PI * 2);
+      return;
+    }
     let stream: any = null;
     g.traverse((o: any) => { if (!stream && o.getBounds) stream = o; });
     const b = stream?.getBounds();
     if (!b || !(b.size[1] > 0)) return;
-    // The glass is 2.6 tall and 1.8 across; the tighter limit wins.
-    const want = Math.min((2.6 * fill) / b.size[1], (1.8 * fill) / Math.max(b.size[0], b.size[2]));
-    if (Math.abs(want - 1) < 0.01) { settled.current = true; return; }
+    // Fit the horizontal diagonal so every angle clears the glass.
+    const want = Math.min((2.6 * fill) / b.size[1], (1.8 * fill) / Math.hypot(b.size[0], b.size[2]));
+    if (Math.abs(want - 1) < 0.01) {
+      g.position.x += position[0] - b.center[0];
+      g.position.y += position[1] - b.center[1];
+      g.position.z += position[2] - b.center[2];
+      settled.current = true;
+      return;
+    }
     g.scale.multiplyScalar(1 + (want - 1) * 0.6);
     g.position.x += (position[0] - b.center[0]) * 0.6;
-    g.position.y += (1.66 - b.center[1]) * 0.6;
+    g.position.y += (position[1] - b.center[1]) * 0.6;
     g.position.z += (position[2] - b.center[2]) * 0.6;
   });
-  return <group ref={box} position={position}>{children}</group>;
+  return <group ref={turntable} position={position}><group ref={box}>{children}</group></group>;
 }`;
 
 const FILE = `// Paint the markup into a canvas and wear it as a texture. The browser lays
@@ -231,7 +144,19 @@ export const PARTS = {
 /* Clearing a step puts the block back to the step before it, not to empty.
    Four steps share the `scene` marker because the snippets are cumulative, so
    a marker-wide clear at 2.2 would take 2.1's deck with it. null means there is
-   nothing before it and the block returns to the template's blank. */
+   nothing before it and the block returns to its empty lesson state. */
+export const EMPTY_BLOCKS = {
+  scene: "",
+  card: "",
+  hud: "",
+  effect: "",
+  field: "  const glitch = null;",
+  markup: "  const fileMarkup = undefined;",
+  parts: `function FitInGlass({ position, children }: any) {
+  return <group position={position}>{children}</group>;
+}`,
+};
+
 export const CLEARS_TO = {
   card: null,
   floor: null,

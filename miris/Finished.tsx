@@ -17,7 +17,7 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
         {concept ? <>You described <em>{concept}</em>. </> : null}
         {live} {live === 1 ? "specimen is" : "specimens are"} streaming
         {stages.length === 6 ? <>, {stages[0]} to {stages[5]},</> : null} into a room you built in three.js, with a
-        file painted from live HTML beside each one and a shader field over the top. Anyone with your link
+        file painted from live HTML beside each one and a blue CRT treatment on the selected screen. Anyone with your link
         loads the same six streams at whatever detail their screen and connection justify.
       </p>
 
@@ -28,16 +28,16 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
           the adaptive budget spending where the camera is looking.
         </li>
         <li>
-          Click a capsule and rewrite <code>fileMarkup</code> to show the six stages as a strip rather than a
-          list. Save, click again: the placard repaints from your markup.
+          Rewrite the header in <code>fileMarkup</code>, then click a pedestal. Its screen repaints from your
+          markup; keep additions inside the 640 by 400 pixel layout.
         </li>
         <li>
-          In the field, replace <code>p.length()</code> with <code>p.x.abs()</code> and the vignette becomes
-          two dark bands. Every edit is a new shader graph, compiled when you save.
+          In the field, lower <code>0.83</code> in the <code>live</code> line to <code>0.5</code> for more
+          frequent tears, or change the blue phosphor tint in <code>vec3(0.48, 0.78, 1)</code>.
         </li>
         <li>
-          Change <code>0.7</code> in your <code>FitInGlass</code> to <code>1</code> and the specimens fill the
-          glass; the egg will touch the walls.
+          Change the rotation speed in <code>FitInGlass</code> from <code>0.08</code> to <code>0.04</code>
+          radians per second. Each centered specimen now takes about 157 seconds to turn.
         </li>
         <li>
           If you want the guide gone from the published lab, comment out <code>&lt;MirisGuide /&gt;</code> in{" "}
@@ -49,8 +49,9 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
       <h3 className="c14 mw-finished-h">Where the pieces are</h3>
       <ul className="c14 mw-finished-list">
         <li>
-          <code>app/stage.tsx</code> is the whole laboratory. Everything you wrote is between the{" "}
-          <code>miris:</code> comments; everything else is the frame around it.
+          <code>app/stage.tsx</code> composes the laboratory between the <code>miris:</code> comments.
+          The prepared room and door are in <code>miris/VaultRoom.tsx</code>; repeated hardware is batched
+          by <code>miris/StaticInstances.tsx</code>.
         </li>
         <li>
           The Miris SDK: <a href="https://www.npmjs.com/package/@miris-inc/three" target="_blank" rel="noopener noreferrer">@miris-inc/three</a>.
@@ -65,7 +66,8 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
         <li>
           TSL: the{" "}
           <a href="https://github.com/mrdoob/three.js/wiki/Three.js-Shading-Language" target="_blank" rel="noopener noreferrer">three.js shading language wiki</a>.
-          The glitch in <code>miris/ScreenFx.tsx</code> is one quad on a second, unseen canvas, copied onto the pedestal screen each frame.
+          The graph in <code>app/stage.tsx</code> runs through <code>miris/ScreenFx.tsx</code> on an unseen canvas.
+          It updates only the selected terminal, at up to 30 frames per second, and pauses when hidden.
         </li>
       </ul>
 

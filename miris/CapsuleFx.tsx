@@ -1,5 +1,5 @@
 import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { AdditiveBlending, DoubleSide, ShaderMaterial, Vector3 } from "three";
 import { getHover, getSelected } from "./labState";
 import { glowTexture } from "./textures";
@@ -77,6 +77,7 @@ export function LightShaft({
       }),
     [strength],
   );
+  useEffect(() => () => mat.dispose(), [mat]);
   useMemo(() => {
     const c = color;
     mat.uniforms.uColor.value = [((c >> 16) & 255) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255];
@@ -170,6 +171,7 @@ export function Pulse({ radius = 0.86, height = 2.5, color = 0xd8f2ff, seed = Ma
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   );
+  useEffect(() => () => mat.dispose(), [mat]);
   useMemo(() => {
     const c = color;
     mat.uniforms.uColor.value = [((c >> 16) & 255) / 255, ((c >> 8) & 255) / 255, (c & 255) / 255];

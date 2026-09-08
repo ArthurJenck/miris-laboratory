@@ -77,37 +77,37 @@ export const STEPS: Step[] = [
         num: "2.1",
         title: "The deck",
         stretch:
-          "Change the fog's 20 and 50 to 8 and 30. The deck ends closer and the shell disappears entirely: the room is as big as the fog says it is.",
+          "Change floorMaps(14) to floorMaps(8) above the return in app/stage.tsx. The scanned floor tiles get larger without changing the size of the room.",
         body:
-          "Sublevel 7 starts as a plated deck running out into fog, and the dark shell around it. Open app/stage.tsx, find the block between the two miris:scene comments, and put this inside it. Everything you write outside those comments is left alone.",
+          "This branch includes the finished laboratory. These scene steps rebuild it a layer at a time. In app/stage.tsx, replace the contents of the miris:scene block with VaultFloor to start with the deck, enclosing shell, wall ribs and ceiling lights. Clear block removes that lesson layer; later scene steps clear back to the preceding layer.",
         fill: "floor",
         check: "floor",
         explain:
-          "Three nodes and nothing clever. A circle lying flat for the deck, wearing a scanned floor with its normal and roughness maps so the grooves catch the light; a fog that takes the far edge of it to black; and one closed cylinder turned inside out for the shell. The shell earns its place: without something behind them, the capsules sit against pure black, and dark glass over black is invisible. The room is deliberately almost black. Nearly everything you are about to see is emissive geometry rather than lit surfaces, which is why the lights above the scene block are so restrained: a hemisphere for the faintest sense of up and down, one directional to put a gradient across the deck so it is not flat, and a single cyan point at ankle height under the walkway.",
+          "VaultFloor is the room shell supplied in miris/VaultRoom.tsx. It combines a scanned metal deck, an inward-facing wall, a ceiling and fog that fades from 12 to 32 metres. Normal maps give the deck grooves without adding geometry; the hemisphere and directional lights reveal the metal surfaces. Pale-blue light strips use basic materials so they remain bright independently of the room lighting. Repeated wall ribs and lights use StaticInstances: one geometry and material are drawn at many transforms, reducing draw calls while keeping the same visible hardware. The attendee composes these prepared parts in app/stage.tsx; their construction lives in the workshop machinery.",
       },
       {
         num: "2.2",
         title: "The walkway",
         stretch:
-          "Add a third torus at radius 3.2 in white. It should sit exactly on the pale ring already there, which is a flat ringGeometry doing the same job without the thickness.",
+          "Change the walkway texture repeat from (6, 6) to (3, 3) above the return in app/stage.tsx. Compare the surface scale with the floor around it.",
         body:
-          "A ring you stand on with a lit edge on each side, and a path off it toward a door at the far end. Add it under the deck, inside the same miris:scene block.",
+          "Add VaultWalkway after VaultFloor in the miris:scene block. It supplies the circular deck, illuminated edges, panel seams and the straight approach to the pressure door.",
         fill: "walkway",
         check: "walkway",
         explain:
-          "ringGeometry is an annulus: an inner radius, an outer radius and nothing in the middle. That is the walkway. The two glowing edges are torus rings laid flat at those same radii, and their material is meshBasicMaterial with toneMapped false. Basic means it ignores every light in the scene, and toneMapped false keeps it out of any tone curve, so it stays at full brightness instead of being rolled off with the rest of the image. That pairing is how you fake a light strip without a bloom pass, and the path's edge lines are the same trick stretched into boxes. The door is a dark frame with a lit panel, a point light spilling back down the path, and a radial glow lying on the deck where that light lands, so the beam has somewhere to end.",
+          "VaultWalkway combines a shallow platform with an annular walking surface. Thin torus rings and narrow boxes make the pale-blue edge lights without a bloom pass. Repeated seams and distance marks share instanced geometry. At the end of the approach, PressureDoor uses beveled shapes for a recessed frame and two solid door leaves, with inset handles and narrow lights. There are no text plaques or gear teeth. A modest point light and a soft floor glow connect the door to the path. All of this is prepared geometry in miris/VaultRoom.tsx, so the scene block stays readable.",
       },
       {
         num: "2.3",
         title: "The capsules",
         stretch:
-          "Change i / 6 to i / 7 and the six capsules leave a gap where a seventh would stand. Then move the door into it.",
+          "Temporarily render specimens.slice(0, 3) in the VaultCapsule map. Half the tube housings disappear while the remaining ones keep their positions. Restore all six before continuing.",
         body:
-          "Six containment capsules, evenly spaced around a circle. Add them under the walkway.",
+          "Add the specimen map after the walkway. Each entry places one VaultCapsule at its index around the room; the specimens themselves are connected in the next step.",
         fill: "capsules",
         check: "capsules",
         explain:
-          "The circle is three lines of trigonometry, written out rather than hidden in a helper, because it is the one bit of maths worth reading: an angle of i over six turns, then cosine for x and sine for z. Each capsule is a plinth, a glass cylinder, a cone of light, a pulse in the fluid, a pool of light on the deck and two rings. The cone is the cheapest volumetric there is: an open cone drawn on both sides with additive blending, so wherever it overlaps itself it brightens, falling off along its length so the beam has no visible end. It writes no depth, which keeps it from cutting a hole in the glass behind it. The cylinder is open-ended and drawn on both sides, which is what makes you see the far wall of the glass through the near one. The glass is a standard material at eighteen percent opacity with a faint emissive of its own, and depthWrite is off so the near wall never hides the far one. That last prop is the one people miss: without it, transparent surfaces punch holes in each other depending on the order they happen to be drawn. Pulse is a second cylinder just inside the glass: every few seconds a band of the capsule's colour climbs through it and is gone, on its own clock, so the six never fire together.",
+          "VaultCapsule places index i at angle i times pi over three, using cosine for x and sine for z on a 4.2-metre ring. Each housing has metal caps, instanced bolts, rear supports, a lamp, glass and pale-blue light effects. The glass has 3.5 percent opacity, is drawn on both sides and does not write depth. Pulse is a second cylinder just inside it: a band travels through the tube on its own clock, softening when that capsule is selected. LightShaft uses an additive cone with a soft falloff, and FloorGlow is a textured plane. These inexpensive shapes suggest illuminated fluid and haze without a full volumetric pass. GlassOrder handles the ordering limitation between transparent glass and the SDK splats.",
       },
       {
         num: "2.4",
@@ -115,23 +115,23 @@ export const STEPS: Step[] = [
         stretch:
           "Give one mirisStream a rotation prop. It is a scene node like the glass around it, so it turns like anything else.",
         body:
-          "Add this last, under the capsules. It connects each capsule to a stream, but nothing appears yet: a stream needs an asset id and a viewer key, and those come in the next section. For now the room is finished and the glass is empty.",
+          "Add the stream map after the capsule housings. Each entry needs an asset id and viewer key; if those are not connected yet, the tube stays empty until section 3. The completed example on this branch already includes FitInGlass, which sizes and centers each stream.",
         fill: "streams",
         check: "streams",
         explain:
-          "A stream is not a file you load, it is a subscription. What appears first is a coarse version of the whole specimen, and it sharpens as more arrives, so there is never a moment where you wait on a download. The extend call at the top of app/stage.tsx is what buys you that: it registers MirisStream as a JSX tag, so a stream takes position and scale like any other three.js object and React Three Fiber draws it in the same pass as the glass around it. Six capsules means six subscriptions, each arriving at whatever detail its distance from the camera justifies. That is the part worth noticing: the far capsules cost less than the near ones without you doing anything about it. FitInGlass around each one is a placeholder for now, a plain group. The next step makes it measure.",
+          "extend registers MirisStream as a JSX tag, so a stream accepts transforms like other three.js objects. Its coarse representation arrives first and gains detail as streaming continues. The six subscriptions share an adaptive splat budget, which spends detail according to the view. The stream map uses the same 4.2-metre circle as the housings. FitInGlass is a separate wrapper: it measures and centers the asset, then turns the centered group slowly. Keeping fitting and rotation outside the stream makes them ordinary scene behavior.",
       },
       {
         num: "2.5",
         title: "Fit the specimen",
         stretch:
-          "In the streams block, make fill depend on i: 0.4 + i * 0.1. The series then grows across the ring without a single mesh changing.",
+          "Change 0.08 in the rotation line to 0.04 for one turn about every 157 seconds, or to 0.16 for about 39 seconds. Leave fill at 0.7 while comparing the motion.",
         body:
-          "A generated mesh arrives at whatever size the generator chose, so once the capsules fill you may find a speck, or a creature bursting out of the glass. This replaces the placeholder FitInGlass in the miris:parts block, above the Stage function: it asks the stream how big it is and scales it to fit.",
+          "Replace FitInGlass in the miris:parts block with this version, or inspect the version already present in the completed example. It measures each arriving stream, fits it inside the glass and starts a slow turn once it has settled. Clearing this helper also removes the pedestal mounting so it cannot call a File component that is no longer present; section 4 adds it again.",
         fill: "fit",
         check: "fit",
         explain:
-          "The one call that matters is getBounds. A stream reports its bounding box in world space with its current scale already applied, which makes the correction proportional: if it is twice as tall as the glass allows, the group wants to be half its current scale. So measure, move part of the way, measure again. The 0.6 is how far to move each frame, which is why it eases into place over a few frames rather than snapping, and the check against 0.01 stops the loop once it has settled, so a stream sharpening later does not make the creature breathe. The centre is corrected the same way, because a mesh's origin is rarely where its middle is. Until the stream has arrived the bounds are empty, and the guard against a zero height is what stops the first frame from dividing by nothing and throwing the specimen to infinity. Change 0.7 and save: it is how much of the glass the creature fills.",
+          "getBounds reports a world-space box with the current scale applied. FitInGlass scales toward the tighter of two limits: the glass height and the horizontal diagonal of that box. The diagonal matters because a wide specimen must clear the tube throughout a full rotation. The inner group moves toward the capsule center until its size settles within one percent; its center then receives a final correction. An outer group stays at the capsule center and rotates at 0.08 radians per second, about one turn every 79 seconds. Rotation uses the frame delta rather than a fixed amount per frame, and caps long deltas to avoid a jump after a stall. The fitting work stops once settled; the inexpensive rotation continues. fill controls how much of the available space the specimen uses.",
       },
       {
         num: "2.6",
@@ -180,7 +180,7 @@ export const STEPS: Step[] = [
         capsuleUuid: true,
         check: "capsuleUuid",
         explain:
-          "This is the whole integration: one component, two strings. Nothing about your scene changed except where the geometry comes from. The glass, the rings, the walkway, the camera and the render loop are identical. Streaming is a delivery change, not a rendering change. You did not load a file that happened to be big. You subscribed to something that arrives at whatever detail the view justifies. Each specimen then sits itself: FitInGlass measures it as it arrives and scales it to the glass. MirisStream.getBounds reports in world space with the current scale already applied, which makes the correction proportional, measure, multiply, measure again, and stop when it stops moving. Fitting to a reported box is only as good as the box, so how much of the glass a specimen takes is the fill prop on FitInGlass in app/stage.tsx, and one is the whole capsule.",
+          "This is the whole integration: one component, two strings. Nothing about your scene changed except where the geometry comes from. The glass, the rings, the walkway, the camera and the render loop are identical. Streaming is a delivery change, not a rendering change. You did not load a file that happened to be big. You subscribed to something that arrives at whatever detail the view justifies. Each specimen then sits itself: FitInGlass measures it as it arrives and scales it to the glass. MirisStream.getBounds reports in world space with the current scale already applied, which makes the correction proportional, measure, multiply, measure again, and stop resizing when it settles. Its outer group then keeps rotating slowly. Fitting to a reported box is only as good as the box, so how much of the glass a specimen takes is the fill prop on FitInGlass in app/stage.tsx, and one uses the full fitting allowance while keeping the horizontal diagonal inside the glass.",
       },
     ],
   },
@@ -192,13 +192,13 @@ export const STEPS: Step[] = [
         num: "4.1",
         title: "Write the file's markup",
         stretch:
-          "Add the traits under the stats: a p with class mw-d-traits holding one span per entry of d.traits. The class is already in lab.css.",
+          "Change the terminal header text in fileMarkup, then select a pedestal to see it painted into the scene. Keep the content within the fixed 640 by 400 pixel screen.",
         body:
-          "The specimen's file is plain HTML: a few elements with classes the guide already styles. Put this in the miris:markup block near the top of the Stage function, above the return. It is a function that takes one dossier and returns markup, and nothing about it is 3D yet.",
+          "The specimen file is plain HTML styled in miris/lab.css. Put this function in the miris:markup block above the return in app/stage.tsx. It lays out an identity panel, six-stage strip, stats, notes and terminal header and footer.",
         fill: "markup",
         check: "markup",
         explain:
-          "This is the HTML-in-Canvas idea in three parts, and this is the first: ordinary markup laid out by the browser with ordinary CSS, so anything you can do on a web page you can do here. Each stat bar is a b element with a width, the growth series is a list of six items with a class on the one this file describes, the cyan comes from a class in lab.css, the text wraps because text wraps. The browser is doing the layout work that a 3D text library would make you do by hand, which is the whole point of the API. The next step paints the result; the one after puts it on the pedestal in front of the tube. Change a word, add a line, or give the notes a class of your own in lab.css, save, and click the capsule again: the file repaints from your markup.",
+          "The browser lays out the dossier with ordinary HTML and CSS before it becomes a texture. The prepared terminal uses pale-blue text on a dark background and a fixed 640 by 400 pixel layout, matching the pedestal and effect canvas at 16:10. Stat bars are elements with percentage widths, and the current growth stage gets its own class. The left column contains identity and stats; the right holds the notes. A fixed aspect ratio prevents the image from stretching when the CRT pass is selected. If you add content, check that the notes and footer still fit. The next step paints the layout; the one after puts it on the pedestal.",
       },
       {
         num: "4.2",
@@ -217,11 +217,11 @@ export const STEPS: Step[] = [
         num: "4.3",
         title: "Put it on the pedestal",
         body:
-          "Two lines, in the miris:card block inside the Canvas. The first makes the room clickable. The second stands a lectern in front of every tube and asks your File to paint that specimen's markup onto its screen. Click a tube and the camera walks up to the organism; click a pedestal and it leans over the screen to read. Click the other to switch, or press Escape to come back.",
+          "Put these two lines in the miris:card block inside Canvas. Dossier enables selection. Pedestals places a metal CRT terminal in front of each tube and asks File to paint its dossier. Click a tube to approach the organism, click a screen to read it, or press Escape to return.",
         fill: "card",
         check: "cardOverlay",
         explain:
-          "Pedestals knows where a file stands: a lectern on the walkway in front of each tube, its top tilted toward the middle of the room, always lit, the way plaques stand in a museum. It knows nothing about what the screen shows; it calls your function with the dossier and its place in the series and scales whatever plane comes back to fit the screen. A plane is a thing in the room: it recedes with everything else and you can walk around it. Two things are clickable now, and the click is decided from the pointer against projected outlines, the pedestal's screen first because it stands in front, so none of your meshes carries a handler. The same click hands the camera one of two destinations: reading distance down the screen's normal, or the organism at the middle of the glass. If your markup or your File throws mid-edit, that screen goes blank until you fix it and the room carries on.",
+          "Each pedestal has a vented base, a beveled metal enclosure and a tilted 16:10 screen. Pedestals supplies the dossier and its place in the series to your File component, then scales the returned plane to the screen. Its geometry, click outline and camera target share the same screen transform, so the image stays aligned when you lean in. The current selection is the only lab state that rerenders the pedestal list; moving hover brackets does not rebuild all six terminals. The effect texture is used only while reading a selected screen. If the attendee markup throws mid-edit, that screen goes blank while the room keeps rendering.",
         stretch:
           "Open a capsule and scroll. The wheel zooms between 1.2 and 3.2 metres from the glass, and only there: standing in the room there is nothing two centimetres ahead worth zooming toward.",
       },
@@ -249,7 +249,7 @@ export const STEPS: Step[] = [
         body:
           "No code for this one. The readout you just added has a second line, bottom right: how many splats the six streams are drawing this frame, how many the budget allows, and the frame time. Drag the slider down to 40k and watch the capsules behind you go coarse before the one in front; drag it up and watch the frame time climb. Press Release and the controller starts again and finds its own level.",
         explain:
-          "This is the part of streaming you cannot see by looking at one creature. Every stream is a tree of detail levels, and the engine picks one level per stream so the total stays under a budget of splats. Left alone, the controller in this SDK build measures frame time and moves that budget: down when frames run long, up while there is headroom, so a laptop on battery and a desktop with a large GPU both hold their frame rate and simply see different amounts of detail. Which stream gives first is decided by how large each one is on screen, which is why the capsules behind you cost almost nothing and the one you walk up to takes most of the budget. Pinning the slider stops the controller and holds the number; Release starts a fresh controller from its default, 250k, and it settles from there. The readout counts the way the controller does, visible detail nodes summed, and the frame time is the render loop's own clock, because the SDK holds the GPU timer open and there is no second one to be had.",
+          "The adaptive controller adjusts the total splat budget using frame time, and the engine distributes detail according to the view. Pinning the slider stops that controller; Release starts a fresh one from 250k and lets it settle. The readout sums visible detail nodes and measures the render loop delta, because the SDK already owns the GPU timer query. The host room has its own costs too: repeated ribs, bolts and floor marks share instanced geometry, pedestal updates follow selection, and the CRT copy runs only while its screen is selected, at most 30 times per second. Floor anisotropy stays at four taps and the main canvas caps pixel ratio at 1.5. These keep the room inexpensive while the controller manages the more variable streaming load.",
         stretch:
           "Pin the budget at 40k, then click a capsule. Watch where the detail goes as the camera arrives, and where it comes from.",
       },
@@ -263,19 +263,19 @@ export const STEPS: Step[] = [
         fill: "effect",
         check: "overlay",
         explain:
-          "Splats render through raw GLSL shader materials the SDK builds itself. TSL compiles through a node builder that cannot read those, so putting both in one canvas gives you no splats and a console full of compile errors. ScreenFx sidesteps it: a second renderer draws one quad into a canvas nobody sees, with your graph as its material and the painted file as its input, and that canvas is copied onto the selected pedestal's screen every frame as an ordinary texture. One screen, one copy a frame, which is cheap; six would not be, so the other five pedestals show the file as painted. That is also why the glitch follows you: whichever pedestal you are reading is the one that flickers.",
+          "The SDK splats use raw shader materials, while this TSL graph runs in a separate node renderer. ScreenFx draws one quad into an unseen 1024 by 640 canvas, then exposes that canvas as a normal texture to the main renderer. Only the selected pedestal screen uses the result. The copy runs at up to 30 updates per second while reading a terminal, and stops when you return to the room, select an organism or hide the browser tab. The other screens keep their original painted textures. This limits the cost of copying pixels between canvases while keeping the subtle CRT animation readable.",
       },
       {
         num: "5.4",
         title: "Write the glitch",
         stretch:
-          "Change 0.75 to 0.25 in the rare line and three ticks in four tear instead of one; change 0.08 and they slide further. Then try band.add(0.2) in the inBand line and watch the tear move down the screen.",
+          "Lower 0.83 in the live line to 0.5 to allow tears on more ticks. Increase the shift multiplier from 0.014 to 0.03 to slide the rows further. Restore the subtle settings when you are done.",
         body:
-          "Now the shader. This goes in the miris:field block near the top of the Stage function, above the return. It is JavaScript that builds a shader graph, not a string of shader source, and it reads top to bottom: a clock, a tear, the sample, the screen.",
+          "Put this graph in the miris:field block above the return. It turns the painted terminal into a pale-blue CRT image with scanlines, soft edge darkening, restrained flicker and occasional horizontal signal tears.",
         fill: "field",
         check: "field",
         explain:
-          "TSL is three.js's node shading language. uv(), time, texture and hash are nodes, not values: nothing is computed when this code runs. It builds a graph, the graph compiles once to GLSL on this backend, and then it runs per pixel per frame on the GPU. That is why it sits in useMemo: rebuild the graph on every render and the renderer rebuilds with it. Read it in order. p is where this pixel is on the file. tick is a clock that changes every second and a half, and hash turns each tick into a number that holds still until the next, which is how a tear can stay in one place while it lasts: rare lets about one tick in four tear at all, band is where the tear sits, inBand is one inside those rows and zero outside, live is one for the first tenth of a tearing tick, and shift is how far those rows slide. Most of the time every one of those is zero and the file is shown exactly as painted. q is p with that slide applied, and texture(screen, q) reads the painted file there, so the rows move without anything else changing. Red is read a little further along than green and blue, which is the colour split a real screen shows when its signal tears. scan darkens every other line and flicker breathes the whole thing by two percent. Then change things and save: every number here is a different graph, compiled fresh when you do.",
+          "TSL functions build shader nodes rather than calculate pixels in JavaScript. useMemo keeps the graph stable between React renders. p is the pixel position on the file. tick advances every 1 / 0.55 seconds, about 1.8 seconds; hash keeps a random value constant within that tick. live allows a tear on roughly 17 percent of ticks for the first 5.5 percent of the tick. band selects a narrow strip of rows, and shift offsets their horizontal texture sample by 0.014. The sampled color is converted to luminance and tinted with vec3(0.48, 0.78, 1) for blue phosphor. scan adds faint horizontal lines, flicker changes brightness by less than one percent, edge darkens the perimeter and a neighboring sample supplies a soft glow. The CRT treatment remains visible between tears. The selected screen evaluates this graph at up to 30 frames per second.",
       },
     ],
   },

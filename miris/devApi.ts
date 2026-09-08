@@ -2,9 +2,9 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
-import { end as markerEnd, readMarker, replaceMarker, start as markerStart } from "./markers.mjs";
+import { readMarker, replaceMarker } from "./markers.mjs";
 import { readData, writeData } from "./store.mjs";
-import { CLEARS_TO, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
+import { CLEARS_TO, EMPTY_BLOCKS, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
 import { emptyBank, normaliseBank } from "./specimens.mjs";
 import { zipSync } from "./zip.mjs";
 import { tinyGlb } from "./tinyGlb.mjs";
@@ -22,7 +22,6 @@ const ZIP = join(ROOT, "miris", "specimens.zip");
    129MB of creature meshes from a paid run are not worth losing to a rehearsal. */
 const ZIP_OFFLINE = join(MIRIS_DIR, "specimens.offline.zip");
 const FIXTURES = join(MIRIS_DIR, "fixtures.json");
-const TEMPLATE = join(MIRIS_DIR, "stage.template.tsx");
 
 /* What each step's snippet must leave behind for its check to believe it. Kept
    in one table, and audited against the snippets when the server starts,
@@ -31,9 +30,9 @@ const TEMPLATE = join(MIRIS_DIR, "stage.template.tsx");
    told the attendee they had not done a step they had just done. A check that
    blames the person for the repo's own drift is worse than no check. */
 const PROOF = {
-  floor: "circleGeometry",
-  walkway: "ringGeometry",
-  capsules: "TINTS",
+  floor: "<VaultFloor",
+  walkway: "<VaultWalkway",
+  capsules: "<VaultCapsule",
   streams: "mirisStream",
   hud: "LabHud",
   overlay: "ScreenFx",
@@ -433,27 +432,11 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
 
       // One step back, not the whole marker.
       const back = CLEARS_TO[id as keyof typeof CLEARS_TO];
-      let body_: string;
-      if (back) {
-        body_ = SNIPPETS[back as keyof typeof SNIPPETS];
-      } else {
-        const template = await readFile(TEMPLATE, "utf8");
-        // From markers.mjs, never rebuilt here: the label marker is a //-style
-        // comment, and a hardcoded JSX form made clearing it fail as unknown.
-        const open = markerStart(marker);
-        const close = markerEnd(marker);
-        const a = template.indexOf(open);
-        const b = template.indexOf(close);
-        if (a === -1 || b === -1) return fail(`unknown marker: ${marker}`);
-        // Leading newlines and all trailing space, but not the leading indent:
-        // the template's block carries the six columns that line its comment up
-        // with the JSX, and trim() restored it at column 0. With this, a Clear
-        // puts stage.tsx back byte-identical to the template.
-        body_ = template.slice(a + open.length, b).replace(/^\n+/, "").replace(/\s+$/, "");
-      }
-
+      const cleared = back ? SNIPPETS[back as keyof typeof SNIPPETS] : EMPTY_BLOCKS[marker as keyof typeof EMPTY_BLOCKS];
       const source = await readFile(STAGE, "utf8");
-      await writeFile(STAGE, replaceMarker(source, marker, body_));
+      let next = replaceMarker(source, marker, cleared);
+      if (["fit", "file", "markup"].includes(id)) next = replaceMarker(next, "card", EMPTY_BLOCKS.card);
+      await writeFile(STAGE, next);
       return ok({ ok: true, marker, back: back ?? null });
     }
 
