@@ -65,7 +65,7 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
         <li>
           TSL: the{" "}
           <a href="https://github.com/mrdoob/three.js/wiki/Three.js-Shading-Language" target="_blank" rel="noopener noreferrer">three.js shading language wiki</a>.
-          The field in <code>miris/EffectCanvas.tsx</code> is one full-screen quad on a second canvas.
+          The glitch in <code>miris/ScreenFx.tsx</code> is one quad on a second, unseen canvas, copied onto the pedestal screen each frame.
         </li>
       </ul>
 

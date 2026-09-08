@@ -198,7 +198,7 @@ export const STEPS: Step[] = [
         fill: "markup",
         check: "markup",
         explain:
-          "This is the HTML-in-Canvas idea in three parts, and this is the first: ordinary markup laid out by the browser with ordinary CSS, so anything you can do on a web page you can do here. Each stat bar is a b element with a width, the growth series is a list of six items with a class on the one this file describes, the cyan comes from a class in lab.css, the text wraps because text wraps. The browser is doing the layout work that a 3D text library would make you do by hand, which is the whole point of the API. The next step paints the result; the one after hangs it in the room. Change a word, add a line, or give the notes a class of your own in lab.css, save, and click the capsule again: the file repaints from your markup.",
+          "This is the HTML-in-Canvas idea in three parts, and this is the first: ordinary markup laid out by the browser with ordinary CSS, so anything you can do on a web page you can do here. Each stat bar is a b element with a width, the growth series is a list of six items with a class on the one this file describes, the cyan comes from a class in lab.css, the text wraps because text wraps. The browser is doing the layout work that a 3D text library would make you do by hand, which is the whole point of the API. The next step paints the result; the one after puts it on the pedestal in front of the tube. Change a word, add a line, or give the notes a class of your own in lab.css, save, and click the capsule again: the file repaints from your markup.",
       },
       {
         num: "4.2",
@@ -211,19 +211,19 @@ export const STEPS: Step[] = [
         check: "file",
         renderPath: true,
         explain:
-          "useHtmlTexture is the hinge between the two worlds. It lays the markup out offscreen, then paints the element into a canvas with drawElementImage, the HTML-in-Canvas API: one call turns a laid-out element into pixels. Where the browser does not have the API yet, the same markup goes through an SVG foreignObject and is painted the same way; the badge on this step says which path yours took. Back comes a three.js texture and the element's size in scene units, and from there it is the most ordinary thing in three: a plane with that texture on it. The plane is placed half its width to the right so its left edge sits at the group's origin, which is where the next step hinges it. alphaTest rather than transparent, on purpose: the card draws as a solid, so the specimen sits in front of it when it should. toneMapped off, because the pixels are already the colours the browser chose.",
+          "useHtmlTexture is the hinge between the two worlds. It lays the markup out offscreen, then paints the element into a canvas with drawElementImage, the HTML-in-Canvas API: one call turns a laid-out element into pixels. Where the browser does not have the API yet, the same markup goes through an SVG foreignObject and is painted the same way; the badge on this step says which path yours took. Back comes a three.js texture and the element's size in scene units, and from there it is the most ordinary thing in three: a plane with that texture on it. The plane is centred on its origin; the pedestal in the next step scales it to fit its screen. toneMapped off, because the pixels are already the colours the browser chose.",
       },
       {
         num: "4.3",
-        title: "Hang it beside the glass",
-        stretch:
-          "Open a capsule and scroll. The wheel zooms between 1.2 and 3.2 metres from the glass, and only there: standing in the room there is nothing two centimetres ahead worth zooming toward.",
+        title: "Put it on the pedestal",
         body:
-          "Two lines, in the miris:card block inside the Canvas. The first makes the capsules clickable. The second stands beside whichever capsule is open and asks your File to paint that capsule's markup. Click a capsule: the camera walks over and the file is there in the room. Click away, or press Escape, to come back.",
+          "Two lines, in the miris:card block inside the Canvas. The first makes the room clickable. The second stands a lectern in front of every tube and asks your File to paint that specimen's markup onto its screen. Click a tube and the camera walks up to the organism; click a pedestal and it leans over the screen to read. Click the other to switch, or press Escape to come back.",
         fill: "card",
         check: "cardOverlay",
         explain:
-          "Placard knows where a file stands: to the right of the open glass, hinged on its inner edge and angled toward you, sized to fit the frame at whatever width your window is, with a dark plate behind it so the reverse is a slab and not text read backwards. It knows nothing about what the file shows; it calls your function with the dossier and hangs whatever comes back. A plane is a thing in the room: it recedes with everything else and you can orbit around it. Clicking is decided from the pointer against the capsules' projected outlines, so your glass never carries a click handler, and the same click hands the camera a destination it eases toward over about a second. If your markup or your File throws mid-edit, the card goes blank until you fix it and the room carries on.",
+          "Pedestals knows where a file stands: a lectern on the walkway in front of each tube, its top tilted toward the middle of the room, always lit, the way plaques stand in a museum. It knows nothing about what the screen shows; it calls your function with the dossier and its place in the series and scales whatever plane comes back to fit the screen. A plane is a thing in the room: it recedes with everything else and you can walk around it. Two things are clickable now, and the click is decided from the pointer against projected outlines, the pedestal's screen first because it stands in front, so none of your meshes carries a handler. The same click hands the camera one of two destinations: reading distance down the screen's normal, or the organism at the middle of the glass. If your markup or your File throws mid-edit, that screen goes blank until you fix it and the room carries on.",
+        stretch:
+          "Open a capsule and scroll. The wheel zooms between 1.2 and 3.2 metres from the glass, and only there: standing in the room there is nothing two centimetres ahead worth zooming toward.",
       },
     ],
   },
@@ -255,27 +255,27 @@ export const STEPS: Step[] = [
       },
       {
         num: "5.3",
-        title: "Add the overlay",
+        title: "Wire the screen",
         stretch:
-          "Resize the window with the guide open, then closed. The overlay tracks the stage rather than the window, because it is sized from its own element.",
+          "Comment the line out again and click a pedestal: the screen shows the file exactly as painted. Everything the next step adds is the difference.",
         body:
-          "TSL cannot share a canvas with a stream, so the containment field gets its own. Add this line at the bottom of app/stage.tsx, outside the Canvas, in the miris:effect block. Nothing shows until the next step hands it a graph.",
+          "TSL cannot share a canvas with a stream, so the glitch gets a renderer of its own. Add this line at the bottom of app/stage.tsx, outside the Canvas, in the miris:effect block. Nothing changes until the next step hands it a graph.",
         fill: "effect",
         check: "overlay",
         explain:
-          "Splats render through raw GLSL shader materials the SDK builds itself. TSL compiles through a node builder that cannot read those, so putting both in one canvas gives you no splats and a console full of compile errors. A second transparent canvas sidesteps it entirely: the field is screen space, so it never needed the room's depth buffer in the first place. It sits on top, ignores pointer events, and is sized to the stage, so it shrinks when the guide is open. It draws whatever node graph you hand it, one full-screen quad, and nothing at all until you do.",
+          "Splats render through raw GLSL shader materials the SDK builds itself. TSL compiles through a node builder that cannot read those, so putting both in one canvas gives you no splats and a console full of compile errors. ScreenFx sidesteps it: a second renderer draws one quad into a canvas nobody sees, with your graph as its material and the painted file as its input, and that canvas is copied onto the selected pedestal's screen every frame as an ordinary texture. One screen, one copy a frame, which is cheap; six would not be, so the other five pedestals show the file as painted. That is also why the glitch follows you: whichever pedestal you are reading is the one that flickers.",
       },
       {
         num: "5.4",
-        title: "Write the field",
+        title: "Write the glitch",
         stretch:
-          "Make the scanlines breathe: multiply scan by time.sin().mul(0.5).add(0.5) before the return. Nothing else changes, and the graph is recompiled on save.",
+          "Change 2 to 6 in both time.mul(2) calls and the tears come three times as often; change 0.12 and they slide further. Then try band.add(0.2) in the inBand line and watch the tear move down the screen.",
         body:
-          "Now the shader. This goes in the miris:field block near the top of app/stage.tsx, above the return. It is JavaScript that builds a shader graph, not a string of shader source, and it reads top to bottom: where the pixel is, the lines, the vignette, the colour.",
+          "Now the shader. This goes in the miris:field block near the top of the Stage function, above the return. It is JavaScript that builds a shader graph, not a string of shader source, and it reads top to bottom: a clock, a tear, the sample, the screen.",
         fill: "field",
         check: "field",
         explain:
-          "TSL is three.js's node shading language. uv(), time, mul and sin are nodes, not values: nothing is computed when this code runs. It builds a graph, the graph compiles once to GLSL on this backend, and then it runs per pixel per frame on the GPU. That is why it sits in useMemo: rebuild the graph on every render and the renderer rebuilds with it. Read it in order. p is the pixel's position from the centre of the screen, corrected for the screen's shape so a circle stays a circle. wave is a sine of the pixel's height, moved along by time, and scan squashes it to three percent so the lines read as texture rather than stripes. edge is the distance from the middle pushed through smoothstep: nothing until 0.8, darkest at 1.6. The vec4 is colour and alpha: the lines are cyan light, the vignette is black with alpha, and black at any alpha darkens what is behind it. Now change things and save. 220 is how many lines fit the screen and 1.4 is how fast they drift. Swap .sin() for .fract() and the lines turn hard-edged. Replace p.length() with p.x.abs() and the vignette becomes two dark bands at the sides. Every one of those is a different graph, compiled fresh when you save.",
+          "TSL is three.js's node shading language. uv(), time, texture and hash are nodes, not values: nothing is computed when this code runs. It builds a graph, the graph compiles once to GLSL on this backend, and then it runs per pixel per frame on the GPU. That is why it sits in useMemo: rebuild the graph on every render and the renderer rebuilds with it. Read it in order. p is where this pixel is on the file. tick is a clock that changes twice a second, and hash turns each tick into a number that holds still until the next, which is how a tear can stay in one place for a third of a second: band is where it sits, inBand is one inside those rows and zero outside, live is one during the first third of each tick, and shift is how far those rows slide. q is p with that slide applied, and texture(screen, q) reads the painted file there, so the rows move without anything else changing. Red is read a little further along than green and blue, which is the colour split a real screen shows when its signal tears. scan darkens every other line and flicker breathes the whole thing by two percent. Then change things and save: every number here is a different graph, compiled fresh when you do.",
       },
     ],
   },

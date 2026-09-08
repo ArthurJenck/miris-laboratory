@@ -4,7 +4,8 @@ import { Vector3 } from "three";
 import { anchor } from "./anchor";
 import { budgetVersion, getBudget, pinBudget, reportBudget, subscribeBudget } from "./budget";
 import "./lab.css";
-import { type Box, getBoxes, getHover, getReticle, getSelected, labVersion, setBoxes, setHover, setReticle, subscribeLab } from "./labState";
+import { type Box, getBoxes, getHover, getHoverPart, getPedestalBoxes, getReticle, getSelected, getSelectedPart, labVersion, setBoxes, setHover, setPedestalBoxes, setReticle, subscribeLab } from "./labState";
+import { screenFrame } from "./Pedestals";
 
 const RING = 4.2; // where the capsules stand
 const GLASS = 0.95; // a little wider than the glass, so brackets clear it
@@ -89,6 +90,23 @@ function streamIn(scene: any, i: number): any {
   return found;
 }
 
+/** Screen box of a pedestal's screen, from its four world corners. */
+function screenBoxOf(i: number, camera: any, w: number, h: number): Box | null {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const c of screenFrame(i).corners) {
+    v.copy(c).project(camera);
+    if (v.z >= 1) return null;
+    minX = Math.min(minX, (v.x * 0.5 + 0.5) * w);
+    maxX = Math.max(maxX, (v.x * 0.5 + 0.5) * w);
+    minY = Math.min(minY, (-v.y * 0.5 + 0.5) * h);
+    maxY = Math.max(maxY, (-v.y * 0.5 + 0.5) * h);
+  }
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
 /** Invisible plumbing inside the canvas: projects the six capsules every frame
  *  and feeds the TSL overlay the one under the pointer. Renders nothing. */
 export function CapsuleProbe() {
@@ -111,8 +129,9 @@ export function CapsuleProbe() {
       reportBudget({ drawn, frameMs: frameMs.current });
     }
     setBoxes(Array.from({ length: 6 }, (_, i) => boxOf(i, camera, size.width, size.height)));
+    setPedestalBoxes(Array.from({ length: 6 }, (_, i) => screenBoxOf(i, camera, size.width, size.height)));
     const i = getHover();
-    if (i < 0) {
+    if (i < 0 || getHoverPart() === "pedestal") {
       anchor.seen = false;
       setReticle(null);
       return;
@@ -152,26 +171,36 @@ export default function LabHud({ specimens = [] as any[] }) {
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       let best = -1;
+      let part: "organism" | "pedestal" = "pedestal";
       let bestArea = Infinity;
-      getBoxes().forEach((b, i) => {
-        if (!b || e.clientX < b.x || e.clientX > b.x + b.w || e.clientY < b.y || e.clientY > b.y + b.h) return;
-        // The nearest capsule is the smallest box the pointer is inside.
-        if (b.w * b.h < bestArea) {
-          bestArea = b.w * b.h;
-          best = i;
-        }
-      });
+      const pick = (boxes: (Box | null)[]) =>
+        boxes.forEach((b, i) => {
+          if (!b || e.clientX < b.x || e.clientX > b.x + b.w || e.clientY < b.y || e.clientY > b.y + b.h) return;
+          // The nearest is the smallest box the pointer is inside.
+          if (b.w * b.h < bestArea) {
+            bestArea = b.w * b.h;
+            best = i;
+          }
+        });
+      // The pedestal stands in front of its tube, so it is tested first.
+      pick(getPedestalBoxes());
+      if (best < 0) {
+        part = "organism";
+        pick(getBoxes());
+      }
       // Standing at a capsule, its glass fills the frame and the pointer is
       // always over it: the glow flooded the tank and the brackets framed
       // the whole screen. The open one is not a hover.
-      setHover(best === getSelected() ? -1 : best);
+      const open = best === getSelected() && part === getSelectedPart();
+      setHover(open ? -1 : best, part);
     };
     window.addEventListener("pointermove", onMove);
     return () => window.removeEventListener("pointermove", onMove);
   }, []);
 
   const live = specimens.filter((s) => s?.uuid).length;
-  const box = hover >= 0 ? getReticle() ?? boxes[hover] : null;
+  const onPedestal = hover >= 0 && getHoverPart() === "pedestal";
+  const box = hover < 0 ? null : onPedestal ? getPedestalBoxes()[hover] : getReticle() ?? boxes[hover];
   const named = hover >= 0 ? specimens[hover]?.dossier?.name : null;
   const stage = hover >= 0 ? specimens[hover]?.stage : null;
 
@@ -181,7 +210,7 @@ export default function LabHud({ specimens = [] as any[] }) {
         <b>Vivarium · Sublevel 7</b>
         <span>Directorate of Applied Genetics</span>
       </div>
-      <div className="mw-hud-bl">{hover >= 0 ? "Click to open dossier" : "Containment capsule"}</div>
+      <div className="mw-hud-bl">{hover < 0 ? "Containment capsule" : onPedestal ? "Click to read the file" : "Click to approach"}</div>
       <div className="mw-hud-br">
         {live} {live === 1 ? "specimen" : "specimens"} · Containment active
       </div>
@@ -224,6 +253,7 @@ export default function LabHud({ specimens = [] as any[] }) {
             <em style={{ left: Math.max(box.x, 22) - box.x, top: Math.max(box.y - 20, 60) - box.y }}>
               {named}
               {stage ? ` · ${String(hover + 1).padStart(2, "0")} ${stage}` : ""}
+              {onPedestal ? " · file" : ""}
             </em>
           )}
         </div>

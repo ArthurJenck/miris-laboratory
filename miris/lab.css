@@ -60,6 +60,12 @@
 
 .mw-d-notes { margin: 0; color: #9fb0b8; }
 
+/* On a pedestal the file lies landscape: identity and series on the left,
+   the notes on the right, so it fits a 16:9 screen. */
+.mw-dossier.mw-screen { width: 600px; display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; align-items: start; }
+
+.mw-dossier.mw-screen .mw-d-head:first-child { margin-top: 2px; }
+
 /* The growth series: six cells, the one this file describes lit. */
 .mw-d-series {
   display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px;

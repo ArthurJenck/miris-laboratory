@@ -36,7 +36,7 @@ const PROOF = {
   capsules: "TINTS",
   streams: "mirisStream",
   hud: "LabHud",
-  overlay: "EffectCanvas",
+  overlay: "ScreenFx",
   field: "Fn(",
   cardOverlay: "Dossier",
   markup: "mw-dossier",
@@ -166,13 +166,13 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     const block = readMarker(await readFile(STAGE, "utf8"), "effect");
     return block.includes(PROOF.overlay)
       ? null
-      : "No EffectCanvas in the miris:effect block yet. Add the line, or let the step do it.";
+      : "No ScreenFx in the miris:effect block yet. Add the line, or let the step do it.";
   },
 
   async field() {
     const src = await readFile(STAGE, "utf8");
-    if (!readMarker(src, "effect").includes("EffectCanvas"))
-      return "No EffectCanvas yet. Step 5.3 puts it there.";
+    if (!readMarker(src, "effect").includes("ScreenFx"))
+      return "No ScreenFx yet. Step 5.3 puts it there.";
     return readMarker(src, "field").includes(PROOF.field)
       ? null
       : "The overlay is mounted but the field is still null. Write the TSL, or let the step do it.";

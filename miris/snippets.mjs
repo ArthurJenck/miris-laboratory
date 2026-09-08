@@ -20,7 +20,7 @@ const WALKWAY = `      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02,
       ))}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.04, 0]}>
         <ringGeometry args={[3.12, 3.28, 64]} />
-        <meshBasicMaterial color={0xffffff} toneMapped={false} transparent opacity={0.85} />
+        <meshBasicMaterial color={0xd9e6ec} toneMapped={false} />
       </mesh>
       <mesh position={[0, 0.02, -10.7]}>
         <boxGeometry args={[2.4, 0.04, 14.2]} />
@@ -106,42 +106,52 @@ const STREAMS = `      {specimens.map((s, i) => {
 
 const HUD = `    <LabHud specimens={specimens} />`;
 
-const EFFECT = `    <EffectCanvas node={field} />`;
+const EFFECT = `    <ScreenFx node={glitch} />`;
 
 const FIELD = `  // TSL: JavaScript that builds a shader graph. Each call is a node, and the
-  // graph runs once per pixel, every frame, on the GPU.
-  const field = useMemo(() => Fn(() => {
-    // Where this pixel is: uv() runs 0 to 1 across the screen; this makes it
-    // -1 to 1 from the middle, stretched so a circle stays a circle.
-    const p = uv().mul(2).sub(1).mul(vec2(screenAspect, float(1)));
-    // Scanlines: a sine wave up the screen, drifting with time, kept faint.
-    const wave = uv().y.mul(220).sub(time.mul(1.4)).sin();
-    const scan = wave.mul(0.5).add(0.5).mul(0.03);
-    // Vignette: distance from the middle, nothing until 0.8, darkest at 1.6.
-    const edge = smoothstep(float(0.8), float(1.6), p.length()).mul(0.5);
-    // Colour and alpha. The lines add cyan light; the vignette adds only
-    // alpha, and black at any alpha darkens whatever is behind it.
-    return vec4(vec3(0.42, 0.86, 1.0).mul(scan), scan.add(edge));
+  // graph runs once per pixel of the screen, every frame, on the GPU.
+  const glitch = useMemo(() => Fn(() => {
+    // The painted file is the texture \`screen\`; p is where this pixel is on it.
+    const p = uv();
+    // A clock that ticks twice a second. hash turns a tick into a number that
+    // holds still until the next one, so the tear stays put while it lasts.
+    const tick = time.mul(2).floor();
+    const live = step(time.mul(2).fract(), float(0.3));
+    const band = hash(tick).mul(0.8).add(0.1);
+    const inBand = step(p.y.sub(band).abs(), float(0.04));
+    const shift = inBand.mul(live).mul(hash(tick.add(11)).sub(0.5)).mul(0.12);
+    // Sample the file with the torn rows slid sideways, red pulled a little further.
+    const q = vec2(p.x.add(shift), p.y);
+    const c = texture(screen, q);
+    const r = texture(screen, q.add(vec2(shift.mul(0.6), float(0)))).r;
+    // Scanlines and a soft flicker, so it reads as a screen and not a print.
+    const scan = p.y.mul(400).sin().mul(0.5).add(0.5).mul(0.15).oneMinus();
+    const flicker = time.mul(9).sin().mul(0.02).add(0.98);
+    return vec4(vec3(r, c.g, c.b).mul(scan).mul(flicker), float(1));
   })(), []);`;
 
 const MARKUP = `  // The file is HTML. The browser lays it out with the guide's own CSS, then
   // paints it into a canvas, and that canvas becomes a texture on a plane.
   const fileMarkup = (d: any) => \`
-    <div class="mw-dossier">
-      <p class="mw-d-code">\${d.designation} / \${d.series}</p>
-      <h3>\${d.name}</h3>
-      <p class="mw-d-class">\${d.classification}</p>
-      <ol class="mw-d-series">
-        \${d.stages.map((name: string, k: number) => \`
-          <li class="\${k === d.index ? "on" : ""}"><b>\${String(k + 1).padStart(2, "0")}</b><span>\${name}</span></li>\`).join("")}
-      </ol>
-      <p class="mw-d-stage">Stage \${d.index + 1} of \${d.stages.length}: \${d.stage}</p>
-      <ul class="mw-d-stats">
-        \${(d.stats || []).map((s: any) => \`
-          <li><span>\${s.label}</span><i><b style="width:\${s.value}%"></b></i><span>\${s.value}</span></li>\`).join("")}
-      </ul>
-      <p class="mw-d-head">Handler notes</p>
-      <p class="mw-d-notes">\${d.notes}</p>
+    <div class="mw-dossier mw-screen">
+      <div>
+        <p class="mw-d-code">\${d.designation} / \${d.series}</p>
+        <h3>\${d.name}</h3>
+        <p class="mw-d-class">\${d.classification}</p>
+        <ol class="mw-d-series">
+          \${d.stages.map((name: string, k: number) => \`
+            <li class="\${k === d.index ? "on" : ""}"><b>\${String(k + 1).padStart(2, "0")}</b><span>\${name}</span></li>\`).join("")}
+        </ol>
+        <p class="mw-d-stage">Stage \${d.index + 1} of \${d.stages.length}: \${d.stage}</p>
+        <ul class="mw-d-stats">
+          \${(d.stats || []).map((s: any) => \`
+            <li><span>\${s.label}</span><i><b style="width:\${s.value}%"></b></i><span>\${s.value}</span></li>\`).join("")}
+        </ul>
+      </div>
+      <div>
+        <p class="mw-d-head">Handler notes</p>
+        <p class="mw-d-notes">\${d.notes}</p>
+      </div>
     </div>\`;`;
 
 const FIT = `// A generated mesh arrives at whatever size the generator chose, and a stream
@@ -174,15 +184,15 @@ function File({ html }: { html: string }) {
   const { texture, width, height } = useHtmlTexture(html);
   if (!texture) return null;
   return (
-    <mesh position={[width / 2, 0, 0]}>
+    <mesh>
       <planeGeometry args={[width, height]} />
-      <meshBasicMaterial map={texture} alphaTest={0.5} toneMapped={false} />
+      <meshBasicMaterial map={texture} toneMapped={false} />
     </mesh>
   );
 }`;
 
 const CARD_PANEL = `      <Dossier specimens={specimens} />
-      <Placard specimens={specimens}>{(d: any) => <File html={fileMarkup(d)} />}</Placard>`;
+      <Pedestals specimens={specimens}>{(d: any) => <File html={fileMarkup(d)} />}</Pedestals>`;
 
 export const SNIPPETS = {
   floor: FLOOR,

@@ -17,7 +17,18 @@ import { useRef } from "react";
    the pass; they arrive once the first stream does. */
 export default function HdrGuard() {
   const done = useRef(false);
-  useFrame(({ scene }) => {
+  useFrame(({ scene, gl }) => {
+    /* The second thing the SDK's renderer leaves behind: it sets the GL
+       unpack-flip flag itself, and three only re-sends that flag when its own
+       cached value changes. So whether a texture uploaded the right way up
+       depended on what the SDK had left in the register, which is why the
+       painted file came out mirrored some of the time and the glitch copy
+       flipped from one load to the next. Make the cache and the register agree
+       at the top of every frame; three then sends the flag whenever a texture
+       wants the other value. */
+    const ctx = gl.getContext();
+    ctx.pixelStorei(ctx.UNPACK_FLIP_Y_WEBGL, 0);
+    (gl.state as any).pixelStorei?.(ctx.UNPACK_FLIP_Y_WEBGL, false);
     if (done.current) return;
     scene.traverse((o: any) => {
       const pass = o?.pass;

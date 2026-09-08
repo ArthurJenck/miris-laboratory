@@ -1,7 +1,8 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useRef } from "react";
 import { Vector3 } from "three";
-import { getSelected } from "./labState";
+import { getSelected, getSelectedPart } from "./labState";
+import { screenFrame } from "./Pedestals";
 
 const RING = 4.2;
 const EYE = 1.7;
@@ -11,6 +12,11 @@ const EYE = 1.7;
 const STANDOFF = 1.1;
 const NEAREST = 1.2;
 const FARTHEST = 3.2; // any further and the orbit clips the neighbours again
+/* Reading distance from a pedestal screen, along its normal, and the zoom
+   range there. The screen is 0.9 wide; at 1.05 it fills most of the frame. */
+const READING = 1.05;
+const READ_NEAREST = 0.45;
+const READ_FARTHEST = 2.2;
 /** How far the camera rests from the glass; the placard sizes itself to it. */
 export const FOCUS_DISTANCE = RING - STANDOFF;
 /* The capsule interior runs y 0.36 to 2.96; this is its middle. */
@@ -32,13 +38,15 @@ const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 
  *  the room when it closes. Mounted inside the Canvas; renders nothing. */
 export default function CapsuleFocus() {
   const { camera, controls } = useThree() as any;
-  const last = useRef<number | null>(null);
+  const last = useRef<string | null>(null);
   const t = useRef(1);
 
   useFrame((_, dt) => {
     const i = getSelected();
+    const part = getSelectedPart();
+    const key = `${i}:${part}`;
 
-    if (last.current !== i) {
+    if (last.current !== key) {
       // A new destination: remember where the move starts from, so the ease
       // runs between two fixed points instead of chasing a moving one.
       fromPos.copy(camera.position);
@@ -51,6 +59,12 @@ export default function CapsuleFocus() {
         dir.normalize();
         toPos.copy(home);
         toTarget.copy(home).addScaledVector(dir, 0.02);
+      } else if (part === "pedestal") {
+        // Straight down the screen's normal, at reading distance: the file
+        // fills the frame the way a plaque does when you lean over it.
+        const f = screenFrame(i);
+        toPos.copy(f.center).addScaledVector(f.normal, READING);
+        toTarget.copy(f.center);
       } else {
         const a = (i / 6) * Math.PI * 2;
         const cx = Math.cos(a);
@@ -60,7 +74,7 @@ export default function CapsuleFocus() {
         // around the specimen rather than around a point beside it.
         toTarget.set(cx * RING, GLASS_MIDDLE, cz * RING);
       }
-      last.current = i;
+      last.current = key;
       t.current = 0;
       /* The negative rotateSpeed is for standing in the room: with the target
          two centimetres ahead, drag left looks left. Around a capsule that
@@ -70,8 +84,9 @@ export default function CapsuleFocus() {
         // Zoom is a focus-only affordance: standing in the room there is
         // nothing two centimetres ahead worth zooming toward.
         controls.enableZoom = i >= 0;
-        controls.minDistance = i >= 0 ? NEAREST : 0;
-        controls.maxDistance = i >= 0 ? FARTHEST : Infinity;
+        const reading = i >= 0 && part === "pedestal";
+        controls.minDistance = i < 0 ? 0 : reading ? READ_NEAREST : NEAREST;
+        controls.maxDistance = i < 0 ? Infinity : reading ? READ_FARTHEST : FARTHEST;
       }
     }
 

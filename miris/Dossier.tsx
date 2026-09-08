@@ -1,10 +1,10 @@
 import { useEffect, useSyncExternalStore } from "react";
 import "./lab.css";
-import { getBoxes, getSelected, labVersion, setSelected, subscribeLab } from "./labState";
+import { getBoxes, getPedestalBoxes, getSelected, labVersion, type Part, setSelected, subscribeLab } from "./labState";
 
 /** Click to open a capsule's file, Escape or click away to close it. Lives
  *  outside the canvas because it reads the pointer against projected boxes;
- *  the card it opens is drawn in the scene by Placard. */
+ *  the file it opens stands on the pedestal, drawn by Pedestals. */
 export default function Dossier({ specimens = [] as any[] }) {
   useSyncExternalStore(subscribeLab, labVersion, labVersion);
   const i = getSelected();
@@ -25,16 +25,24 @@ export default function Dossier({ specimens = [] as any[] }) {
       // so every click inside the open file fell through to the hit test and
       // the close button selected whichever capsule sat behind it.
       if ((e.target as HTMLElement)?.closest?.(".mw-panel, .mw-dossier-panel, .mw-tab, .mw-tray, .mw-tray-min, .mw-dev")) return;
+      // The pedestal stands in front of its tube, so it is tested first.
       let best = -1;
+      let part: Part = "pedestal";
       let bestArea = Infinity;
-      getBoxes().forEach((b, n) => {
-        if (!b || e.clientX < b.x || e.clientX > b.x + b.w || e.clientY < b.y || e.clientY > b.y + b.h) return;
-        if (b.w * b.h < bestArea) {
-          bestArea = b.w * b.h;
-          best = n;
-        }
-      });
-      setSelected(best);
+      const pick = (boxes: ReturnType<typeof getBoxes>) =>
+        boxes.forEach((b, n) => {
+          if (!b || e.clientX < b.x || e.clientX > b.x + b.w || e.clientY < b.y || e.clientY > b.y + b.h) return;
+          if (b.w * b.h < bestArea) {
+            bestArea = b.w * b.h;
+            best = n;
+          }
+        });
+      pick(getPedestalBoxes());
+      if (best < 0) {
+        part = "organism";
+        pick(getBoxes());
+      }
+      setSelected(best, part);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSelected(-1);
@@ -49,7 +57,7 @@ export default function Dossier({ specimens = [] as any[] }) {
     };
   }, []);
 
-  // The card itself is drawn in the scene by Placard; this only decides
+  // The file itself is drawn in the scene by Pedestals; this only decides
   // which capsule is open.
   void specimens;
   void i;

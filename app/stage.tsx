@@ -4,18 +4,18 @@ import { OrbitControls } from "@react-three/drei";
 import { MirisStream } from "@miris-inc/three";
 import { TINTS, VIEWER_KEY as DEMO_KEY } from "../miris/config";
 import { DoubleSide, Group, NoToneMapping } from "three";
-import { Fn, float, smoothstep, time, uv, vec2, vec3, vec4 } from "three/tsl";
+import { Fn, float, hash, step, texture, time, uv, vec2, vec3, vec4 } from "three/tsl";
 import Dossier from "../miris/Dossier";
 import LabHud, { CapsuleProbe } from "../miris/LabHud";
 import CapsuleFocus from "../miris/CapsuleFocus";
-import Placard from "../miris/Placard";
+import Pedestals from "../miris/Pedestals";
 import useHtmlTexture from "../miris/htmlTexture";
 import HdrGuard from "../miris/HdrGuard";
 import BudgetGuard from "../miris/BudgetGuard";
 import GlassOrder from "../miris/GlassOrder";
 import { FloorGlow, LightShaft, Pulse, RadialGlow } from "../miris/CapsuleFx";
 import { floorMaps, walkwayTexture, wearMap } from "../miris/textures";
-import EffectCanvas, { screenAspect } from "../miris/EffectCanvas";
+import ScreenFx, { screen } from "../miris/ScreenFx";
 import { StageSkeleton } from "../miris/Skeleton";
 
 // A Miris stream is now a scene node: <mirisStream args={[{ uuid, viewerKey }]} />
@@ -47,7 +47,7 @@ export default function Stage() {
 
   // miris:field-start
   // Step 5.4 goes here.
-  const field = null;
+  const glitch = null;
   // miris:field-end
 
   const specimens = data?.specimens ?? [];

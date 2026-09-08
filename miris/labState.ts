@@ -14,8 +14,15 @@ let boxes: (Box | null)[] = [null, null, null, null, null, null];
    the brackets frame the creature and not the tube it stands in. Null when
    nothing is hovered or the stream has not reported a size yet. */
 let reticle: Box | null = null;
+/* Screen boxes of the six pedestal screens, for hover and for clicks. */
+let pedestalBoxes: (Box | null)[] = [null, null, null, null, null, null];
+/* A capsule has two things to look at: the organism in the glass and the file
+   on the pedestal in front of it. Hover and selection say which. */
+export type Part = "organism" | "pedestal";
 let hover = -1;
+let hoverPart: Part = "organism";
 let selected = -1;
+let selectedPart: Part = "organism";
 let version = 0;
 const subs = new Set<() => void>();
 
@@ -34,6 +41,22 @@ export const setReticle = (b: Box | null) => {
   if (!same) bump();
 };
 export const getSelected = () => selected;
+export const getSelectedPart = () => selectedPart;
+export const getHoverPart = () => hoverPart;
+export const getPedestalBoxes = () => pedestalBoxes;
+
+const sameBoxes = (a: (Box | null)[], b: (Box | null)[]) =>
+  a.every((x, i) => {
+    const y = b[i];
+    if (!x || !y) return x === y;
+    return Math.abs(x.x - y.x) < 1 && Math.abs(x.y - y.y) < 1 && Math.abs(x.w - y.w) < 1 && Math.abs(x.h - y.h) < 1;
+  });
+
+export const setPedestalBoxes = (next: (Box | null)[]) => {
+  const same = sameBoxes(next, pedestalBoxes);
+  pedestalBoxes = next;
+  if (!same) bump();
+};
 
 const bump = () => {
   version++;
@@ -52,15 +75,18 @@ export const setBoxes = (next: (Box | null)[]) => {
   if (!same) bump();
 };
 
-export const setHover = (i: number) => {
-  if (i === hover) return;
+export const setHover = (i: number, part: Part = "organism") => {
+  if (i === hover && part === hoverPart) return;
   hover = i;
+  hoverPart = part;
   bump();
 };
 
-/** Which capsule's dossier is open. -1 closes it. */
-export const setSelected = (i: number) => {
-  if (i === selected) return;
+/** Which capsule is open, and whether you walked to the glass or the pedestal.
+ *  -1 closes it. */
+export const setSelected = (i: number, part: Part = "organism") => {
+  if (i === selected && part === selectedPart) return;
   selected = i;
+  selectedPart = part;
   bump();
 };

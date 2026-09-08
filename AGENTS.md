@@ -171,6 +171,14 @@ creature in front of it. `miris/GlassOrder.tsx` decides per tube per frame from
 the readout's screen boxes: over, unless a nearer capsule overlaps it on
 screen. It finds the glass by the `glass-N` name the capsule snippet gives it.
 
+**TSL reaches the pedestal screens by copy, not by sharing a canvas.** The
+glitch graph renders in `miris/ScreenFx.tsx`, a second renderer drawing one
+quad into an unseen canvas with the painted file as input; `Pedestals.tsx`
+swaps that canvas in as the selected pedestal's screen texture each frame.
+One screen is one upload a frame; six would be too many, so the other five
+show the file as painted. `screen` is one DataTexture object whose pixels are
+swapped to the active file, so the attendee's graph can name it.
+
 **What the room costs, measured.** With the splat budget pinned and the canvas
 at six times its size so nothing sits at the frame cap, every category of
 scene object was shown alone: glass, shafts, pulses, glows, rings, door, the
