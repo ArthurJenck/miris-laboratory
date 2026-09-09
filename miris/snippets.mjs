@@ -23,6 +23,7 @@ const SCREENS = `        {specimens.map((specimen, index) => (
 // After <Scene>: on the page, not in the canvas.
 const HUD = `      <Readout />`;
 const EFFECT = `      <ScreenFx node={glitch} />`;
+const CONTROLS = `      <Controls />`;
 
 const FIELD = `  const glitch = useMemo(() => Fn(() => {
     const point = uv();
@@ -136,6 +137,7 @@ export const SNIPPETS = {
   field: FIELD,
   hud: HUD,
   effect: stack(HUD, EFFECT),
+  controls: stack(HUD, EFFECT, CONTROLS),
 };
 
 /* What each step actually adds: the part the card shows. */
@@ -152,6 +154,7 @@ export const PARTS = {
   field: FIELD,
   hud: HUD,
   effect: EFFECT,
+  controls: CONTROLS,
 };
 
 /* A block with nothing in it yet. */
@@ -179,6 +182,7 @@ export const CLEARS_TO = {
   field: null,
   hud: null,
   effect: "hud",
+  controls: "effect",
 };
 
 export const MARKER_FOR = {
@@ -194,6 +198,7 @@ export const MARKER_FOR = {
   field: "field",
   hud: "hud",
   effect: "hud",
+  controls: "hud",
 };
 
 /* Steps that replace one named function inside the parts block, leaving

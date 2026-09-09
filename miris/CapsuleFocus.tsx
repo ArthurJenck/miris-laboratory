@@ -15,8 +15,6 @@ const FARTHEST = 3.2; // any further and the orbit clips the neighbours again
 const READING = 1.05;
 const READ_NEAREST = 0.45;
 const READ_FARTHEST = 2.2;
-/** How far the camera rests from the glass; the placard sizes itself to it. */
-export const FOCUS_DISTANCE = RING - STANDOFF;
 const TRAVEL = 0.9; // seconds
 
 const fromPos = new Vector3();

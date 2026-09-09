@@ -21,10 +21,7 @@ export default function Dossier() {
     const onClick = (e: MouseEvent) => {
       if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
       // Anything with its own controls, the guide included, keeps its click.
-      // .mw-dossier-panel, not .mw-dossier: the shorter class does not exist,
-      // so every click inside the open file fell through to the hit test and
-      // the close button selected whichever capsule sat behind it.
-      if ((e.target as HTMLElement)?.closest?.(".mw-panel, .mw-dossier-panel, .mw-tab, .mw-tray, .mw-tray-min, .mw-dev")) return;
+      if ((e.target as HTMLElement)?.closest?.(".mw-panel, .mw-controls, .mw-tab, .mw-tray, .mw-tray-min, .mw-dev")) return;
       // The pedestal stands in front of its tube, so it is tested first.
       let best = -1;
       let part: Part = "pedestal";

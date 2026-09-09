@@ -1,0 +1,101 @@
+/* The toolbar at the foot of the room. Same palette as the readout and the
+   dossier, so it reads as the laboratory's own instrument rather than a web
+   widget laid over it. Imported by Controls, so it survives without the guide. */
+.mw-controls {
+  position: fixed; z-index: 5;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  left: calc((100vw - var(--mw-side, 0px)) / 2); transform: translateX(-50%);
+  width: min(400px, calc(100vw - var(--mw-side, 0px) - 32px));
+  color: #c8d4da; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; font-size: 12px; line-height: 1.4;
+}
+/* The open list has to clear the guide's tray and the dossier brackets. */
+.mw-controls:has([aria-expanded="true"]) { z-index: 22; }
+
+.mw-controls-bar {
+  padding: 6px; border: 1px solid #24424e; border-radius: 6px;
+  background: rgba(13, 14, 18, 0.94); box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+}
+.mw-controls button {
+  color: inherit; font: inherit; letter-spacing: 0.04em; cursor: pointer;
+  min-height: 44px; border: 0; border-radius: 4px; background: transparent;
+}
+.mw-controls button:disabled { opacity: 0.35; cursor: default; }
+.mw-controls button:focus-visible { outline: 2px solid #41d0f8; outline-offset: -3px; }
+
+/* ── the dropdown ─────────────────────────────────────────── */
+.mw-picker { position: relative; }
+.mw-picker-trigger { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 10px; text-align: left; }
+.mw-picker-trigger:hover, .mw-picker-trigger[aria-expanded="true"] { background: #182329; }
+.mw-picker-mark {
+  display: grid; place-items: center; flex: none; width: 34px; height: 34px;
+  border: 1px solid #24424e; border-radius: 50%; color: #41d0f8;
+}
+.mw-picker-text { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.mw-picker-text strong { font-weight: 500; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: #f2f7f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mw-picker-text > span { color: #6f838d; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mw-picker-chevron { display: grid; place-items: center; color: #6f838d; transition: transform 160ms ease; }
+.mw-picker-chevron[data-open] { transform: rotate(180deg); }
+
+.mw-picker-pop {
+  position: absolute; left: -6px; right: -6px; bottom: calc(100% + 14px);
+  padding: 6px; border: 1px solid #24424e; border-radius: 6px;
+  background: rgba(13, 14, 18, 0.97); box-shadow: 0 14px 40px rgba(0, 0, 0, 0.55);
+}
+.mw-picker-list {
+  max-height: min(392px, calc(100dvh - 240px)); overflow-y: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: #24424e transparent;
+}
+.mw-picker-list button { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 10px; text-align: left; }
+.mw-picker-list button:hover, .mw-picker-list button:focus-visible { background: #182329; }
+.mw-picker-list button[aria-selected="true"] { background: rgba(65, 208, 248, 0.1); }
+.mw-picker-list button > svg { flex: none; color: #41d0f8; }
+.mw-picker-num { display: grid; place-items: center; flex: none; min-width: 34px; color: #41d0f8; letter-spacing: 0.1em; }
+
+/* ── the row of actions under it ─────────────────────────── */
+.mw-controls-row { display: flex; gap: 4px; margin-top: 5px; padding-top: 5px; border-top: 1px solid #182329; }
+.mw-controls-row > button { display: flex; align-items: center; justify-content: center; gap: 7px; flex: none; width: 44px; }
+.mw-controls-row > button:hover:not(:disabled) { background: #182329; }
+.mw-controls-row > .mw-controls-wide { flex: 1; width: auto; padding: 0 8px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; }
+.mw-controls-row > .mw-controls-read { background: #41d0f8; color: #0d0e12; font-weight: 500; }
+.mw-controls-row > .mw-controls-read:hover:not(:disabled) { background: #7fe1ff; }
+.mw-controls-row > .mw-controls-read:disabled { background: #182329; color: #c8d4da; }
+
+.mw-controls-hint {
+  margin: 8px 0 0; text-align: center; color: #6f838d;
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; text-shadow: 0 1px 4px #000;
+}
+
+/* The readout's bottom line says what the hint says; with the toolbar in the
+   room only one of them is needed, and the count moves up out of its way. */
+body:has(.mw-controls) .mw-hud-bl { display: none; }
+
+@media (max-width: 720px) {
+  /* The guide is a bottom sheet here, and the toolbar would sit under it. */
+  body:has(.mw-panel) .mw-controls { display: none; }
+  /* With the toolbar showing, the count and the budget move up above it. */
+  body:has(.mw-controls):not(:has(.mw-panel)) .mw-hud-br { bottom: calc(176px + env(safe-area-inset-bottom)); }
+  body:has(.mw-controls):not(:has(.mw-panel)) .mw-hud-budget { bottom: calc(198px + env(safe-area-inset-bottom)); }
+}
+
+/* Between a phone and a wide desk the corner readouts would run under the
+   toolbar: a tablet on its own, or a laptop with the guide taking 408px. */
+@media (min-width: 721px) and (max-width: 1000px) {
+  body:has(.mw-controls) .mw-hud-br { bottom: 176px; }
+  body:has(.mw-controls) .mw-hud-budget { bottom: 198px; }
+}
+@media (min-width: 721px) and (max-width: 1400px) {
+  body:has(.mw-controls):has(.mw-panel) .mw-hud-br { bottom: 176px; }
+  body:has(.mw-controls):has(.mw-panel) .mw-hud-budget { bottom: 198px; }
+}
+
+/* A phone on its side: the toolbar to the right, out of the room's middle. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .mw-controls { left: auto; right: max(12px, env(safe-area-inset-right)); transform: none; width: 360px; bottom: 12px; }
+  .mw-controls-hint { display: none; }
+  .mw-picker-list { max-height: calc(100dvh - 200px); }
+  body:has(.mw-controls) .mw-hud-br { display: none; }
+  body:has(.mw-controls) .mw-hud-budget { right: auto; left: 22px; bottom: 20px; justify-items: start; }
+}
+
+@media (prefers-reduced-motion: reduce) { .mw-picker-chevron { transition: none; } }

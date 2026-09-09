@@ -5,16 +5,7 @@ import { emptyBank, normaliseBank } from "./specimens.mjs";
 export const DEFAULT_DATA = {
   track: "",
   step: "1.1",
-  prompt: "",
-  imageUrl: "",
-  falRequestId: "",
-  glb: "",
-  // Epoch ms while a mesh build is in flight, 0 otherwise. How a reloaded page
-  // knows to resume the building state instead of re-offering the review.
-  modelStartedAt: 0,
-  uuid: "",
   viewerKey: "",
-  card: null,
   // The one sentence the whole laboratory grows from.
   concept: "",
   // Epoch ms when the growth series was last started, 0 otherwise.

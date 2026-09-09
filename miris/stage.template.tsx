@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CanvasTexture, SRGBColorSpace } from "three";
 import { Fn, float, hash, step, texture, time, uv, vec2, vec3, vec4 } from "three/tsl";
-import { Scene, Floor, Platform, Walkway, Door, Specimen, Screen, Readout, ScreenFx, screenTexture } from "../miris";
+import { Scene, Floor, Platform, Walkway, Door, Specimen, Screen, Readout, ScreenFx, Controls, screenTexture } from "../miris";
 import specimens from "./specimens.json" with { type: "json" };
 
 // The viewer key you scoped to your six assets. Every stream reads through it.

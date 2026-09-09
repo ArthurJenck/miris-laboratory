@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Step, Sub } from "./curriculum";
 import type { Track } from "./tracks";
-import { CapsuleAuto, ConceptField, type HatchState } from "./Build";
+import { ConceptField, type HatchState } from "./Build";
 import Chevron from "./Chevron";
 import Code from "./highlight";
 import { PARTS } from "./snippets.mjs";
@@ -11,7 +11,6 @@ import { indexOfSub, nextSub, subState } from "./progress";
 export interface StepActions {
   fill: (snippetId: string, num: string) => void | Promise<void>;
   clear: (snippetId: string) => void | Promise<void>;
-  /** Asks a model on the attendee's fal key to write the card. */
   /** Re-reads data.json, for the parts of a step that write it themselves. */
   reload: () => void;
   /** Verifies the substep actually happened, then moves the progress pointer
@@ -203,7 +202,6 @@ export default function StepPane({
             )}
 
             {sub.panel && <ConceptField hatch={hatch} />}
-            {sub.capsuleUuid && <CapsuleAuto data={data} onDone={actions.reload} />}
 
             {sub.fill && (
               <>
@@ -232,15 +230,6 @@ export default function StepPane({
                 </summary>
                 <p>{sub.explain}</p>
               </details>
-            )}
-
-            {/* One thing to try for anyone who finished early. Never checked,
-                never required: the pointer moves on Done whether or not it
-                was done. */}
-            {sub.stretch && (
-              <p className="mw-stretch c14">
-                <span className="l12">Further</span> {withNoun(sub.stretch, track.noun)}
-              </p>
             )}
 
             {problems[sub.num] && (

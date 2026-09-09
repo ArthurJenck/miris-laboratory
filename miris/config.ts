@@ -15,13 +15,6 @@ export const PORTAL_URL = "https://app.miris.com";
 export const FALLBACK_KEYS: { label: string; key: string }[] = [];
 export const FAL_KEYS_URL = "https://fal.ai/dashboard/keys";
 
-// Authorises every stream. Cold start is 6 to 9s; warming it early does not help.
-export const JWKS_URL = "https://app.miris.com/.well-known/jwks.json";
-
-/* One tint per capsule, sampled from the reference: mostly cool, with two warm
-   outliers so the ring of six does not read as a single colour. */
-export const TINTS = [0x3bd6fe, 0x2fc0aa, 0x5f7fd0, 0xc4443f, 0x3bd6fe, 0x7f68c0];
-
 /* The dossier's closed vocabulary. A status outside this set would break the
    colour of the dot beside it, and stats of varying length cannot be laid out. */
 export const STATUSES = ["STABLE", "DORMANT", "VOLATILE", "BREACHED"] as const;

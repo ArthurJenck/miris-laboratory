@@ -61,37 +61,6 @@ function noise(ctx: CanvasRenderingContext2D, s: number, amount: number, scale: 
   ctx.putImageData(img, 0, 0);
 }
 
-/** The deck: dark plate with a seam every half tile and a little grain. */
-export const deckTexture = () =>
-  make(512, (ctx, s) => {
-    ctx.fillStyle = "#1b242e";
-    ctx.fillRect(0, 0, s, s);
-    noise(ctx, s, 26, 5);
-
-    ctx.strokeStyle = "rgba(120, 168, 190, 0.10)";
-    ctx.lineWidth = 2;
-    for (const p of [0, s / 2]) {
-      ctx.beginPath();
-      ctx.moveTo(p + 1, 0);
-      ctx.lineTo(p + 1, s);
-      ctx.moveTo(0, p + 1);
-      ctx.lineTo(s, p + 1);
-      ctx.stroke();
-    }
-    // A few brighter scuffs, so the repeat is harder to read as a grid.
-    ctx.strokeStyle = "rgba(150, 190, 210, 0.045)";
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 60; i++) {
-      const x = Math.random() * s;
-      const y = Math.random() * s;
-      const len = 10 + Math.random() * 70;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + len, y + (Math.random() - 0.5) * 6);
-      ctx.stroke();
-    }
-  });
-
 /** The walkway: lighter, brushed along one axis, with bolt heads at the seams. */
 export const walkwayTexture = () =>
   make(512, (ctx, s) => {
@@ -121,58 +90,6 @@ export const walkwayTexture = () =>
     }
   });
 
-/** The room shell: panelled plate with two recessed rails, high enough up that
- *  they read as architecture rather than cutting across the capsules. */
-export const wallTexture = () =>
-  make(512, (ctx, s) => {
-    ctx.fillStyle = "#212d38";
-    ctx.fillRect(0, 0, s, s);
-    noise(ctx, s, 18, 6);
-
-    // Vertical seams between plates, doubled so the repeat is less obvious.
-    ctx.strokeStyle = "rgba(8, 12, 16, 0.55)";
-    ctx.lineWidth = 3;
-    for (const x of [0, s / 4, s / 2, (s * 3) / 4]) {
-      ctx.beginPath();
-      ctx.moveTo(x + 1.5, 0);
-      ctx.lineTo(x + 1.5, s);
-      ctx.stroke();
-    }
-    ctx.strokeStyle = "rgba(150, 190, 210, 0.05)";
-    ctx.lineWidth = 1;
-    for (const x of [0, s / 4, s / 2, (s * 3) / 4]) {
-      ctx.beginPath();
-      ctx.moveTo(x + 4, 0);
-      ctx.lineTo(x + 4, s);
-      ctx.stroke();
-    }
-
-    // Horizontal rails: a dark recess with a pale edge above it.
-    for (const y of [s * 0.34, s * 0.62]) {
-      ctx.fillStyle = "rgba(6, 10, 14, 0.6)";
-      ctx.fillRect(0, y, s, 14);
-      ctx.fillStyle = "rgba(140, 186, 208, 0.09)";
-      ctx.fillRect(0, y - 2, s, 2);
-    }
-  });
-
-/** Cyan strip lights banded across the wall, added as emissive so they glow
- *  without lighting anything. */
-export const wallGlowMap = () =>
-  make(512, (ctx, s) => {
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(0, 0, s, s);
-    for (const y of [s * 0.34, s * 0.62]) {
-      const g = ctx.createLinearGradient(0, y - 10, 0, y + 22);
-      g.addColorStop(0, "rgba(0,0,0,0)");
-      g.addColorStop(0.4, "rgba(90, 200, 240, 0.62)");
-      g.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, y - 10, s, 32);
-    }
-    dither(ctx, s);
-  });
-
 /** The pool of light a capsule throws on the deck. Radial, so it has no edge. */
 const makeGlow = () =>
   make(512, (ctx, s) => {
@@ -191,32 +108,6 @@ const makeGlow = () =>
    and kept six copies of it on the GPU. */
 let sharedGlow: Texture | null = null;
 export const glowTexture = () => (sharedGlow ??= makeGlow());
-
-/** The lit panels set into the wall. Soft at all four edges, so they read as
- *  light behind glass rather than as blue rectangles. */
-export const shadeTexture = () =>
-  make(256, (ctx, s) => {
-    const v = ctx.createLinearGradient(0, 0, 0, s);
-    v.addColorStop(0, "rgba(255,255,255,0)");
-    v.addColorStop(0.16, "rgba(255,255,255,0.5)");
-    v.addColorStop(0.5, "rgba(255,255,255,0.95)");
-    v.addColorStop(0.84, "rgba(255,255,255,0.5)");
-    v.addColorStop(1, "rgba(255,255,255,0)");
-    ctx.fillStyle = v;
-    ctx.fillRect(0, 0, s, s);
-
-    // Feather the sides as well, or the panel keeps two hard vertical edges.
-    ctx.globalCompositeOperation = "destination-in";
-    const h = ctx.createLinearGradient(0, 0, s, 0);
-    h.addColorStop(0, "rgba(0,0,0,0)");
-    h.addColorStop(0.13, "rgba(0,0,0,1)");
-    h.addColorStop(0.87, "rgba(0,0,0,1)");
-    h.addColorStop(1, "rgba(0,0,0,0)");
-    ctx.fillStyle = h;
-    ctx.fillRect(0, 0, s, s);
-    ctx.globalCompositeOperation = "source-over";
-    dither(ctx, s);
-  });
 
 /** A roughness map so the deck is not uniformly matte under the rim lights. */
 export const wearMap = () =>

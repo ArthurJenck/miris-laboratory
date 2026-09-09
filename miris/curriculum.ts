@@ -19,18 +19,12 @@ export interface Sub {
   link?: { href: string; label: string };
   /** Renders the fal panel opener. */
   panel?: boolean;
-  /** Renders the uuid and viewer key form for the active capsule. */
-  capsuleUuid?: boolean;
-  /** Renders the Write the label button. */
   /** A check id from the CHECKS map in miris/devApi.ts. Done verifies it before
    *  moving on. Steps whose work happens outside the project, signing up or
    *  deploying, deliberately have none. */
   check?: string;
   /** Renders the html-in-canvas path badge. */
   renderPath?: boolean;
-  /** One thing to try for whoever finishes early. Shown under the card, never
-   *  checked: a step is done when its check passes, stretch or not. */
-  stretch?: string;
 }
 
 export interface Step {
@@ -254,13 +248,29 @@ export const STEPS: Step[] = [
   },
   {
     num: "06",
-    title: "Ship it",
+    title: "The controls",
     subs: [
       {
         num: "6.1",
+        title: "Add the controls",
+        body:
+          "Add this line under ScreenFx in the miris:hud block. It puts a toolbar at the bottom of the room: a dropdown that lists your six specimens, arrows to step between them, a button back to the overview and one that opens the selected file. On a phone there is nothing to hover and not much to click, so this is how anyone else gets round your room.",
+        fill: "controls",
+        check: "controls",
+        explain:
+          "Controls sits outside Scene like the readout and drives the same selection the tubes and screens answer to, so choosing a specimen walks the camera over exactly as a click does. The dropdown is a real listbox: arrow keys, Home, End and typing a letter all work, and every target is at least 44 pixels tall for a thumb. On a narrow screen it steps aside while the guide is open, since the guide is a bottom sheet there.",
+      },
+    ],
+  },
+  {
+    num: "07",
+    title: "Ship it",
+    subs: [
+      {
+        num: "7.1",
         title: "Publish it",
         body:
-          "Press Publish in Bolt, wait for your link, and send it to someone. Open it on a phone, tap a tube and a pedestal, then press Finish.",
+          "Press Publish in Bolt, wait for your link, and send it to someone. Open it on a phone, pick a specimen from the dropdown, read its file, then press Finish.",
         explain:
           "The published build has no dev server, so it reads a snapshot of your scene data written at build time. Everything else is the code you wrote in app/stage.tsx.",
       },

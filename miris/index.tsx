@@ -8,4 +8,5 @@ export { default as Specimen } from "./Specimen";
 export { default as Screen } from "./Screen";
 export { default as Readout } from "./Readout";
 export { default as ScreenFx, screenTexture } from "./ScreenFx";
+export { default as Controls } from "./Controls";
 export { default as Workshop } from "./Workshop";

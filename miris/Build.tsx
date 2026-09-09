@@ -209,7 +209,6 @@ export function ConceptField({ hatch }: { hatch: HatchState }) {
 const STATE_LABEL: Record<string, string> = {
   empty: "Waiting",
   named: "Planned",
-  drawn: "Drawn",
   building: "Building",
   ready: "Ready",
   live: "Streaming",

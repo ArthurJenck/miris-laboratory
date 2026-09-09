@@ -1,11 +1,10 @@
 /* The laboratory's own interface: the readout, the hover brackets and the
    specimen file. Imported by the components that draw them rather than by the
-   guide, because step 6.1 removes the guide and these have to survive it. */
+   guide, because a published lab has no guide and these have to survive it. */
 
-/* The dossier, laid out from the reference: a code line, the name, a status
-   row, four stat bars, trait chips and handler notes. Used twice, once as a
-   DOM overlay at step 4.2 and once painted into the canvas at step 4.3, so it
-   has to survive being drawn by drawElementImage with no cascade of its own. */
+/* The dossier, laid out from the reference: a code line, the name, the series,
+   four stat bars and handler notes. Painted into the pedestal screen by
+   drawElementImage at step 4.2, so it has to survive with no cascade of its own. */
 .mw-dossier {
   width: 340px; padding: 18px 20px 16px; box-sizing: border-box;
   background: #0d0e12; border: 1px solid #182329; border-radius: 4px;
@@ -22,24 +21,6 @@
 
 .mw-d-class { margin: 0 0 12px; font-style: italic; color: #8fa3ad; }
 
-.mw-d-state {
-  display: flex; gap: 10px; align-items: center; margin: 0 0 14px; padding: 9px 0;
-  border-top: 1px solid #182329; border-bottom: 1px solid #182329;
-  letter-spacing: 0.1em; font-size: 11px; color: #8fa3ad;
-}
-
-.mw-d-state b { font-weight: 500; color: #64dba1; }
-
-.mw-d-state b::before { content: "● "; }
-
-.mw-d-state b[data-status="VOLATILE"] { color: #ffa14a; }
-
-.mw-d-state b[data-status="BREACHED"] { color: #ff5f6d; }
-
-.mw-d-state b[data-status="DORMANT"] { color: #8fa3ad; }
-
-.mw-d-state em { font-style: normal; color: #41d0f8; }
-
 .mw-d-stats { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 6px; }
 
 .mw-d-stats li { display: grid; grid-template-columns: 92px 1fr 26px; gap: 8px; align-items: center; }
@@ -53,10 +34,6 @@
 .mw-d-stats i b { display: block; height: 100%; background: #41d0f8; }
 
 .mw-d-head { margin: 0 0 6px; letter-spacing: 0.14em; font-size: 10px; color: #6f838d; text-transform: uppercase; }
-
-.mw-d-traits { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; }
-
-.mw-d-traits span { padding: 4px 8px; border: 1px solid #24424e; color: #a9d8e8; font-size: 11px; }
 
 .mw-d-notes { margin: 0; color: #9fb0b8; }
 
@@ -165,37 +142,6 @@
   position: absolute; left: 0; top: -20px; font-style: normal;
   color: #e8f4f8; letter-spacing: 0.2em;
 }
-
-/* The dossier panel, anchored to the right edge the way the reference does it,
-   opened by clicking a capsule. Not geometry: a card standing in the scene
-   turns edge-on, hides behind its own glass and clips off the top of frame. */
-.mw-dossier-panel {
-  position: fixed; top: 50%; right: 24px; transform: translateY(-50%);
-  z-index: 3; width: 340px;
-}
-
-.mw-dossier-panel .mw-dossier { width: 100%; }
-
-.mw-dossier-close {
-  position: absolute; top: 12px; right: 12px; z-index: 1;
-  width: 22px; height: 22px; padding: 0; line-height: 1;
-  background: none; border: 0; cursor: pointer;
-  color: #6f838d; font-size: 17px;
-}
-
-.mw-dossier-close:hover { color: #e8f4f8; }
-
-.mw-dossier-foot {
-  display: flex; justify-content: space-between; margin: 0;
-  padding: 9px 20px; box-sizing: border-box;
-  background: #0d0e12; border: 1px solid #182329; border-top: 0;
-  font-family: ui-monospace, Menlo, monospace; font-size: 10px;
-  letter-spacing: 0.14em; text-transform: uppercase; color: #6f838d;
-}
-
-/* The published laboratory has no guide, so the margin is the default and the
-   panel only steps aside while the workshop panel is actually on screen. */
-body:has(.mw-panel) .mw-dossier-panel { right: calc(min(408px, 100vw) + 24px); }
 
 /* The painted terminal keeps the same aspect ratio before and after the CRT pass. */
 .mw-dossier.mw-screen {

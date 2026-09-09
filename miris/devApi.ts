@@ -3,9 +3,9 @@ import { join } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
 import { applyLesson, clearLesson, mergeSpecimens, readViewerKey, specimensJson, withViewerKey } from "./lessonSource.mjs";
-import { readMarker, replaceMarker } from "./markers.mjs";
+import { readMarker } from "./markers.mjs";
 import { readData, writeData } from "./store.mjs";
-import { CLEARS_TO, EMPTY_BLOCKS, EMPTY_SPECIMENS, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
+import { CLEARS_TO, EMPTY_SPECIMENS, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
 import { emptyBank, normaliseBank } from "./specimens.mjs";
 import { zipSync } from "./zip.mjs";
 import { tinyGlb } from "./tinyGlb.mjs";
@@ -46,6 +46,7 @@ const PROOF = {
   field: "Fn(",
   markup: "mw-dossier",
   file: "drawElementImage",
+  controls: "<Controls",
 };
 
 /** Which snippet each proof has to appear in. */
@@ -62,6 +63,7 @@ const PROOF_IN: Record<keyof typeof PROOF, keyof typeof SNIPPETS> = {
   field: "field",
   markup: "markup",
   file: "file",
+  controls: "controls",
 };
 
 const auditProofs = () => {
@@ -173,6 +175,7 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
   },
 
   hud: inBlock("hud", PROOF.hud, "No Readout in the miris:hud block yet. Add the line, or let the step do it."),
+  controls: inBlock("hud", PROOF.controls, "No Controls in the hud block yet. Add the line under ScreenFx, or let the step do it."),
   overlay: inBlock("hud", PROOF.overlay, "No ScreenFx in the miris:hud block yet. Add the line under Readout, or let the step do it."),
 
   async field() {
@@ -297,7 +300,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
     "Content-Type": "application/json",
   });
 
-  async function falRun(model: string, input: unknown, recordIn?: string) {
+  async function falRun(model: string, input: unknown) {
     const submit = await fetch(`https://queue.fal.run/${model}`, {
       method: "POST",
       headers: falHeaders(),
@@ -305,10 +308,6 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
     });
     if (!submit.ok) throw new Error(`fal submit ${submit.status}: ${await submit.text()}`);
     const job = await submit.json();
-
-    // Recorded before the wait, so a dev server killed mid-generation costs
-    // nothing: the job is still findable on fal.
-    if (recordIn) await writeData(recordIn, { falRequestId: job.request_id ?? "", modelStartedAt: Date.now() });
 
     for (let i = 0; i < 300; i++) {
       await new Promise((r) => setTimeout(r, 5000));
@@ -346,10 +345,11 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       const { value, done } = await reader.read();
       if (done) break;
       buffer += decoder.decode(value, { stream: true });
-      let cut: number;
-      while ((cut = buffer.indexOf("\n\n")) !== -1) {
-        const lines = buffer.slice(0, cut).split(/\r?\n/);
-        buffer = buffer.slice(cut + 2);
+      // fal separates events with CRLF; searching for a bare \n\n dropped every one.
+      let gap: RegExpExecArray | null;
+      while ((gap = /\r?\n\r?\n/.exec(buffer))) {
+        const lines = buffer.slice(0, gap.index).split(/\r?\n/);
+        buffer = buffer.slice(gap.index + gap[0].length);
         const data = lines.filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim()).join("\n");
         if (!data) continue;
         let event: any;
@@ -418,8 +418,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       const i = Number(body?.index);
       if (!Number.isInteger(i) || i < 0 || i >= bank.length) return fail(`No such capsule: ${body?.index}`);
       const uuid = String(body?.uuid ?? "").trim();
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid))
-        return fail(`That uuid does not look like one: "${uuid}". Copy just the id from the asset page.`);
+      if (!UUID_RE.test(uuid)) return fail(`That uuid does not look like one: "${uuid}". Copy just the id from the asset page.`);
       bank[i] = { ...bank[i], uuid, status: "live" };
       const patch: Record<string, unknown> = { specimens: bank };
       // One key reads every capsule, so it lives beside the bank, not inside it.
@@ -489,8 +488,12 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
           const list = parseDossiers(raw);
           for (let i = 0; i < list.length; i++) if (list[i]) await patchSlot(i, { dossier: list[i] });
         };
-        const takeRender = async (i: number, url: unknown) => {
-          if (typeof url === "string" && url) await patchSlot(i, { imageUrl: url, status: "building", modelStartedAt: Date.now() });
+        // The node reports `images`, and the output map hands that array on as `image_N`.
+        const takeRender = async (i: number, images: unknown) => {
+          const url = Array.isArray(images) ? images[0]?.url : images;
+          // The output map replays every render at the end; a slot whose mesh
+          // has already landed must not fall back to building.
+          if (typeof url === "string" && url && !glbs[i]) await patchSlot(i, { imageUrl: url, status: "building", modelStartedAt: Date.now() });
         };
         const takeMesh = async (i: number, glb: string | null) => {
           if (!glb || glbs[i] === glb) return;
@@ -505,7 +508,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
           const slot = /^(render|mesh)(\d)$/.exec(node);
           if (node === "plan") await takePlan(out?.output);
           else if (node === "dossiers") await takeDossiers(out?.output);
-          else if (slot?.[1] === "render") await takeRender(Number(slot[2]) - 1, out?.images?.[0]?.url);
+          else if (slot?.[1] === "render") await takeRender(Number(slot[2]) - 1, out?.images);
           else if (slot?.[1] === "mesh") await takeMesh(Number(slot[2]) - 1, findGlb(out));
         }).catch(abandon);
 

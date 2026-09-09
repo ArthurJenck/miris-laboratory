@@ -1266,9 +1266,6 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 .mw-fallbacks .l12 { color: var(--mono-500); }
 .mw-fallbacks .mw-row { flex-wrap: wrap; gap: 6px; margin: 0; justify-content: flex-start; }
 
-/* ── the stretch line on a step ─────────────────────────── */
-.mw-stretch { margin: 0; color: var(--mono-400); }
-.mw-stretch .l12 { color: var(--mono-600); margin-right: 6px; }
 
 /* ── the closing pane ───────────────────────────────────── */
 .mw-finished > .l12 { color: var(--accent); }

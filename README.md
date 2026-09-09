@@ -49,7 +49,8 @@ capsules from a series the presenters grew in advance.
 | 03 Add the streams | Download the archive, upload six files, tag them and a viewer key, add the six specimens and their streams, paste the ids, fit each creature. | Portal processing. |
 | 04 The specimen file | Write HTML for the specimen's file, draw it into a canvas, put it on the screen. | |
 | 05 The readout | Add the HUD, write a TSL field on a second canvas. | |
-| 06 Ship it | Publish, send the link. | |
+| 06 The controls | Add the toolbar: a specimen dropdown, next and previous, overview and read file, so the room works under a thumb. | |
+| 07 Ship it | Publish, send the link. | |
 
 The room is built while the meshes grow, which is the only reason two hours is
 enough. Do not wait for the tray to finish before starting step 2.
@@ -61,7 +62,7 @@ in WebContainer, which is where most attendees run this.
 
 - `app/stage.tsx` is your file. It imports the room's parts by their plain
   names from `../miris` (`Scene`, `Floor`, `Platform`, `Walkway`, `Door`,
-  `Specimen`, `Readout`) and composes them; the camera, lights, controls and
+  `Specimen`, `Screen`, `Readout`, `ScreenFx`, `Controls`) and composes them; the camera, lights, controls and
   renderer settings live inside `Scene`, so the file carries none of it. The
   viewer key is one constant at the top, and the six specimens (asset id and
   scale) are `app/specimens.json`, imported beside it; step 3.6 fills both in
@@ -98,8 +99,8 @@ so there is nothing to restart when you add it.
 ### Rehearsing without spending
 
 `MIRIS_OFFLINE=1` in `.env.local` replays a recorded run from
-`miris/fixtures.json` instead of calling fal. `hatch` and `label` return
-instantly, and a **Seed the lab** control appears bottom left that fills all
+`miris/fixtures.json` instead of calling fal. `hatch` returns instantly, and a
+**Seed the lab** control appears bottom left that fills all
 six capsules with the recorded specimen in one press. Everything after the
 twelve minute wait can be rehearsed in seconds. The archive it writes is
 `miris/specimens.offline.zip`, six tiny synthetic cubes, so a rehearsal can

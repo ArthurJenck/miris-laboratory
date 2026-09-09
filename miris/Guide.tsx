@@ -183,13 +183,7 @@ function WorkshopGuide() {
     // panel and the panel does not exist yet.
     setNote(id ? "Setting up your track" : "Going back to the chooser");
 
-    // Changing track clears the previous one's prompt, render and mesh, so a
-    // subject never carries over into a track that did not describe it.
-    const patch: Record<string, unknown> =
-      id && id !== data.track
-        ? { track: id, prompt: "", imageUrl: "", falRequestId: "", modelStartedAt: 0, glb: "", card: null }
-        : { track: id };
-    const saved = await post({ action: "save", patch });
+    const saved = await post({ action: "save", patch: { track: id } });
     if (!saved.ok) return setNote(saved.problem!);
 
     let next: any;

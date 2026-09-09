@@ -14,7 +14,11 @@ from. It imports everything it names from `../miris` (the barrel in
 `miris/index.tsx`) and is deliberately free of numbers: the camera, lights,
 controls, renderer settings, guards and data loading are all inside `Scene`,
 and each part of the room (`Floor`, `Platform`, `Walkway`, `Door`,
-`Specimen`) takes no props. Shared positions live once, in `miris/layout.ts`.
+`Specimen`) takes no props, as do the two things on the page outside the canvas,
+`Readout` and `Controls`. `Controls` is the toolbar at the foot of the room
+(a specimen dropdown, next and previous, overview, read file) that drives the
+same selection in `miris/labState.ts` a click on a tube does; on a phone it is
+the only way round. Shared positions live once, in `miris/layout.ts`.
 `main.tsx` they need not touch: it mounts the stage in `Workshop`, and the
 guide renders nothing in a published build, so removing it is an option the
 closing pane offers, not a step.
@@ -47,8 +51,9 @@ inside it portals its child onto the pedestal, handing that child the slot's
 dossier as `dossier`. A `mirisStream` with an empty id is left out, so the SDK
 is never asked for nothing. A slot whose stage is named but whose dossier the
 registrar has not written yet gets a pending record with the same shape, so the
-attendee's `File` paints something rather than a black screen; the run's label
-calls swallow their failures, and this is where that used to become invisible.
+attendee's `File` paints something rather than a black screen; a dossiers node
+that answers badly is dropped by the parser, and this is where that used to
+become invisible.
 
 Attendees read these files by hand, so keep comments to roughly one line per
 file. The curriculum's WHY texts already explain the concepts; a comment
@@ -90,7 +95,8 @@ model settings live on fal, not in this repo; `GROWTH_WORKFLOW` in
 workflow.
 
 `hatch` in `miris/devApi.ts` streams the run from `fal.run/<workflow>/stream`
-and patches `data.json` as each node reports: the plan names the six stages,
+and patches `data.json` as each node reports (the events arrive separated by
+CRLF, which a parser looking for a bare `\n\n` never sees): the plan names the six stages,
 the dossiers node files all six at once, each render sets an image, each mesh
 a glb. The output map at the end is the record and fills any gap the events
 left, then the six glbs are fetched, checked for the glTF magic and zipped.
@@ -117,8 +123,8 @@ photographed on a rock arrives in the capsule as a rock.
 ## Rehearsing without fal
 
 `MIRIS_OFFLINE=1` in `.env.local` replays a recorded run from
-`miris/fixtures.json` instead of calling fal: `hatch` and `label` return
-instantly and for nothing, and a **Seed the lab** control appears bottom left
+`miris/fixtures.json` instead of calling fal: `hatch` returns instantly and
+for nothing, and a **Seed the lab** control appears bottom left
 that fills all six capsules, dossiers and uuids in one press. `unseed` empties
 it again. The whole flow downstream of the twelve minute wait can then be
 rehearsed in seconds.
