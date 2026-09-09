@@ -1,0 +1,20 @@
+# Read by the Vercel CLI in step 7.2. When this file exists Vercel stops
+# consulting .gitignore, so everything that must stay off Vercel is named here
+# by hand. miris/data.json is deliberately NOT listed: the build's snapshot
+# plugin reads it to freeze your run into the published laboratory.
+node_modules/
+dist/
+.vercel/
+
+# Your fal key. The published page has no server, so nothing there needs it.
+.env.local
+.env*.local
+
+# Run artefacts the build never reads.
+miris/specimens.zip
+miris/specimens.offline.zip
+specimens-out/
+public/models/
+.playwright-mcp/
+tsconfig.tsbuildinfo
+.DS_Store

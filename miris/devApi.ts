@@ -650,7 +650,7 @@ export function mirisDevApi(mode: string): Plugin {
      * <mirisStream> leaves the SDK's own scene objects behind (measured two
      * SparkRenderers in one scene, splats drawn twice, the model smearing as
      * the camera moves), and scoping the reload to "only when a stream was
-     * mounted" still ghosted in Bolt on the stream's FIRST mount, through an
+     * mounted" still ghosted in early hosted runs on the stream's FIRST mount, through an
      * HMR path localhost never reproduced. A fresh boot is the only state
      * this SDK provably cannot double. The reload is cheap because everything
      * durable lives in data.json: the tray, its fold state, and an in-flight

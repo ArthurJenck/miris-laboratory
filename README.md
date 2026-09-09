@@ -33,7 +33,11 @@ Five minutes now saves twenty in the room.
    fallback: without the flag the pedestal screens stay dark.
 4. **A charger.** Chrome caps rendering at 30fps once a laptop hits 20%
    battery, browser-wide, and the room will feel slow for no reason in the code.
-5. **Node 20 or newer** if you run it locally. In Bolt nothing to install.
+5. **A Vercel account.** Step 7 publishes the laboratory from your terminal
+   with the Vercel CLI, and the first run logs you in through the browser. The
+   free Hobby plan is enough. Sign up at vercel.com.
+6. **Node 20 or newer.** The dev server and the deploy both run on your own
+   machine.
 
 Total spend on your fal key is about twelve dollars: six images at a few cents
 each and six meshes at about $1.40 apiece. Every attendee grows their own
@@ -49,15 +53,16 @@ series; there is no way past step 1.5 without one.
 | 04 The specimen file | Write HTML for the specimen's file, draw it into a canvas, put it on the screen. | |
 | 05 The readout | Add the HUD, write a TSL field on a second canvas. | |
 | 06 The controls | Add the toolbar: a specimen dropdown, next and previous, overview and read file, so the room works under a thumb. | |
-| 07 Ship it | Publish, send the link. | |
+| 07 Ship it | Deploy to Vercel from the terminal, send the link. | |
 
 The room is built while the meshes grow, which is the only reason two hours is
 enough. Do not wait for the tray to finish before starting step 2.
 
 ## What it is
 
-React, Vite, React Three Fiber and drei. Not Next: the App Router cannot run
-in WebContainer, which is where most attendees run this.
+React, Vite, React Three Fiber and drei. Not Next: the published laboratory
+is a folder of static files with no server behind it, so nothing on the public
+page can reach a fal key or rewrite a file.
 
 - `app/stage.tsx` is your file. It imports the room's parts by their plain
   names from `../miris` (`Scene`, `Room`, `Platform`, `Walkway`, `Door`,
@@ -94,14 +99,27 @@ starts the moment its render lands. Wall clock is about twelve minutes and
 the tray keeps a stage list and a running total while it works.
 
 The tray fills in because the run is streamed from fal and each stage is
-written to `miris/data.json` as its event arrives. That needs a real Node
-process: inside a WebContainer (bolt.new, StackBlitz) fetch hands a response
-over only once it is complete, so nothing lands until the end. Run the dev
-server from your own machine. Restarting it mid-run loses the run, and the
-form says so.
+written to `miris/data.json` as its event arrives. Restarting the dev server
+mid-run loses the run, and the form says so.
 
 The workshop's dev server reads `FAL_KEY` from `.env.local` on every request,
 so there is nothing to restart when you add it.
+
+### Publishing
+
+Step 7 runs `npx vercel --prod --yes` in the project folder. The Vercel CLI
+uploads the source, runs `npm run build` on Vercel, and prints a production
+URL. The build's snapshot plugin reads `miris/data.json`, the record of your
+run, and freezes your track, dossiers, six asset ids and viewer key into
+`dist/miris-scene.json`; the published page reads that file instead of the dev
+API, and the guide renders nothing in production.
+
+That is why the deploy runs from your terminal rather than from a Git import
+in the Vercel dashboard. `miris/data.json` is gitignored, so a build from a
+repository has no run to freeze and ships an empty laboratory. `.vercelignore`
+keeps `data.json` in the upload and keeps `.env.local` out: your fal key never
+leaves your machine. The CLI writes its project link to `.vercel/`, which is
+gitignored too.
 
 ## For presenters
 

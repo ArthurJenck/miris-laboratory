@@ -10,6 +10,7 @@ export const PORTAL_URL = "https://app.miris.com";
 export const FAL_URL = "https://fal.ai";
 export const FAL_KEYS_URL = "https://fal.ai/dashboard/keys";
 export const FAL_CREDITS_URL = "https://fal.ai/dashboard/usage-billing/credits";
+export const VERCEL_URL = "https://vercel.com";
 
 /* The dossier's closed vocabulary. A status outside this set would break the
    colour of the dot beside it, and stats of varying length cannot be laid out. */

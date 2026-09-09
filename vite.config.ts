@@ -13,10 +13,8 @@ export default defineConfig(({ mode }) => {
       // strictPort so the workshop's own instructions stay true: if 3000 is
       // taken, fail loudly rather than silently moving to 3001.
       strictPort: true,
-      // host so the dev server binds beyond localhost. In a WebContainer
-      // (bolt.new, StackBlitz) the preview is proxied from outside the
-      // process, and a localhost-only bind leaves it stuck on "Waiting for
-      // preview to load" while the terminal happily reports Vite as ready.
+      // host so the dev server binds beyond localhost: a phone on the same
+      // wifi can open the room before step 7 publishes it.
       host: true,
     },
     preview: { port: 3000, strictPort: true, host: true },
