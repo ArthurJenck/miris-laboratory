@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       '@miris-inc/three':
-        specifier: ^0.0.8-7db43c1
+        specifier: 0.0.8-c9cae05
         version: 0.0.8-c9cae05(@miris-inc/core@0.0.8-c9cae05)(three@0.185.0)
       '@react-three/drei':
         specifier: ^10.7.8

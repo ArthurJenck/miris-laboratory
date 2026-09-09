@@ -7,7 +7,7 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@miris-inc/three": "^0.0.8-7db43c1",
+        "@miris-inc/three": "0.0.8-c9cae05",
         "@react-three/drei": "^10.7.8",
         "@react-three/fiber": "^9.7.0",
         "react": "^19.2.8",
