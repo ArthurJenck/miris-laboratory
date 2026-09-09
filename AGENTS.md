@@ -15,7 +15,7 @@ byte-identical to `miris/stage.template.tsx`, which the reset action restores
 from. It imports everything it names from `../miris` (the barrel in
 `miris/index.tsx`) and is deliberately free of numbers: the camera, lights,
 controls, renderer settings, guards and data loading are all inside `Scene`,
-and each part of the room (`Floor`, `Platform`, `Walkway`, `Door`,
+and each part of the room (`Room`, `Platform`, `Walkway`, `Door`,
 `Specimen`) takes no props, as do the two things on the page outside the canvas,
 `Readout` and `Controls`. `Controls` is the toolbar at the foot of the room
 (a specimen dropdown, next and previous, overview, read file) that drives the
@@ -29,7 +29,7 @@ closing pane offers, not a step.
 dev API, config. Nothing in it needs editing to complete the workshop.
 
 `miris/lab-components/` is the part of it attendees are walked through: the
-four room parts step 2 adds (`Floor`, `Platform`, `Walkway`, `Door`) and the
+four room parts step 2 adds (`Room`, `Platform`, `Walkway`, `Door`) and the
 parts bin they are assembled from (`hardware.tsx` for the colours, `Ring`,
 `Label` and `radial`; `StaticInstances.tsx` for repeated hardware in one draw
 call). Each room part's default export reads as a list of named sub-parts

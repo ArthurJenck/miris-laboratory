@@ -29,12 +29,12 @@ const FIXTURES = join(MIRIS_DIR, "fixtures.json");
 
 /* What each step's snippet must leave behind for its check to believe it. Kept
    in one table, and audited against the snippets when the server starts,
-   because these drifted apart once: the floor check went looking for a
+   because these drifted apart once: the room check went looking for a
    gridHelper the snippet had stopped emitting, so pressing Fill and then Done
    told the attendee they had not done a step they had just done. A check that
    blames the person for the repo's own drift is worse than no check. */
 const PROOF = {
-  floor: "<Floor",
+  room: "<Room",
   platform: "<Platform",
   walkway: "<Walkway",
   door: "<Door",
@@ -51,7 +51,7 @@ const PROOF = {
 
 /** Which snippet each proof has to appear in. */
 const PROOF_IN: Record<keyof typeof PROOF, keyof typeof SNIPPETS> = {
-  floor: "floor",
+  room: "room",
   platform: "platform",
   walkway: "walkway",
   door: "door",
@@ -150,8 +150,8 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     return "Nothing grown yet. Describe your creature and press Grow the series.";
   },
 
-  floor: inBlock("scene", PROOF.floor, "The scene block in app/stage.tsx has no floor in it yet. Add the line between the miris:scene comments, or let the step do it."),
-  platform: inBlock("scene", PROOF.platform, "No platform in the scene block yet. Add it under the floor, or let the step do it."),
+  room: inBlock("scene", PROOF.room, "The scene block in app/stage.tsx has no room in it yet. Add the line between the miris:scene comments, or let the step do it."),
+  platform: inBlock("scene", PROOF.platform, "No platform in the scene block yet. Add it under the room, or let the step do it."),
   walkway: inBlock("scene", PROOF.walkway, "No walkway in the scene block yet. Add it under the platform, or let the step do it."),
   door: inBlock("scene", PROOF.door, "No door in the scene block yet. Add it under the walkway, or let the step do it."),
   specimens: inBlock("scene", PROOF.specimens, "No specimens in the scene block yet. Add the map under the door, or let the step do it."),

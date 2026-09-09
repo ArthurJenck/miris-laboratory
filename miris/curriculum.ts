@@ -65,19 +65,19 @@ export const STEPS: Step[] = [
     subs: [
       {
         num: "2.1",
-        title: "Add the floor",
+        title: "Add the room",
         body:
-          "Add Floor between the miris:scene comments in app/stage.tsx. It gives you the deck, the walls, the ceiling and the fog.",
-        fill: "floor",
-        check: "floor",
+          "Add Room between the miris:scene comments in app/stage.tsx. It gives you the deck, the walls, the ceiling and the fog.",
+        fill: "room",
+        check: "room",
         explain:
-          "Everything you add here goes inside Scene, which owns the canvas, the lights and the camera. Floor is in miris/lab-components/Floor.tsx: a scanned metal deck, an inward-facing wall and a ceiling, with the repeated ribs and lamps drawn as instances so they cost one draw call each.",
+          "Everything you add here goes inside Scene, which owns the canvas, the lights and the camera. Room is in miris/lab-components/Room.tsx: a scanned metal deck, an inward-facing wall and a ceiling, with the repeated ribs and lamps drawn as instances so they cost one draw call each.",
       },
       {
         num: "2.2",
         title: "Add the platform",
         body:
-          "Add Platform after Floor. It is the raised ring you are standing on, with its lit edges and the division's label.",
+          "Add Platform after Room. It is the raised ring you are standing on, with its lit edges and the division's label.",
         fill: "platform",
         check: "platform",
         explain:

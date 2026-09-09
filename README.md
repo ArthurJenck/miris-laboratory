@@ -44,7 +44,7 @@ series; there is no way past step 1.2 without one.
 | Step | You | Running in the background |
 |---|---|---|
 | 01 Set up | Paste your fal key. Describe a creature. | The series grows: about twelve minutes. |
-| 02 Build the room | Add the floor, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
+| 02 Build the room | Add the room, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
 | 03 Add the streams | Download the archive, upload six files, tag them and a viewer key, add the six specimens and their streams, paste the ids, fit each creature. | Portal processing. |
 | 04 The specimen file | Write HTML for the specimen's file, draw it into a canvas, put it on the screen. | |
 | 05 The readout | Add the HUD, write a TSL field on a second canvas. | |
@@ -60,7 +60,7 @@ React, Vite, React Three Fiber and drei. Not Next: the App Router cannot run
 in WebContainer, which is where most attendees run this.
 
 - `app/stage.tsx` is your file. It imports the room's parts by their plain
-  names from `../miris` (`Scene`, `Floor`, `Platform`, `Walkway`, `Door`,
+  names from `../miris` (`Scene`, `Room`, `Platform`, `Walkway`, `Door`,
   `Specimen`, `Screen`, `Readout`, `ScreenFx`, `Controls`) and composes them; the camera, lights, controls and
   renderer settings live inside `Scene`, so the file carries none of it. The
   viewer key is one constant at the top, and the six specimens (asset id and

@@ -1,6 +1,6 @@
 // Everything app/stage.tsx needs, by its plain name.
 export { default as Scene } from "./Scene";
-export { default as Floor } from "./lab-components/Floor";
+export { default as Room } from "./lab-components/Room";
 export { default as Platform } from "./lab-components/Platform";
 export { default as Walkway } from "./lab-components/Walkway";
 export { default as Door } from "./lab-components/Door";

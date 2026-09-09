@@ -7,7 +7,7 @@ import { floorMaps } from "../textures";
 
 /** The room itself: the scanned metal deck, the wall round it, the ceiling
  *  with its ribs and lamps, and the fog that closes the distance. */
-export default function Floor() {
+export default function Room() {
   return (
     <>
       <Atmosphere />
