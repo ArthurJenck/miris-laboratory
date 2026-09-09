@@ -218,7 +218,7 @@ again, which builds a new controller at its default 250k rather than resuming. F
 the readout is the render loop's own delta, smoothed: the SDK holds the one
 GPU timer query open, so there is no second one.
 
-Step 1.2 has no way round it: every attendee describes a creature and grows
+Step 1.4 has no way round it: every attendee describes a creature and grows
 their own series. The only shortcut is the offline seed, for presenters
 rehearsing, and it exists only under `MIRIS_OFFLINE=1`.
 

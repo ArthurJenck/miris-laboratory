@@ -37,7 +37,7 @@ export interface StepPaneProps {
   busy: string;
   /** What the last Done click found wrong, keyed by substep number. */
   problems: Record<string, string>;
-  /** Owned by Guide so the tray outlives step 1.2. */
+  /** Owned by Guide so the tray outlives step 1.4. */
   hatch: HatchState;
   /** The substep whose card is open. Usually the progress pointer, but a
    *  finished substep can be opened to re-read it. */

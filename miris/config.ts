@@ -8,6 +8,7 @@ export const GROWTH_WORKFLOW = "workflows/dexhonsa/miris-growth-series-v2";
 export const PORTAL_URL = "https://app.miris.com";
 
 export const FAL_KEYS_URL = "https://fal.ai/dashboard/keys";
+export const FAL_BILLING_URL = "https://fal.ai/dashboard/billing";
 
 /* The dossier's closed vocabulary. A status outside this set would break the
    colour of the dot beside it, and stats of varying length cannot be laid out. */

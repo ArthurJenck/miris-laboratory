@@ -181,7 +181,7 @@ function WorkshopGuide() {
   const trackVars = { ["--track" as string]: track.accent } as React.CSSProperties;
 
   // Above the steps, so the tray survives an advance: the mesh takes four to
-  // six minutes and later steps send attendees away from 1.2 while it runs.
+  // six minutes and later steps send attendees away from 1.4 while it runs.
   const hatch = useHatch(track);
 
   // Swapping between the chooser and the panel is a view transition: the

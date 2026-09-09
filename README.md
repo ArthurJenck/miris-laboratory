@@ -22,9 +22,9 @@ changing your code or saved specimens.
 Five minutes now saves twenty in the room.
 
 1. **A fal.ai account with billing on.** The series is generated on your own
-   key, and a key without a card behind it stops at step 1.2. Sign up at
-   fal.ai, add a payment method, and create a key at fal.ai/dashboard/keys.
-   You will paste it in step 1.1.
+   key, and a key without a card behind it stops at step 1.4. Sign up at
+   fal.ai, add a payment method, redeem the coupon FAL-MIRIS on the Billing
+   page, and create a key at fal.ai/dashboard/keys. You will paste it in step 1.3.
 2. **A Miris account.** Sign up at app.miris.com. You upload six files to it
    in step 3.1, and the signup is quicker done at home than on conference wifi.
 3. **Chrome, with one flag on.** Step 4.2 draws live HTML into the scene with
@@ -37,13 +37,13 @@ Five minutes now saves twenty in the room.
 
 Total spend on your fal key is about twelve dollars: six images at a few cents
 each and six meshes at about $1.40 apiece. Every attendee grows their own
-series; there is no way past step 1.2 without one.
+series; there is no way past step 1.4 without one.
 
 ## What happens, in order
 
 | Step | You | Running in the background |
 |---|---|---|
-| 01 Set up | Paste your fal key. Describe a creature. | The series grows: about twelve minutes. |
+| 01 Set up | Make a fal account, create a key, put it in .env.local. Describe a creature. | The series grows: about twelve minutes. |
 | 02 Build the room | Add the room, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
 | 03 Add the streams | Download the archive, upload six files, tag them and a viewer key, add the six specimens and their streams, paste the ids, fit each creature. | Portal processing. |
 | 04 The specimen file | Write HTML for the specimen's file, draw it into a canvas, put it on the screen. | |

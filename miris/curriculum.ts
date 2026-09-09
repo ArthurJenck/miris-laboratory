@@ -1,4 +1,4 @@
-import { FAL_KEYS_URL, PORTAL_URL } from "./config";
+import { FAL_BILLING_URL, FAL_KEYS_URL, PORTAL_URL } from "./config";
 
 export interface Sub {
   num: string;
@@ -40,15 +40,35 @@ export const STEPS: Step[] = [
     subs: [
       {
         num: "1.1",
-        title: "Add your fal key",
+        title: "Create your fal account",
         body:
-          "Sign in at fal.ai and redeem the coupon code FAL-MIRIS on the Billing page of the dashboard; it seeds your account with the credits this workshop spends. Then create an API key and paste it into a file called .env.local at the top of the project. Save it and press Done; the server reads the key on every request, so there is nothing to restart.",
-        code: "FAL_KEY=your-key-here",
-        link: { href: FAL_KEYS_URL, label: "Open fal keys" },
-        check: "falKey",
+          "Sign up at fal.ai, or sign in if you already have an account. On the Billing page of the dashboard, redeem the coupon code below: it seeds your account with the credits this workshop spends. Press Done once the balance shows.",
+        code: "FAL-MIRIS",
+        link: { href: FAL_BILLING_URL, label: "Open fal billing" },
+        explain:
+          "fal hosts the workflow that grows your series: a planner, six chained renders and six meshes, billed per run. A run costs about twelve dollars, which is what the coupon is for.",
       },
       {
         num: "1.2",
+        title: "Create an API key",
+        body:
+          "Open Keys in the fal dashboard and press Add key. Give it any name, then copy the key it shows you: fal shows it once. Keep it handy for the next step and press Done.",
+        link: { href: FAL_KEYS_URL, label: "Open fal keys" },
+        explain:
+          "The key is how this project's dev server signs its requests to fal on your behalf. It stays on your machine: the server reads it and calls fal from there, so the page you publish never carries it.",
+      },
+      {
+        num: "1.3",
+        title: "Create .env.local",
+        body:
+          "Make a file called .env.local at the top of the project, beside package.json, and paste your key into it as the one line below. Save it and press Done; the server reads the file on every request, so there is nothing to restart.",
+        code: "FAL_KEY=your-key-here",
+        check: "falKey",
+        explain:
+          ".env.local is gitignored, so the key stays out of your repo and out of the published build. The dev API reads the file fresh each time it needs the key, which is why saving is enough.",
+      },
+      {
+        num: "1.4",
         title: "Describe your {noun}",
         body:
           "Describe one {noun} in one sentence, or press the dice for a suggestion, then press Grow the series. It takes about twelve minutes and costs real money, and the room is built while it runs, so press Done and move on as soon as the tray shows it has started.",

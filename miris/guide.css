@@ -568,7 +568,7 @@ a:hover { text-decoration: underline; }
   .mw-prog-fill { transition: none; }
 }
 
-/* ── the build block, inline in step 1.2 ──────────────── */
+/* ── the build block, inline in step 1.4 ──────────────── */
 
 /* Was a modal. It is the step's own work, so it belongs in the step, and the
    card around it already supplies the heading, the guidance and the accent. */
