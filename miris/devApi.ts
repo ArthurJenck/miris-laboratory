@@ -113,10 +113,12 @@ async function writeStageSpecimens(viewerKey: string | undefined, entries: { uui
 
 /** Copies the key and ids the attendee has in their files into data.json, so the
  *  readout's count and the tray agree with what is streaming even when the ids
- *  were typed in rather than sealed. */
+ *  were typed in rather than sealed. The files win whenever they say something;
+ *  an empty file never erases what data.json already knows. */
 async function followStage(viewerKey: string, entries: { uuid?: string }[]) {
   const stored = await readData(MIRIS_DIR);
   const bank = normaliseBank(stored.specimens as any[]);
+  viewerKey = viewerKey.trim() || String(stored.viewerKey ?? "");
   let changed = stored.viewerKey !== viewerKey;
   bank.forEach((slot, i) => {
     const uuid = String(entries[i]?.uuid ?? "").trim();
@@ -698,6 +700,11 @@ export function mirisDevApi(mode: string): Plugin {
               res.setHeader("Content-Length", String(zip.length));
               return res.end(zip);
             }
+            // What streams is what the files say, however the ids got there:
+            // typed, sealed, or carried in by a chapter's finished code that
+            // skipped the step whose check would have copied them. So the
+            // answer follows the files every time, not only when that check runs.
+            await followStage(readViewerKey(await readFile(STAGE, "utf8")), await readSpecimensFile());
             // The flag rides along with the state so the sidebar can show its
             // dev controls without a second request.
             return send(res, ok({ ...(await readData(MIRIS_DIR)), offline: offline(mode) }));

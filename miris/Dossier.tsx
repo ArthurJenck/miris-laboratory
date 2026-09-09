@@ -21,7 +21,12 @@ export default function Dossier() {
     const onClick = (e: MouseEvent) => {
       if (downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) return;
       // Anything with its own controls, the guide included, keeps its click.
-      if ((e.target as HTMLElement)?.closest?.(".mw-panel, .mw-controls, .mw-tab, .mw-tray, .mw-tray-min, .mw-dev")) return;
+      // Read from the event's path rather than the target: React has already
+      // applied the handler's state by the time this fires, so a control that
+      // closes itself on click, like the picker's options, is out of the
+      // document, and closest() on a detached node finds nothing.
+      const own = ".mw-panel, .mw-controls, .mw-tab, .mw-tray, .mw-tray-min, .mw-dev";
+      if (e.composedPath().some((node) => (node as Element).matches?.(own))) return;
       // The pedestal stands in front of its tube, so it is tested first.
       let best = -1;
       let part: Part = "pedestal";

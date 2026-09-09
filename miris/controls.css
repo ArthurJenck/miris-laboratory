@@ -73,20 +73,17 @@ body:has(.mw-controls) .mw-hud-bl { display: none; }
 @media (max-width: 720px) {
   /* The guide is a bottom sheet here, and the toolbar would sit under it. */
   body:has(.mw-panel) .mw-controls { display: none; }
-  /* With the toolbar showing, the count and the budget move up above it. */
+  /* With the toolbar showing, the count moves up above it. */
   body:has(.mw-controls):not(:has(.mw-panel)) .mw-hud-br { bottom: calc(176px + env(safe-area-inset-bottom)); }
-  body:has(.mw-controls):not(:has(.mw-panel)) .mw-hud-budget { bottom: calc(198px + env(safe-area-inset-bottom)); }
 }
 
 /* Between a phone and a wide desk the corner readouts would run under the
    toolbar: a tablet on its own, or a laptop with the guide taking 480px. */
 @media (min-width: 721px) and (max-width: 1000px) {
   body:has(.mw-controls) .mw-hud-br { bottom: 176px; }
-  body:has(.mw-controls) .mw-hud-budget { bottom: 198px; }
 }
 @media (min-width: 721px) and (max-width: 1400px) {
   body:has(.mw-controls):has(.mw-panel) .mw-hud-br { bottom: 176px; }
-  body:has(.mw-controls):has(.mw-panel) .mw-hud-budget { bottom: 198px; }
 }
 
 /* A phone on its side: the toolbar to the right, out of the room's middle. */
@@ -95,7 +92,6 @@ body:has(.mw-controls) .mw-hud-bl { display: none; }
   .mw-controls-hint { display: none; }
   .mw-picker-list { max-height: calc(100dvh - 200px); }
   body:has(.mw-controls) .mw-hud-br { display: none; }
-  body:has(.mw-controls) .mw-hud-budget { right: auto; left: 22px; bottom: 20px; justify-items: start; }
 }
 
 @media (prefers-reduced-motion: reduce) { .mw-picker-chevron { transition: none; } }

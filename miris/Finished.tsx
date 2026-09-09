@@ -24,10 +24,6 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
       <h3 className="c14 mw-finished-h">Worth trying while the room is still open</h3>
       <ul className="c14 mw-finished-list">
         <li>
-          Drag the budget slider in the readout to 40k and watch which capsules coarsen first. That order is
-          the adaptive budget spending where the camera is looking.
-        </li>
-        <li>
           Rewrite the header in <code>fileMarkup</code>, then click a pedestal. Its screen repaints from your
           markup; keep additions inside the 640 by 400 pixel layout.
         </li>

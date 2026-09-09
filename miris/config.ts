@@ -3,8 +3,8 @@ export const DEMO_UUID = "2b21e89f-ef5d-4175-bbdf-03e8649bcb76";
 
 /* The growth series is one fal workflow: the plan, six dossiers, six chained
    renders and six meshes. Its prompts and model settings live there, not here.
-   https://fal.ai/workflows/dexhonsa/miris-growth-series-v2 */
-export const GROWTH_WORKFLOW = "workflows/dexhonsa/miris-growth-series-v2";
+   https://fal.ai/workflows/dexhonsa/miris-growth-series-v3 */
+export const GROWTH_WORKFLOW = "workflows/dexhonsa/miris-growth-series-v3";
 export const PORTAL_URL = "https://app.miris.com";
 
 export const FAL_URL = "https://fal.ai";

@@ -92,7 +92,7 @@ page can reach a fal key or rewrite a file.
 
 ### Money and time
 
-The whole run is one fal workflow, `workflows/dexhonsa/miris-growth-series-v2`.
+The whole run is one fal workflow, `workflows/dexhonsa/miris-growth-series-v3`.
 The image renders cost cents. Each mesh is about $1.40 and four to five
 minutes on fal's `meshy/v7/image-to-3d`; the six renders run in series, each
 one editing the last so the creature stays the same creature, and each mesh

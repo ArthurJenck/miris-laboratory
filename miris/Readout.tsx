@@ -1,8 +1,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useRef, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Vector3 } from "three";
 import { anchor } from "./anchor";
-import { budgetVersion, getBudget, pinBudget, reportBudget, subscribeBudget } from "./budget";
 import "./lab.css";
 import { type Box, getBoxes, getHover, getHoverPart, getPedestalBoxes, getReticle, getSelected, getSelectedPart, labVersion, setBoxes, setHover, setPedestalBoxes, setReticle, subscribeLab } from "./labState";
 import { GLASS, GLASS_TOP, RING, angleOf, screenFrame, slotOf } from "./layout";
@@ -11,8 +10,6 @@ import useLab from "./useLab";
 const SLACK = 0.95; // a little wider than the glass, so brackets clear it
 const TOP = 3.1;
 const BOTTOM = 0.3;
-
-const kilo = (n: number) => (n >= 1000 ? `${Math.round(n / 1000)}k` : String(Math.round(n)));
 
 const v = new Vector3();
 const toGlass = new Vector3();
@@ -110,23 +107,7 @@ function screenBoxOf(i: number, camera: any, w: number, h: number): Box | null {
  *  and feeds the TSL overlay the one under the pointer. Renders nothing. */
 export function CapsuleProbe() {
   const { camera, size, scene } = useThree();
-  // Frame time smoothed over about a second, and the splats actually drawn,
-  // counted the way the SDK's controller counts them: visible LOD nodes only.
-  // GPU timer queries are not an option here, the SDK holds one open.
-  const frameMs = useRef(0);
-  const tick = useRef(0);
-  useFrame((_, dt) => {
-    frameMs.current += (dt * 1000 - frameMs.current) * 0.08;
-    if (++tick.current % 10 === 0) {
-      let drawn = 0;
-      const walk = (o: any) => {
-        if (!o.visible) return;
-        if (o.isLod && typeof o.splatCount === "number") drawn += o.splatCount;
-        for (const c of o.children) walk(c);
-      };
-      scene.children.forEach(walk);
-      reportBudget({ drawn, frameMs: frameMs.current });
-    }
+  useFrame(() => {
     setBoxes(Array.from({ length: 6 }, (_, i) => boxOf(i, camera, size.width, size.height)));
     setPedestalBoxes(Array.from({ length: 6 }, (_, i) => screenBoxOf(i, camera, size.width, size.height)));
     const i = getHover();
@@ -161,10 +142,8 @@ export function CapsuleProbe() {
 export default function Readout() {
   const { specimens, ready } = useLab();
   useSyncExternalStore(subscribeLab, labVersion, labVersion);
-  useSyncExternalStore(subscribeBudget, budgetVersion, budgetVersion);
   const boxes = getBoxes();
   const hover = getHover();
-  const budget = getBudget();
 
   // Hover is decided here, from the pointer against the projected boxes, so no
   // event handler has to hang off the glass the attendee wrote.
@@ -217,36 +196,6 @@ export default function Readout() {
       <div className="mw-hud-br">
         {live} {live === 1 ? "specimen" : "specimens"} · Containment active
       </div>
-      {/* The streaming budget, made visible. Drawn is what the six streams
-          cost this frame; budget is what the controller allows, or what the
-          slider pinned. Drag it down and watch the far capsules coarsen first. */}
-      {live > 0 && budget.live && (
-        <div className="mw-hud-budget">
-          <span>
-            <b>{kilo(budget.drawn)}</b> of <b>{kilo(budget.budget)}</b> splats
-            {" · "}
-            <b>{budget.frameMs.toFixed(1)}</b> ms
-            {" · "}
-            {budget.pinned === null ? "adaptive" : "pinned"}
-          </span>
-          <label>
-            <input
-              type="range"
-              min={20000}
-              max={1500000}
-              step={10000}
-              value={budget.pinned ?? budget.budget}
-              onChange={(e) => pinBudget(Number(e.target.value))}
-              aria-label="Splat budget"
-            />
-            {budget.pinned !== null && (
-              <button type="button" onClick={() => pinBudget(null)}>
-                Release
-              </button>
-            )}
-          </label>
-        </div>
-      )}
       {box && (
         <div className="mw-brackets" style={{ left: box.x, top: box.y, width: box.w, height: box.h }}>
           <i /><i /><i /><i />

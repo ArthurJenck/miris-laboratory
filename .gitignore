@@ -25,3 +25,4 @@ tsconfig.tsbuildinfo
 # drop, and the notes and specs written while building the guide.
 miris-web-kit/
 docs/
+.vercel
