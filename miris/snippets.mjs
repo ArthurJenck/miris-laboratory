@@ -1,5 +1,15 @@
 /* The code each step adds to app/stage.tsx, and where it goes. */
 
+// At the top of the file: the SDK's stream becomes a tag React Three Fiber
+// can render, and TypeScript learns what props it takes.
+const SETUP = `extend({ MirisStream });
+
+declare module "@react-three/fiber" {
+  interface ThreeElements {
+    mirisStream: ThreeElement<typeof MirisStream>;
+  }
+}`;
+
 // Inside <Scene>: one line per part of the room.
 const ROOM = `        <Room />`;
 const PLATFORM = `        <Platform />`;
@@ -125,6 +135,7 @@ const stack = (...lines) => lines.join("\n");
    those snippets are cumulative: filling the platform writes the room too,
    and each version of the specimen map replaces the one before it. */
 export const SNIPPETS = {
+  setup: SETUP,
   room: ROOM,
   platform: stack(ROOM, PLATFORM),
   walkway: stack(ROOM, PLATFORM, WALKWAY),
@@ -142,6 +153,7 @@ export const SNIPPETS = {
 
 /* What each step actually adds: the part the card shows. */
 export const PARTS = {
+  setup: SETUP,
   room: ROOM,
   platform: PLATFORM,
   walkway: WALKWAY,
@@ -159,6 +171,7 @@ export const PARTS = {
 
 /* A block with nothing in it yet. */
 export const EMPTY_BLOCKS = {
+  setup: "",
   scene: "",
   hud: "",
   field: "  const glitch = null;",
@@ -167,9 +180,10 @@ export const EMPTY_BLOCKS = {
 };
 
 /* Clearing a step puts its block back to the step before it, not to empty, so
-   a clear at 2.2 does not take 2.1's room with it. null means there is
+   a clear at 2.3 does not take 2.2's room with it. null means there is
    nothing before it and the block returns to its empty state. */
 export const CLEARS_TO = {
+  setup: null,
   room: null,
   platform: "room",
   walkway: "platform",
@@ -186,6 +200,7 @@ export const CLEARS_TO = {
 };
 
 export const MARKER_FOR = {
+  setup: "setup",
   room: "scene",
   platform: "scene",
   walkway: "scene",

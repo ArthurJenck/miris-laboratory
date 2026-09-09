@@ -756,8 +756,9 @@ a:hover { text-decoration: underline; }
 .mw-now-title {
   margin: 0;
   font-family: var(--sans);
-  font-size: 18px;
-  line-height: 24px;
+  font-size: 26px;
+  line-height: 32px;
+  letter-spacing: -0.02em;
   font-weight: var(--fw-medium);
   color: var(--text-primary);
 }

@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import type { Plugin } from 'vite';
 import { readData } from './store.mjs';
+import { writeReference } from './lessonSource.mjs';
 
 // Static hosts get a JSON file; the dev middleware is never part of a published lab.
 export function mirisSnapshot(): Plugin {
@@ -9,6 +10,8 @@ export function mirisSnapshot(): Plugin {
   return {
     name: 'miris-snapshot',
     apply: 'build',
+    // The reference is part of the bundle, so it is brought up to date first.
+    buildStart: () => writeReference(process.cwd()),
     configResolved(config) { outDir = resolve(config.root, config.build.outDir); },
     async closeBundle() {
       const data = await readData(join(process.cwd(), 'miris'));

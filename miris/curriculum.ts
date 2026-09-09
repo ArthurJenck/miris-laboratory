@@ -78,10 +78,18 @@ export const STEPS: Step[] = [
   },
   {
     num: "02",
-    title: "Build the room",
+    title: "Set up the scene",
     subs: [
       {
         num: "2.1",
+        title: "Set up React Three Fiber",
+        body:
+          "Put these lines in the miris:setup block at the top of app/stage.tsx. extend registers the SDK's MirisStream as a tag React Three Fiber can render, mirisStream, and the declaration tells TypeScript what props that tag takes.",
+        fill: "setup",
+        check: "setup",
+      },
+      {
+        num: "2.2",
         title: "Add the room",
         body:
           "Add Room between the miris:scene comments in app/stage.tsx. It gives you the deck, the walls, the ceiling and the fog.",
@@ -89,7 +97,7 @@ export const STEPS: Step[] = [
         check: "room",
       },
       {
-        num: "2.2",
+        num: "2.3",
         title: "Add the platform",
         body:
           "Add Platform after Room. It is the raised ring you are standing on, with its lit edges and the division's label.",
@@ -97,7 +105,7 @@ export const STEPS: Step[] = [
         check: "platform",
       },
       {
-        num: "2.3",
+        num: "2.4",
         title: "Add the walkway",
         body:
           "Add Walkway after Platform. It is the straight path from the platform to the far wall.",
@@ -105,7 +113,7 @@ export const STEPS: Step[] = [
         check: "walkway",
       },
       {
-        num: "2.4",
+        num: "2.5",
         title: "Add the door",
         body:
           "Add Door after Walkway. It stands at the end of the path, straight ahead of you: drag to look around the room.",

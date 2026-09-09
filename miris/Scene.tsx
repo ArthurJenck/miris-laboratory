@@ -1,6 +1,5 @@
 import { OrbitControls } from "@react-three/drei";
-import { Canvas, extend } from "@react-three/fiber";
-import { MirisStream } from "@miris-inc/three";
+import { Canvas } from "@react-three/fiber";
 import { Children, cloneElement, isValidElement, type ReactNode } from "react";
 import { NoToneMapping } from "three";
 import BudgetGuard from "./BudgetGuard";
@@ -15,8 +14,6 @@ import { StageSkeleton } from "./Skeleton";
 import Specimen from "./Specimen";
 import useLab from "./useLab";
 
-// Registers <mirisStream> as a JSX tag; miris.d.ts gives it a type.
-extend({ MirisStream });
 
 /** The canvas and everything the room needs that nobody should have to read:
  *  the renderer settings, the lights, a camera standing in the middle of the

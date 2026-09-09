@@ -41,7 +41,7 @@ export function PanelSkeleton() {
 
 /** Stands in for the canvas until the stage has data to render. Deliberately
  *  ends there: once the Canvas mounts, the stream's own coarse-to-sharp arrival
- *  is the thing step 2.3 exists to show, so nothing covers it. */
+ *  is the thing step 3.5 exists to show, so nothing covers it. */
 export function StageSkeleton() {
   return <div className="mw-stage-skel" aria-hidden="true" />;
 }

@@ -37,12 +37,21 @@ defined below it in the same file, so the names carry the explanation and the
 comments stay short. `Specimen` uses the same parts bin from outside the folder.
 
 The committed starter has empty lesson blocks. The finished lab lives at
-`/?view=reference`, using `miris/stage.reference.tsx`. Generate it with
-`npm run reference`; never copy the finished scene back into the starter.
-`npm test` verifies that the curriculum's ordered snippets produce that
-reference and that every intermediate lesson compiles. The function the
-attendee writes, `File`, is replaced by name inside the `parts` block rather
-than by rewriting the block, so anything else they put there survives.
+`/?view=reference`, using `miris/stage.reference.tsx` and `miris/specimens.json`.
+Both are generated, by `writeReference` in `miris/lessonSource.mjs`, whenever
+the dev server or a build starts and whenever the template, snippets,
+curriculum or fixtures change while the server runs; never copy the finished
+scene back into the starter, and never edit the reference by hand. There is no
+test suite and no scripts directory: `npm run build` type-checks the starter
+and the reference. The function the attendee writes, `File`, is replaced by
+name inside the `parts` block rather than by rewriting the block, so anything
+else they put there survives.
+
+The SDK's tag is the attendee's to register. Step 2.1 puts `extend({ MirisStream })`
+and the `mirisStream` module augmentation for `@react-three/fiber` in the
+stage's `setup` block; nothing in `miris/` calls `extend` or declares the tag,
+and `Specimen` recognises a stream child by the string `"mirisStream"`, so it
+needs no type for it.
 
 The six asset ids and scales are `app/specimens.json`, imported by the stage;
 the viewer key is one constant in the stage, found by name. Nothing is fetched
@@ -246,7 +255,8 @@ parked off screen with the markup inside it, `drawElementImage` in the canvas's
 The old SVG `foreignObject` fallback and the render-path store went with
 `htmlInCanvas.ts` and `htmlTexture.ts`; without
 `chrome://flags/#canvas-draw-element` the screens stay dark and the badge on
-4.2 says so. The two primitives are typed in `miris/miris.d.ts`.
+4.2 says so. The two primitives are typed in `miris/miris.d.ts`, which is
+otherwise empty now that the stream tag is declared in the attendee's file.
 
 **What the room costs, measured.** With the splat budget pinned and the canvas
 at six times its size so nothing sits at the frame cap, every category of

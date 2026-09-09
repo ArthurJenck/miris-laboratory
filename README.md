@@ -44,7 +44,7 @@ series; there is no way past step 1.5 without one.
 | Step | You | Running in the background |
 |---|---|---|
 | 01 Set up | Make a fal account, create a key, put it in .env.local. Describe a creature. | The series grows: about twelve minutes. |
-| 02 Build the room | Add the room, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
+| 02 Set up the scene | Register the stream tag, then add the room, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
 | 03 Add the streams | Download the archive, upload six files, tag them and a viewer key, add the six specimens and their streams, paste the ids, fit each creature. | Portal processing. |
 | 04 The specimen file | Write HTML for the specimen's file, draw it into a canvas, put it on the screen. | |
 | 05 The readout | Add the HUD, write a TSL field on a second canvas. | |
@@ -74,9 +74,11 @@ in WebContainer, which is where most attendees run this.
   adds the guide and hosts the reference view. Production hides the guide, so
   no closing edit is required.
 - `miris/stage.template.tsx` is the identical clean starter.
-  `miris/stage.reference.tsx` is generated from that template by applying the
-  curriculum’s code lessons in order. Run `npm run reference` after changing
-  the template or snippets; `npm test` detects drift.
+  `miris/stage.reference.tsx` and `miris/specimens.json` are generated from
+  that template by applying the curriculum’s code lessons in order and adding
+  the recorded series; they regenerate whenever the dev server or a build
+  starts, and while the server runs, whenever the template, snippets,
+  curriculum or fixtures change.
 - `miris/` is the workshop's machinery: the guide, the curriculum, the
   snippets, the dev API that proxies fal, and the room's own components.
   Nothing in it needs editing to finish the workshop.
@@ -165,14 +167,13 @@ fills in on its own once processing finishes.
 
 **Laptops on battery drop to 30fps.** Say so out loud at the start.
 
-### Testing
+### Checking a change
 
-`npm test` checks the empty starter, curriculum/snippet coverage, preservation
-of customized fitting code when File is added, clear-block dependencies, and
-type-checks every intermediate lesson. It also verifies that the completed
-reference is exactly the cumulative lesson result. `npm run build` checks the
-production bundle.
+`npm run build` type-checks the empty starter and the generated reference and
+produces the production bundle. There is no separate test suite; the reference
+is regenerated from the curriculum on every start, so a snippet that no longer
+compiles shows up as a build error.
 
-Additional browser verification lives outside this repo so a fork carries no Playwright:
+Browser verification lives outside this repo so a fork carries no Playwright:
 see `verify-stage.mjs` and `measure-seat.mjs` in the sibling `miris-atelier`
 checkout. `AGENTS.md` carries the measurement method for frame costs.

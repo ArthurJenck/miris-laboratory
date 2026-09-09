@@ -2,7 +2,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
-import { applyLesson, clearLesson, mergeSpecimens, readViewerKey, specimensJson, withViewerKey } from "./lessonSource.mjs";
+import { applyLesson, clearLesson, mergeSpecimens, readViewerKey, specimensJson, withViewerKey, writeReference } from "./lessonSource.mjs";
 import { readMarker } from "./markers.mjs";
 import { readData, writeData } from "./store.mjs";
 import { CLEARS_TO, EMPTY_SPECIMENS, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
@@ -19,6 +19,7 @@ const ROOT = process.cwd();
 const MIRIS_DIR = join(ROOT, "miris");
 const STAGE = join(ROOT, "app", "stage.tsx");
 const SPECIMENS = join(ROOT, "app", "specimens.json");
+const REFERENCE_SOURCES = new Set(["stage.template.tsx", "curriculum.ts", "snippets.mjs", "fixtures.json"].map((f) => join(MIRIS_DIR, f)));
 /* What the stage returns to on reset: the file attendees start from. */
 const TEMPLATE = join(ROOT, "miris", "stage.template.tsx");
 const ZIP = join(ROOT, "miris", "specimens.zip");
@@ -34,6 +35,7 @@ const FIXTURES = join(MIRIS_DIR, "fixtures.json");
    told the attendee they had not done a step they had just done. A check that
    blames the person for the repo's own drift is worse than no check. */
 const PROOF = {
+  setup: "extend(",
   room: "<Room",
   platform: "<Platform",
   walkway: "<Walkway",
@@ -51,6 +53,7 @@ const PROOF = {
 
 /** Which snippet each proof has to appear in. */
 const PROOF_IN: Record<keyof typeof PROOF, keyof typeof SNIPPETS> = {
+  setup: "setup",
   room: "room",
   platform: "platform",
   walkway: "walkway",
@@ -150,6 +153,7 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     return "Nothing grown yet. Describe your creature and press Grow the series.";
   },
 
+  setup: inBlock("setup", PROOF.setup, "The miris:setup block at the top of app/stage.tsx is still empty. Add the extend call and the declaration, or let the step do it."),
   room: inBlock("scene", PROOF.room, "The scene block in app/stage.tsx has no room in it yet. Add the line between the miris:scene comments, or let the step do it."),
   platform: inBlock("scene", PROOF.platform, "No platform in the scene block yet. Add it under the room, or let the step do it."),
   walkway: inBlock("scene", PROOF.walkway, "No walkway in the scene block yet. Add it under the platform, or let the step do it."),
@@ -631,7 +635,12 @@ export function mirisDevApi(mode: string): Plugin {
         server.hot.send({ type: "full-reload" });
         return [];
       }
+      // The finished lab follows the template, the snippets, the curriculum and
+      // the recorded series, so it is regenerated whenever one of them changes.
+      if (REFERENCE_SOURCES.has(file)) void writeReference(ROOT);
     },
+
+    buildStart: () => writeReference(ROOT),
 
     configureServer(server) {
       auditProofs();

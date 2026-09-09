@@ -1,8 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
 import { CanvasTexture, SRGBColorSpace } from "three";
 import { Fn, float, hash, step, texture, time, uv, vec2, vec3, vec4 } from "three/tsl";
+import { extend, type ThreeElement } from "@react-three/fiber";
+import { MirisStream } from "@miris-inc/three";
 import { Scene, Room, Platform, Walkway, Door, Specimen, Screen, Readout, ScreenFx, Controls, screenTexture } from "../miris";
 import specimens from "./specimens.json" with { type: "json" };
+
+// miris:setup-start
+extend({ MirisStream });
+
+declare module "@react-three/fiber" {
+  interface ThreeElements {
+    mirisStream: ThreeElement<typeof MirisStream>;
+  }
+}
+// miris:setup-end
 
 // The viewer key you scoped to your six assets. Every stream reads through it.
 const viewerKey = "EtE0iRieHOo_fauIBuMJIr0YR4-OyWtA6Z3jUd55Msc";

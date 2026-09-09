@@ -1,3 +1,5 @@
+import { readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import ts from 'typescript';
 import { readMarker, replaceMarker } from './markers.mjs';
 import { SNIPPETS, MARKER_FOR, CLEARS_TO, EMPTY_BLOCKS, EMPTY_SPECIMENS, PART_NAME, PLACEHOLDERS } from './snippets.mjs';
@@ -94,4 +96,21 @@ export function referenceStage(starter, curriculum, fixtures) {
     stage: withViewerKey(completedStage(starter, curriculum), fixtures.viewerKey || ''),
     specimens: specimensJson(mergeSpecimens(EMPTY_SPECIMENS, entries)),
   };
+}
+
+/** Writes miris/stage.reference.tsx and miris/specimens.json from the template,
+ *  the curriculum and the fixtures, touching them only when they would change.
+ *  Called when the dev server or a build starts, so the reference cannot drift. */
+export async function writeReference(root) {
+  const dir = join(root, 'miris');
+  const [starter, curriculum, fixtures] = await Promise.all([
+    readFile(join(dir, 'stage.template.tsx'), 'utf8'),
+    readFile(join(dir, 'curriculum.ts'), 'utf8'),
+    readFile(join(dir, 'fixtures.json'), 'utf8'),
+  ]);
+  const { stage, specimens } = referenceStage(starter, curriculum, JSON.parse(fixtures));
+  for (const [file, next] of [['stage.reference.tsx', stage], ['specimens.json', specimens]]) {
+    const path = join(dir, file);
+    if ((await readFile(path, 'utf8').catch(() => '')) !== next) await writeFile(path, next);
+  }
 }
