@@ -1,14 +1,29 @@
 import { MirisStream } from '@miris-inc/three'
 import { extend, type ThreeElement } from '@react-three/fiber'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CanvasTexture, SRGBColorSpace } from 'three'
 import {
+    Fn,
+    float,
+    hash,
+    step,
+    texture,
+    time,
+    uv,
+    vec2,
+    vec3,
+    vec4,
+} from 'three/tsl'
+import {
+    Controls,
     Door,
     Platform,
     Readout,
     Room,
     Scene,
     Screen,
+    ScreenFx,
+    screenTexture,
     Specimen,
     Walkway,
 } from '../miris'
@@ -103,7 +118,72 @@ function File({ dossier }: any) {
 
 // Your file. Each step adds a few lines to it.
 export default function Stage() {
-    const glitch = null
+    const glitch = useMemo(
+        () =>
+            Fn(() => {
+                const point = uv()
+                const tick = time.mul(2).floor()
+                const live = step(float(0.55), hash(tick.add(3)))
+                const band = step(
+                    point.y.sub(hash(tick)).abs(),
+                    hash(tick.add(5)).mul(0.05).add(0.015)
+                )
+                const shift = band
+                    .mul(live)
+                    .mul(hash(tick.add(9)).sub(0.5))
+                    .mul(0.06)
+                const shifted = vec2(point.x.add(shift), point.y)
+                const split = vec2(0.004, 0)
+                const red = texture(screenTexture, shifted.sub(split)).g
+                const green = texture(screenTexture, shifted).g
+                const blue = texture(screenTexture, shifted.add(split)).g
+                const phase = point.y.mul(6).add(time.mul(0.6))
+                const sheen = vec3(
+                    phase.sin(),
+                    phase.add(2.09).sin(),
+                    phase.add(4.19).sin()
+                )
+                    .mul(0.12)
+                    .add(0.88)
+                const picture = vec3(
+                    red.mul(0.7),
+                    green.mul(0.95),
+                    blue.mul(1.2)
+                )
+                    .mul(sheen)
+                    .add(vec3(0.03, 0.08, 0.14))
+                const scan = point.y.mul(500).sin().mul(0.1).add(0.9)
+                const roll = point.y
+                    .sub(time.mul(0.25))
+                    .fract()
+                    .sub(0.5)
+                    .abs()
+                    .mul(2)
+                    .oneMinus()
+                    .pow(4)
+                    .mul(0.25)
+                    .add(1)
+                const cell = point.mul(vec2(640, 400)).floor()
+                const grain = hash(
+                    cell.x
+                        .add(cell.y.mul(640))
+                        .add(time.mul(24).floor().mul(97))
+                )
+                    .mul(0.12)
+                    .add(0.93)
+                const edge = point.x
+                    .mul(point.x.oneMinus())
+                    .mul(point.y)
+                    .mul(point.y.oneMinus())
+                    .mul(16)
+                    .pow(0.2)
+                return vec4(
+                    picture.mul(scan).mul(roll).mul(grain).mul(edge),
+                    float(1)
+                )
+            })(),
+        []
+    )
 
     return (
         <>
@@ -125,6 +205,8 @@ export default function Stage() {
                 ))}
             </Scene>
             <Readout />
+            <ScreenFx node={glitch} />
+            <Controls />
         </>
     )
 }
