@@ -7,8 +7,10 @@ in WebContainer, which is where attendees run this, so the port is deliberate.
 ## The two halves
 
 `app/` is the attendee's. `stage.tsx` is the file they edit all session, and the
-sidebar writes into it between the `miris:` marker comments; `specimens.json`
-beside it holds their six ids and scales. It must stay
+sidebar can write into it between the `miris:` marker comments, though the
+paste-it-for-me and clear buttons are hidden until the wand in the guide's
+header is on (remembered per browser in `localStorage` as `mw-assist`);
+`specimens.json` beside it holds their six ids and scales. It must stay
 byte-identical to `miris/stage.template.tsx`, which the reset action restores
 from. It imports everything it names from `../miris` (the barrel in
 `miris/index.tsx`) and is deliberately free of numbers: the camera, lights,

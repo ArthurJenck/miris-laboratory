@@ -204,6 +204,25 @@ a:hover { text-decoration: underline; }
 }
 .mw-hide:hover { color: var(--mono-200); }
 
+/* The wand: a switch, so it keeps its pressed state in colour rather than
+   in a label. Dim like the mark when off; the track's accent when on. */
+.mw-assist {
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--mono-600);
+  cursor: pointer;
+  padding: 0;
+}
+.mw-assist:hover { color: var(--mono-200); }
+.mw-assist[aria-pressed="true"] { color: var(--accent); border-color: var(--mono-800); }
+
 .mw-tab {
   position: fixed;
   top: 16px;
