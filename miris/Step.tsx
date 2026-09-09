@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { canDrawHtml } from "./renderPath";
 import type { Step, Sub } from "./curriculum";
 import type { Track } from "./tracks";
 import { ConceptField, type HatchState } from "./Build";
@@ -47,11 +48,12 @@ export interface StepPaneProps {
 
 const FLAG = "chrome://flags/#canvas-draw-element";
 
-/* Whether this browser can draw HTML into a canvas. There is no fallback: the
+/* Whether this browser can draw HTML into a canvas. The workshop needs it: the
  * screens stay dark until the flag is on, and this says so before the attendee
- * writes the code that needs it. */
+ * writes the code that needs it. Only the published lab has a fallback, the
+ * pictures this browser captures once it can draw. */
 function RenderPathBadge() {
-  const canDraw = typeof CanvasRenderingContext2D !== "undefined" && "drawElementImage" in CanvasRenderingContext2D.prototype;
+  const canDraw = canDrawHtml();
   return canDraw ? (
     <p className="mw-path" data-native>
       Your browser can draw HTML into a canvas.

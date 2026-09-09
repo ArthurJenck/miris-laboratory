@@ -29,8 +29,10 @@ Five minutes now saves twenty in the room.
    in step 3.1, and the signup is quicker done at home than on conference wifi.
 3. **Chrome, with one flag on.** Step 4.2 draws live HTML into the scene with
    `drawElementImage`, which Chrome ships behind
-   `chrome://flags/#canvas-draw-element`. Turn it on and relaunch. There is no
-   fallback: without the flag the pedestal screens stay dark.
+   `chrome://flags/#canvas-draw-element`. Turn it on and relaunch. Without the
+   flag the pedestal screens stay dark in the workshop. The published lab is
+   the one exception: as your screens paint, the room saves a picture of each
+   to `public/screens/`, and phones and other browsers are shown those.
 4. **A charger.** Chrome caps rendering at 30fps once a laptop hits 20%
    battery, browser-wide, and the room will feel slow for no reason in the code.
 5. **A Vercel account.** Step 7 publishes the laboratory from your terminal

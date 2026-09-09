@@ -5,6 +5,9 @@ dist/
 .env.local
 .DS_Store
 public/models/
+# Pictures of your own screens, captured during step 4 for phones. Shipped by
+# step 7, not committed: they are yours, like data.json.
+public/screens/
 
 # The budget-lab SDK ships with the repo. package.json installs core and three
 # from vendor/, so a clone without them cannot npm install at all. The other two

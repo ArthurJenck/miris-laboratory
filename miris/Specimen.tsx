@@ -6,6 +6,7 @@ import { FloorGlow, LightShaft, Pulse } from "./CapsuleFx";
 import { Label, Ring, blue, enamel, radial, steel } from "./lab-components/hardware";
 import { getSelected, getSelectedPart, subscribeLab } from "./labState";
 import { CAPSULES, GLASS, GLASS_CENTRE, GLASS_TOP, HEAD, SCREEN, capsulePlacement, pedestalPlacement } from "./layout";
+import { captureScreen } from "./screenCapture";
 import { getScreenOutput, setScreenSource } from "./ScreenFx";
 import { SpecimenContext } from "./specimenContext";
 import StaticInstances from "./lab-components/StaticInstances";
@@ -200,6 +201,8 @@ const Pedestal = memo(function Pedestal({ index, active, screenTarget }: { index
     const effect = getScreenOutput();
     // Remember the painted texture, whatever the glitch pass swaps in.
     if (material.map && material.map !== appliedEffect.current) painted.current = material.map;
+    // In the workshop, each repaint is also saved as the picture phones will see.
+    if (painted.current) captureScreen(index, painted.current);
     const want = active && getSelectedPart() === "pedestal" && effect && painted.current ? effect : painted.current;
     if (active && painted.current) setScreenSource(painted.current, index);
     if (want && material.map !== want) {

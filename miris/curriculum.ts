@@ -290,7 +290,7 @@ export const STEPS: Step[] = [
         num: "7.2",
         title: "Publish it",
         body:
-          "Leave the dev server running, open a second terminal in the project folder, and run this. The first run opens a browser tab to log in, then builds the laboratory on Vercel and prints a link. Your six ids, your dossiers and your scoped viewer key are frozen into the build; there is no server behind the page, so nothing on it can spend your fal key. Send the link to someone, open it on a phone, pick a specimen from the dropdown, read its file, then press Finish.",
+          "Leave the dev server running, open a second terminal in the project folder, and run this. The first run opens a browser tab to log in, then builds the laboratory on Vercel and prints a link. Your six ids, your dossiers and your scoped viewer key are frozen into the build; there is no server behind the page, so nothing on it can spend your fal key. Phones cannot draw HTML into a canvas, so they are shown the pictures of your screens the room saved to `public/screens` as it painted them; the build ships those too. Send the link to someone, open it on a phone, pick a specimen from the dropdown, read its file, then press Finish.",
         code: "npx vercel --prod --yes",
       },
     ],

@@ -61,7 +61,8 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
           HTML-in-Canvas: the{" "}
           <a href="https://html-in-canvas.dev" target="_blank" rel="noopener noreferrer">spec site and demos</a>.
           Your File is the whole implementation: a canvas with <code>layoutsubtree</code>,{" "}
-          <code>drawElementImage</code> on paint, and a <code>CanvasTexture</code>. There is no fallback.
+          <code>drawElementImage</code> on paint, and a <code>CanvasTexture</code>. Browsers without it, phones included,
+          are shown the pictures of your screens that <code>miris/screenCapture.ts</code> saved as they painted.
         </li>
         <li>
           TSL: the{" "}

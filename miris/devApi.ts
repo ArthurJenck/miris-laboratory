@@ -1,4 +1,4 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
@@ -26,6 +26,10 @@ const ZIP = join(ROOT, "miris", "specimens.zip");
    129MB of creature meshes from a paid run are not worth losing to a rehearsal. */
 const ZIP_OFFLINE = join(MIRIS_DIR, "specimens.offline.zip");
 const FIXTURES = join(MIRIS_DIR, "fixtures.json");
+/* The pictures of the six screens, captured from the attendee's own canvases
+   for browsers that cannot draw HTML into one. Under public/ so the build
+   ships them without being told. */
+const SCREENS = join(ROOT, "public", "screens");
 
 /* What each step's snippet must leave behind for its check to believe it. Kept
    in one table, and audited against the snippets when the server starts,
@@ -427,6 +431,19 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
 
     case "save":
       return ok(await writeData(MIRIS_DIR, body.patch ?? {}));
+
+    /* One screen's picture, as the room painted it, for the phones that will
+       open the published lab. Overwritten on every repaint, so the picture is
+       always of the latest dossier the attendee saw. */
+    case "screen": {
+      const index = Number(body.index);
+      if (!Number.isInteger(index) || index < 0 || index >= STAGES) return fail(`No such slot: ${body.index}`);
+      const match = /^data:image\/png;base64,([A-Za-z0-9+/=]+)$/.exec(String(body.png ?? ""));
+      if (!match) return fail("png must be a PNG data URL");
+      await mkdir(SCREENS, { recursive: true });
+      await writeFile(join(SCREENS, `${String(index + 1).padStart(2, "0")}.png`), Buffer.from(match[1], "base64"));
+      return ok({ ok: true, index });
+    }
 
     /* Every step back to the start: the stage returns to the template and the
        pointer to 1.1. The series, its uuids and the viewer key stay, so nothing
