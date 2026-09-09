@@ -22,9 +22,9 @@ changing your code or saved specimens.
 Five minutes now saves twenty in the room.
 
 1. **A fal.ai account with billing on.** The series is generated on your own
-   key, and a key without a card behind it stops at step 1.4. Sign up at
-   fal.ai, add a payment method, redeem the coupon FAL-MIRIS on the Billing
-   page, and create a key at fal.ai/dashboard/keys. You will paste it in step 1.3.
+   key, and a key without a card behind it stops at step 1.5. Sign up at
+   fal.ai, add a payment method, redeem the coupon fal-miris with Add credits on the
+   Credits & Tiers page, and create a key at fal.ai/dashboard/keys. You will paste it in step 1.4.
 2. **A Miris account.** Sign up at app.miris.com. You upload six files to it
    in step 3.1, and the signup is quicker done at home than on conference wifi.
 3. **Chrome, with one flag on.** Step 4.2 draws live HTML into the scene with
@@ -37,7 +37,7 @@ Five minutes now saves twenty in the room.
 
 Total spend on your fal key is about twelve dollars: six images at a few cents
 each and six meshes at about $1.40 apiece. Every attendee grows their own
-series; there is no way past step 1.4 without one.
+series; there is no way past step 1.5 without one.
 
 ## What happens, in order
 

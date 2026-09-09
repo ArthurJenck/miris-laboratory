@@ -7,8 +7,9 @@ export const DEMO_UUID = "2b21e89f-ef5d-4175-bbdf-03e8649bcb76";
 export const GROWTH_WORKFLOW = "workflows/dexhonsa/miris-growth-series-v2";
 export const PORTAL_URL = "https://app.miris.com";
 
+export const FAL_URL = "https://fal.ai";
 export const FAL_KEYS_URL = "https://fal.ai/dashboard/keys";
-export const FAL_BILLING_URL = "https://fal.ai/dashboard/billing";
+export const FAL_CREDITS_URL = "https://fal.ai/dashboard/usage-billing/credits";
 
 /* The dossier's closed vocabulary. A status outside this set would break the
    colour of the dot beside it, and stats of varying length cannot be laid out. */

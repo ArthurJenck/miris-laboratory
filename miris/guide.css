@@ -289,31 +289,6 @@ a:hover { text-decoration: underline; }
    step above them is what the attendee came to do, so the reasoning is offered
    rather than imposed. A details element rather than state: keyboard and
    find-in-page both work on it for free. */
-.mw-why {
-  margin: 0;
-  padding: 10px 12px;
-  background: var(--mono-1000);
-  border-left: 2px solid var(--mono-700);
-  font-size: 13px;
-  color: var(--mono-400);
-}
-.mw-why summary {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  /* Both, because engines disagree on which one removes the disclosure
-     triangle, and a stray marker beside our own chevron reads as a bug. */
-  list-style: none;
-  color: var(--mono-600);
-  cursor: pointer;
-}
-.mw-why summary::-webkit-details-marker,
-.mw-why summary::marker { display: none; content: ""; }
-.mw-why summary:hover { color: var(--mono-200); }
-.mw-why summary svg { transition: transform var(--mo-color) var(--ease-micro); }
-.mw-why[open] summary { margin-bottom: 8px; }
-.mw-why[open] summary svg { transform: rotate(180deg); }
-.mw-why p { margin: 0; }
 
 /* ── controls ─────────────────────────────────────────── */
 

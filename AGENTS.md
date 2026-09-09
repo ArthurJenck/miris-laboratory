@@ -66,8 +66,8 @@ that answers badly is dropped by the parser, and this is where that used to
 become invisible.
 
 Attendees read these files by hand, so keep comments to roughly one line per
-file. The curriculum's WHY texts already explain the concepts; a comment
-repeating one is noise in front of the code it explains.
+file. There are no WHY panels any more; the step bodies carry what an attendee
+needs, so a comment repeating one is noise in front of the code it explains.
 
 ## Publishing is a filtered push, and `origin` is not it
 
@@ -218,7 +218,7 @@ again, which builds a new controller at its default 250k rather than resuming. F
 the readout is the render loop's own delta, smoothed: the SDK holds the one
 GPU timer query open, so there is no second one.
 
-Step 1.4 has no way round it: every attendee describes a creature and grows
+Step 1.5 has no way round it: every attendee describes a creature and grows
 their own series. The only shortcut is the offline seed, for presenters
 rehearsing, and it exists only under `MIRIS_OFFLINE=1`.
 

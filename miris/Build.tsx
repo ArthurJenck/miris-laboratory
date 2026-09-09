@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { STAGES } from "./config";
 import type { Track } from "./tracks";
 
-/* The state lives above the steps, in Guide. It used to live inside step 1.4's
+/* The state lives above the steps, in Guide. It used to live inside step 1.5's
  * card, which unmounted the moment anyone advanced: the room is built while the
  * series grows, so the twelve minute job lost its entire UI at exactly the
  * point the curriculum sends attendees on to the next step. */
@@ -112,7 +112,7 @@ export type HatchState = ReturnType<typeof useHatch>;
 
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-/** Step 1.4's card. One sentence describes the creature; the six bodies that
+/** Step 1.5's card. One sentence describes the creature; the six bodies that
  *  grow out of it are the workflow's business, not the attendee's. */
 export function ConceptField({ hatch }: { hatch: HatchState }) {
   const { track, concept, setConcept, running, error, done } = hatch;

@@ -1,4 +1,4 @@
-import { FAL_BILLING_URL, FAL_KEYS_URL, PORTAL_URL } from "./config";
+import { FAL_CREDITS_URL, FAL_KEYS_URL, FAL_URL, PORTAL_URL } from "./config";
 
 export interface Sub {
   num: string;
@@ -11,8 +11,6 @@ export interface Sub {
    *  snippets live in a plain .mjs file, so there is no exported union to
    *  narrow against. */
   fill?: string;
-  /** Required whenever `fill` is set. What the button wrote, and why. */
-  explain?: string;
   /** Renders an outbound link as a button, for steps that send you somewhere
    *  else to fetch something. Opens in a new tab: losing the guide mid-step
    *  would cost more than the link saves. */
@@ -42,40 +40,39 @@ export const STEPS: Step[] = [
         num: "1.1",
         title: "Create your fal account",
         body:
-          "Sign up at fal.ai, or sign in if you already have an account. On the Billing page of the dashboard, redeem the coupon code below: it seeds your account with the credits this workshop spends. Press Done once the balance shows.",
-        code: "FAL-MIRIS",
-        link: { href: FAL_BILLING_URL, label: "Open fal billing" },
-        explain:
-          "fal hosts the workflow that grows your series: a planner, six chained renders and six meshes, billed per run. A run costs about twelve dollars, which is what the coupon is for.",
+          "Sign up at fal.ai, or sign in if you already have an account, then press Done.",
+        link: { href: FAL_URL, label: "Open fal" },
       },
       {
         num: "1.2",
+        title: "Redeem the coupon",
+        body:
+          "Open the Credits & Tiers page of the fal dashboard, press Add credits, and paste the coupon code below. It seeds your account with the credits this workshop spends. Press Done once the balance shows.",
+        code: "fal-miris",
+        link: { href: FAL_CREDITS_URL, label: "Open Credits & Tiers" },
+      },
+      {
+        num: "1.3",
         title: "Create an API key",
         body:
           "Open Keys in the fal dashboard and press Add key. Give it any name, then copy the key it shows you: fal shows it once. Keep it handy for the next step and press Done.",
         link: { href: FAL_KEYS_URL, label: "Open fal keys" },
-        explain:
-          "The key is how this project's dev server signs its requests to fal on your behalf. It stays on your machine: the server reads it and calls fal from there, so the page you publish never carries it.",
       },
       {
-        num: "1.3",
+        num: "1.4",
         title: "Create .env.local",
         body:
           "Make a file called .env.local at the top of the project, beside package.json, and paste your key into it as the one line below. Save it and press Done; the server reads the file on every request, so there is nothing to restart.",
         code: "FAL_KEY=your-key-here",
         check: "falKey",
-        explain:
-          ".env.local is gitignored, so the key stays out of your repo and out of the published build. The dev API reads the file fresh each time it needs the key, which is why saving is enough.",
       },
       {
-        num: "1.4",
+        num: "1.5",
         title: "Describe your {noun}",
         body:
-          "Describe one {noun} in one sentence, or press the dice for a suggestion, then press Grow the series. It takes about twelve minutes and costs real money, and the room is built while it runs, so press Done and move on as soon as the tray shows it has started.",
+          "Describe one {noun} in one sentence, or press the dice for a suggestion, then press Grow the series. The run takes about twelve minutes and spends some of your usage credits. As soon as the tray shows it has started, press Done and carry on; there is no need to wait for it.",
         panel: true,
         check: "series",
-        explain:
-          "A model first decides what kind of animal this is and how it develops, then plans six life stages and renders each one from the one before it. All six meshes build at the same time, so the whole run takes about as long as one.",
       },
     ],
   },
@@ -90,8 +87,6 @@ export const STEPS: Step[] = [
           "Add Room between the miris:scene comments in app/stage.tsx. It gives you the deck, the walls, the ceiling and the fog.",
         fill: "room",
         check: "room",
-        explain:
-          "Everything you add here goes inside Scene, which owns the canvas, the lights and the camera. Room is in miris/lab-components/Room.tsx: a scanned metal deck, an inward-facing wall and a ceiling, with the repeated ribs and lamps drawn as instances so they cost one draw call each.",
       },
       {
         num: "2.2",
@@ -100,8 +95,6 @@ export const STEPS: Step[] = [
           "Add Platform after Room. It is the raised ring you are standing on, with its lit edges and the division's label.",
         fill: "platform",
         check: "platform",
-        explain:
-          "The edge lights are thin rings and boxes with basic materials, so they stay bright without a bloom pass. The seams and distance marks round the ring share one geometry each.",
       },
       {
         num: "2.3",
@@ -110,8 +103,6 @@ export const STEPS: Step[] = [
           "Add Walkway after Platform. It is the straight path from the platform to the far wall.",
         fill: "walkway",
         check: "walkway",
-        explain:
-          "A path is one long box with a light strip down each edge and a seam every half metre. Its texture is the same painted canvas the platform uses.",
       },
       {
         num: "2.4",
@@ -120,8 +111,6 @@ export const STEPS: Step[] = [
           "Add Door after Walkway. It stands at the end of the path, straight ahead of you: drag to look around the room.",
         fill: "door",
         check: "door",
-        explain:
-          "The door is built from bevelled shapes in miris/lab-components/Door.tsx, with a light that spills onto the path. You are standing in the middle of the room at eye height, and dragging turns you on the spot rather than flying you around; Scene puts the camera there and aims it two centimetres ahead, which is the whole trick.",
       },
     ],
   },
@@ -142,8 +131,6 @@ export const STEPS: Step[] = [
         body:
           "In the portal, create a viewer key and give it the tag workshop. The tag is how the key knows which assets it may read; the next step puts the same tag on your six meshes. Copy the key somewhere handy: it goes into your file in step 3.6.",
         link: { href: PORTAL_URL, label: "Open Miris" },
-        explain:
-          "A viewer key ships inside your page, so anyone who opens it can read it. Tying it to a tag means the worst anyone can do is stream the assets you tagged, which is the point.",
       },
       {
         num: "3.3",
@@ -159,8 +146,6 @@ export const STEPS: Step[] = [
           "Your meshes exist now, so the room can have somewhere to put them. Add the specimen map after Door in the miris:scene block. It walks app/specimens.json and places one Specimen per entry around the ring: a capsule, and the pedestal in front of it. Nothing stands in the glass yet.",
         fill: "specimens",
         check: "specimens",
-        explain:
-          "Specimen takes no props. Scene numbers the Specimens it finds inside it, first to sixth. The first stands just right of the door as you face it, and each one after it is sixty degrees further round a 4.2 metre ring, so the series runs round the room and ends beside the door on the left. The glass is almost clear, and the glow inside it is a second cylinder with its own shader.",
       },
       {
         num: "3.5",
@@ -169,8 +154,6 @@ export const STEPS: Step[] = [
           "Replace the specimen line with this version. Inside each Specimen goes a stream: the SDK's tag, given the entry's asset id and your viewer key, and the entry's scale. Both id and key are still empty, so the tubes stay dark until the next step.",
         fill: "streams",
         check: "streams",
-        explain:
-          "mirisStream is a scene node like the glass around it, so scale works on it the way it works on any object. Specimen stands whatever is inside it in the middle of the glass, and leaves out a stream that has no id yet. A low-detail version arrives first and sharpens as more data streams in.",
       },
       {
         num: "3.6",
@@ -179,8 +162,6 @@ export const STEPS: Step[] = [
           "Open each of your six assets in the portal and copy its id into app/specimens.json, in growth order, egg first. Paste your viewer key into viewerKey at the top of app/stage.tsx. Save, and the glass fills.",
         code: `{ "uuid": "9b1c2d3e-...", "scale": 1 }`,
         check: "ids",
-        explain:
-          "The id says which asset; the key says you may read it. Nothing in your scene changes except where the geometry comes from. You did not load a file that happened to be big: you subscribed to something that arrives at whatever detail the view justifies.",
       },
       {
         num: "3.7",
@@ -188,8 +169,6 @@ export const STEPS: Step[] = [
         body:
           "Each creature arrives at its own size. In app/specimens.json, set each entry's scale until it fits its glass: small for the egg and the hatchling, larger as the life cycle goes on, so the row reads as growth from left to right. Save, and the page reloads.",
         code: `{ "uuid": "9b1c2d3e-...", "scale": 0.4 }`,
-        explain:
-          "scale multiplies the mesh's own size. The glass is 1.8 metres across and 2.6 tall, so a creature that arrives three metres tall wants a scale near 0.6. Let the last stage fill its glass and the first sit small in it, and the series tells its story before anyone reads a file.",
       },
     ],
   },
@@ -204,8 +183,6 @@ export const STEPS: Step[] = [
           "Replace the empty fileMarkup in the miris:markup block at the top of app/stage.tsx. It builds the specimen's file as plain HTML from its dossier, styled by miris/lab.css.",
         fill: "markup",
         check: "markup",
-        explain:
-          "This is ordinary HTML that the browser will lay out like any web page, so the stat bars are just elements with widths. The layout is a fixed 640 by 400 pixels to match the pedestal screen.",
       },
       {
         num: "4.2",
@@ -215,8 +192,6 @@ export const STEPS: Step[] = [
           "Replace the placeholder File in the miris:parts block with this. It puts your HTML inside a canvas, asks the browser to draw it in whenever it paints, and wears the canvas as a texture. Nothing shows until the next step puts it on a screen.",
         fill: "file",
         check: "file",
-        explain:
-          "Three things from the HTML-in-Canvas spec. layoutsubtree makes a canvas lay its children out like normal elements, invisible until drawn. requestPaint asks the browser to paint them, and the canvas fires paint once it has, again whenever a child's rendering changes, so drawing there keeps the texture current. drawElementImage copies the painted element into the canvas with the current transform, doubled here so the texture stays crisp up close. The canvas sits on the page under the room, because only what the browser paints can be copied. From there it is ordinary three: CanvasTexture reads the canvas, and a plane wears it.",
       },
       {
         num: "4.3",
@@ -225,8 +200,6 @@ export const STEPS: Step[] = [
           "Replace the specimen line with this version. Screen goes inside each Specimen, with your File inside it. Click a tube to walk up to the creature, click a screen to read its file, and press Escape to come back.",
         fill: "screens",
         check: "screens",
-        explain:
-          "Screen is the pedestal's face. It hands whatever is inside it this specimen's dossier, with its place in the series, as the dossier prop, and scales the plane it gets back to fit. Clicks are tested against projected outlines, so none of your meshes needs a handler.",
       },
     ],
   },
@@ -241,8 +214,6 @@ export const STEPS: Step[] = [
           "Add this line in the miris:hud block, after Scene. It adds the header, the specimen count, and brackets around whatever your pointer is over.",
         fill: "hud",
         check: "hud",
-        explain:
-          "The brackets are plain HTML positioned from the capsule outlines projected to the screen each frame. It has to sit outside Scene, or it would float in the room instead of staying pinned to the window.",
       },
       {
         num: "5.2",
@@ -251,8 +222,6 @@ export const STEPS: Step[] = [
           "Add this line under Readout in the miris:hud block. Nothing changes until the next step gives it a shader.",
         fill: "effect",
         check: "overlay",
-        explain:
-          "TSL cannot run in the same canvas as the streams, so ScreenFx draws the effect in a hidden canvas of its own and copies it onto the selected pedestal screen. The other screens keep their plain texture, so the copy costs one screen, not six.",
       },
       {
         num: "5.3",
@@ -261,8 +230,6 @@ export const STEPS: Step[] = [
           "Replace the null glitch in the miris:field block with this. It gives the selected screen scanlines, a blue phosphor tint, a faint flicker and the occasional signal tear.",
         fill: "field",
         check: "field",
-        explain:
-          "Each call here builds a node in a shader graph instead of computing a pixel, and the graph runs on the GPU for every pixel of the screen. hash turns the clock into a value that holds still for a moment, which is how a tear can stay in one place while it lasts.",
       },
     ],
   },
@@ -277,8 +244,6 @@ export const STEPS: Step[] = [
           "Add this line under ScreenFx in the miris:hud block. It puts a toolbar at the bottom of the room: a dropdown that lists your six specimens, arrows to step between them, a button back to the overview and one that opens the selected file. On a phone there is nothing to hover and not much to click, so this is how anyone else gets round your room.",
         fill: "controls",
         check: "controls",
-        explain:
-          "Controls sits outside Scene like the readout and drives the same selection the tubes and screens answer to, so choosing a specimen walks the camera over exactly as a click does. The dropdown is a real listbox: arrow keys, Home, End and typing a letter all work, and every target is at least 44 pixels tall for a thumb. On a narrow screen it steps aside while the guide is open, since the guide is a bottom sheet there.",
       },
     ],
   },
@@ -291,8 +256,6 @@ export const STEPS: Step[] = [
         title: "Publish it",
         body:
           "Press Publish in Bolt, wait for your link, and send it to someone. Open it on a phone, pick a specimen from the dropdown, read its file, then press Finish.",
-        explain:
-          "The published build has no dev server, so it reads a snapshot of your scene data written at build time. Everything else is the code you wrote in app/stage.tsx.",
       },
     ],
   },

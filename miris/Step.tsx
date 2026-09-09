@@ -37,7 +37,7 @@ export interface StepPaneProps {
   busy: string;
   /** What the last Done click found wrong, keyed by substep number. */
   problems: Record<string, string>;
-  /** Owned by Guide so the tray outlives step 1.4. */
+  /** Owned by Guide so the tray outlives step 1.5. */
   hatch: HatchState;
   /** The substep whose card is open. Usually the progress pointer, but a
    *  finished substep can be opened to re-read it. */
@@ -227,16 +227,6 @@ export default function StepPane({
               </>
             )}
 
-
-            {sub.explain && (
-              <details className="mw-why">
-                <summary className="l12">
-                  Why
-                  <Chevron />
-                </summary>
-                <p>{sub.explain}</p>
-              </details>
-            )}
 
             {problems[sub.num] && (
               <p className="mw-snag c14" role="status">
