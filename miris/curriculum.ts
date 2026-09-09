@@ -253,7 +253,7 @@ export const STEPS: Step[] = [
         num: "5.3",
         title: "Write the glitch shader",
         body:
-          "It gives the selected screen scanlines, a blue phosphor tint, a faint flicker and the occasional signal tear.",
+          "It turns the selected screen into a holographic CRT: the picture split into red, green and blue a few pixels apart, a sheen drifting down the rows, scanlines, a bar rolling through, grain, and a tear every couple of seconds.",
         where: "In place of `const glitch = null`, at the top of `Stage`.",
         fill: "field",
         check: "field",

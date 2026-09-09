@@ -32,8 +32,9 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
           markup; keep additions inside the 640 by 400 pixel layout.
         </li>
         <li>
-          In the field, lower <code>0.83</code> in the <code>live</code> line to <code>0.5</code> for more
-          frequent tears, or change the blue phosphor tint in <code>vec3(0.48, 0.78, 1)</code>.
+          In the glitch, widen the colour split by raising <code>0.004</code> in the <code>split</code> line, turn the
+          rainbow up or down with <code>0.12</code> in the <code>sheen</code> line, or change how often it tears with{" "}
+          <code>0.55</code> in the <code>live</code> line.
         </li>
         <li>
           In <code>app/specimens.json</code>, halve one creature's <code>scale</code>. The page reloads with

@@ -37,18 +37,24 @@ const CONTROLS = `      <Controls />`;
 
 const FIELD = `  const glitch = useMemo(() => Fn(() => {
     const point = uv();
-    const tick = time.mul(0.55).floor();
-    const live = step(float(0.83), hash(tick.add(3))).mul(step(time.mul(0.55).fract(), float(0.055)));
-    const band = step(point.y.sub(hash(tick)).abs(), float(0.018));
-    const shift = band.mul(live).mul(0.014);
+    const tick = time.mul(2).floor();
+    const live = step(float(0.55), hash(tick.add(3)));
+    const band = step(point.y.sub(hash(tick)).abs(), hash(tick.add(5)).mul(0.05).add(0.015));
+    const shift = band.mul(live).mul(hash(tick.add(9)).sub(0.5)).mul(0.06);
     const shifted = vec2(point.x.add(shift), point.y);
-    const color = texture(screenTexture, shifted);
-    const phosphor = color.r.mul(0.21).add(color.g.mul(0.72)).add(color.b.mul(0.07));
-    const scan = point.y.mul(1131).sin().mul(0.035).add(0.965);
-    const flicker = time.mul(8).sin().mul(0.006).add(0.994);
-    const edge = point.x.mul(point.x.oneMinus()).mul(point.y).mul(point.y.oneMinus()).mul(16).pow(0.12);
-    const glow = texture(screenTexture, shifted.add(vec2(0.0015, 0))).g.mul(0.08);
-    return vec4(vec3(0.48, 0.78, 1).mul(phosphor.add(glow)).mul(scan).mul(flicker).mul(edge), float(1));
+    const split = vec2(0.004, 0);
+    const red = texture(screenTexture, shifted.sub(split)).g;
+    const green = texture(screenTexture, shifted).g;
+    const blue = texture(screenTexture, shifted.add(split)).g;
+    const phase = point.y.mul(6).add(time.mul(0.6));
+    const sheen = vec3(phase.sin(), phase.add(2.09).sin(), phase.add(4.19).sin()).mul(0.12).add(0.88);
+    const picture = vec3(red.mul(0.7), green.mul(0.95), blue.mul(1.2)).mul(sheen).add(vec3(0.03, 0.08, 0.14));
+    const scan = point.y.mul(500).sin().mul(0.1).add(0.9);
+    const roll = point.y.sub(time.mul(0.25)).fract().sub(0.5).abs().mul(2).oneMinus().pow(4).mul(0.25).add(1);
+    const cell = point.mul(vec2(640, 400)).floor();
+    const grain = hash(cell.x.add(cell.y.mul(640)).add(time.mul(24).floor().mul(97))).mul(0.12).add(0.93);
+    const edge = point.x.mul(point.x.oneMinus()).mul(point.y).mul(point.y.oneMinus()).mul(16).pow(0.2);
+    return vec4(picture.mul(scan).mul(roll).mul(grain).mul(edge), float(1));
   })(), []);`;
 
 const MARKUP = `// The file is HTML. The browser lays it out with the lab's own CSS; the next
