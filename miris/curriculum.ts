@@ -146,7 +146,7 @@ export const STEPS: Step[] = [
         fill: "specimens",
         check: "specimens",
         explain:
-          "Specimen takes no props. Scene numbers the Specimens it finds inside it, first to sixth, and each stands at its number times sixty degrees on a 4.2 metre ring. The glass is almost clear, and the glow inside it is a second cylinder with its own shader.",
+          "Specimen takes no props. Scene numbers the Specimens it finds inside it, first to sixth. The first stands just right of the door as you face it, and each one after it is sixty degrees further round a 4.2 metre ring, so the series runs round the room and ends beside the door on the left. The glass is almost clear, and the glow inside it is a second cylinder with its own shader.",
       },
       {
         num: "3.5",

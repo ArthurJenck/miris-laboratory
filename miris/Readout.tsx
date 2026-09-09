@@ -5,7 +5,7 @@ import { anchor } from "./anchor";
 import { budgetVersion, getBudget, pinBudget, reportBudget, subscribeBudget } from "./budget";
 import "./lab.css";
 import { type Box, getBoxes, getHover, getHoverPart, getPedestalBoxes, getReticle, getSelected, getSelectedPart, labVersion, setBoxes, setHover, setPedestalBoxes, setReticle, subscribeLab } from "./labState";
-import { GLASS, GLASS_TOP, RING, angleOf, screenFrame } from "./layout";
+import { GLASS, GLASS_TOP, RING, angleOf, screenFrame, slotOf } from "./layout";
 import useLab from "./useLab";
 
 const SLACK = 0.95; // a little wider than the glass, so brackets clear it
@@ -84,8 +84,7 @@ function streamIn(scene: any, i: number): any {
   scene.traverse((o: any) => {
     if (found || typeof o?.getBounds !== "function") return;
     o.getWorldPosition(streamAt);
-    const slot = Math.round(((Math.atan2(streamAt.z, streamAt.x) / (Math.PI * 2)) * 6 + 6)) % 6;
-    if (slot === i) found = o;
+    if (slotOf(Math.atan2(streamAt.z, streamAt.x)) === i) found = o;
   });
   return found;
 }

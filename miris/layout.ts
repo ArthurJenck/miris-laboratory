@@ -11,8 +11,19 @@ export const GLASS = { radius: 0.9, height: 2.6, bottom: 0.36 };
 export const GLASS_TOP = GLASS.bottom + GLASS.height;
 export const GLASS_CENTRE = GLASS.bottom + GLASS.height / 2;
 
+/* The first slot stands one place back from +x, just right of the door as you
+   face it, so the series starts beside the way in and runs round the room. */
+const FIRST_SLOT = -1;
+
 /** Angle of slot `index` round the ring, from +x toward +z. */
-export const angleOf = (index: number) => (index / CAPSULES) * Math.PI * 2;
+export const angleOf = (index: number) => ((index + FIRST_SLOT) / CAPSULES) * Math.PI * 2;
+
+/** The slot nearest a world angle: the inverse of angleOf, for things found
+ *  by where they stand rather than by a prop. */
+export const slotOf = (angle: number) => {
+  const turn = Math.round((angle / (Math.PI * 2)) * CAPSULES) - FIRST_SLOT;
+  return ((turn % CAPSULES) + CAPSULES) % CAPSULES;
+};
 
 /** A point on a ring of `radius` at slot `index`, at height `y`. */
 export const onRing = (index: number, radius: number, y = 0): [number, number, number] => {
