@@ -51,7 +51,7 @@ export const STEPS: Step[] = [
         num: "1.2",
         title: "Describe your {noun}",
         body:
-          "Describe one {noun} in one sentence, or press the dice for a suggestion. Growing takes about twelve minutes and costs real money, so if you already have a series uploaded you can skip ahead.",
+          "Describe one {noun} in one sentence, or press the dice for a suggestion, then press Grow the series. It takes about twelve minutes and costs real money, and the room is built while it runs, so press Done and move on as soon as the tray shows it has started.",
         panel: true,
         check: "series",
         explain:
@@ -71,7 +71,7 @@ export const STEPS: Step[] = [
         fill: "floor",
         check: "floor",
         explain:
-          "Everything you add here goes inside Scene, which owns the canvas, the lights and the camera. Floor is in miris/Floor.tsx: a scanned metal deck, an inward-facing wall and a ceiling, with the repeated ribs and lamps drawn as instances so they cost one draw call each.",
+          "Everything you add here goes inside Scene, which owns the canvas, the lights and the camera. Floor is in miris/lab-components/Floor.tsx: a scanned metal deck, an inward-facing wall and a ceiling, with the repeated ribs and lamps drawn as instances so they cost one draw call each.",
       },
       {
         num: "2.2",
@@ -101,7 +101,7 @@ export const STEPS: Step[] = [
         fill: "door",
         check: "door",
         explain:
-          "The door is built from bevelled shapes in miris/Door.tsx, with a light that spills onto the path. You are standing in the middle of the room at eye height, and dragging turns you on the spot rather than flying you around; Scene puts the camera there and aims it two centimetres ahead, which is the whole trick.",
+          "The door is built from bevelled shapes in miris/lab-components/Door.tsx, with a light that spills onto the path. You are standing in the middle of the room at eye height, and dragging turns you on the spot rather than flying you around; Scene puts the camera there and aims it two centimetres ahead, which is the whole trick.",
       },
     ],
   },

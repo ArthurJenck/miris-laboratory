@@ -36,9 +36,8 @@ Five minutes now saves twenty in the room.
 5. **Node 20 or newer** if you run it locally. In Bolt nothing to install.
 
 Total spend on your fal key is about twelve dollars: six images at a few cents
-each and six meshes at about $1.40 apiece. If you would rather not spend it,
-the guide has an **I already have a series** path at step 1.2 that fills the
-capsules from a series the presenters grew in advance.
+each and six meshes at about $1.40 apiece. Every attendee grows their own
+series; there is no way past step 1.2 without one.
 
 ## What happens, in order
 
@@ -108,16 +107,6 @@ never overwrite a paid run.
 
 Offline is never inferred from a missing key: "FAL_KEY is not set" is a
 sentence attendees are meant to see.
-
-### The fallback series
-
-`FALLBACK_KEYS` in `miris/config.ts` is a list of viewer keys, each scoped to a
-six-stage series you grew and uploaded in advance. They show up as buttons
-under **I already have a series** at step 1.2. Anyone whose fal account is
-blocked, whose run failed, or who arrived late picks one and is streaming
-inside a minute. Viewer keys are public by design, so committing them is fine;
-what matters is that each is scoped to exactly its six assets. Grow three or
-four before the day. An empty list hides the buttons.
 
 ### The SDK is vendored, and the pin is not negotiable
 

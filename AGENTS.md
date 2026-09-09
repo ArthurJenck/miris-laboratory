@@ -26,6 +26,14 @@ closing pane offers, not a step.
 `miris/` is the workshop's machinery: the guide, curriculum copy, snippets, the
 dev API, config. Nothing in it needs editing to complete the workshop.
 
+`miris/lab-components/` is the part of it attendees are walked through: the
+four room parts step 2 adds (`Floor`, `Platform`, `Walkway`, `Door`) and the
+parts bin they are assembled from (`hardware.tsx` for the colours, `Ring`,
+`Label` and `radial`; `StaticInstances.tsx` for repeated hardware in one draw
+call). Each room part's default export reads as a list of named sub-parts
+defined below it in the same file, so the names carry the explanation and the
+comments stay short. `Specimen` uses the same parts bin from outside the folder.
+
 The committed starter has empty lesson blocks. The finished lab lives at
 `/?view=reference`, using `miris/stage.reference.tsx`. Generate it with
 `npm run reference`; never copy the finished scene back into the starter.
@@ -36,7 +44,7 @@ than by rewriting the block, so anything else they put there survives.
 
 The six asset ids and scales are `app/specimens.json`, imported by the stage;
 the viewer key is one constant in the stage, found by name. Nothing is fetched
-for them. The dev API's adopt, seed and reset actions write both through
+for them. The dev API's seed and reset actions write both through
 `mergeSpecimens` and `withViewerKey`, which change only the values named so a
 scale tuned by hand survives a reseal; the reference gets the fixture ids and
 scales the same way into `miris/specimens.json`. The file is the truth for what
@@ -118,7 +126,14 @@ biology. The renders run in series, each editing the last, because six
 independent renders of "the same creature" are six different creatures.
 `change` exists because an edit model left alone returns the reference nearly
 untouched. The framing rules forbid substrate as well as props: an egg
-photographed on a rock arrives in the capsule as a rock.
+photographed on a rock arrives in the capsule as a rock. Live-bearing clades
+start at the newborn, never a fetus or embryo: asked for a placental mammal's
+first stage the image model draws a human fetus in an amniotic sac, and the
+plan forbids anything human outright. The framing rules also forbid any
+enclosure round the subject (sac, membrane, shell, capsule, glass) unless the
+stage is itself a bare egg, and the chained stage prompts say the enclosure is
+gone: an edit model otherwise carries the sac from the first render through the
+next three, and the mesh step turns it into a shell with a window cut in it.
 
 ## Rehearsing without fal
 
@@ -201,9 +216,9 @@ again, which builds a new controller at its default 250k rather than resuming. F
 the readout is the render loop's own delta, smoothed: the SDK holds the one
 GPU timer query open, so there is no second one.
 
-`FALLBACK_KEYS` in `miris/config.ts` lists viewer keys scoped to series grown
-in advance, offered under "I already have a series" at 1.2. It ships empty;
-fill it before the day or the buttons never appear.
+Step 1.2 has no way round it: every attendee describes a creature and grows
+their own series. The only shortcut is the offline seed, for presenters
+rehearsing, and it exists only under `MIRIS_OFFLINE=1`.
 
 **Glass and splats cannot be depth-sorted against each other.** The SDK draws
 all six specimens as one splat mesh with no depth write, so a tube's glass is

@@ -53,7 +53,7 @@ export default function Finished({ data, onBack }: { data: any; onBack: () => vo
           Each part it names is one file in <code>miris/</code>: <code>Scene</code>, <code>Floor</code>,{" "}
           <code>Platform</code>, <code>Walkway</code>, <code>Door</code>, <code>Specimen</code>,{" "}
           <code>Screen</code>, <code>Readout</code> and <code>Controls</code>; repeated
-          hardware is batched by <code>miris/StaticInstances.tsx</code>.
+          hardware is batched by <code>miris/lab-components/StaticInstances.tsx</code>.
         </li>
         <li>
           The Miris SDK: <a href="https://www.npmjs.com/package/@miris-inc/three" target="_blank" rel="noopener noreferrer">@miris-inc/three</a>.

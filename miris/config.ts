@@ -7,12 +7,6 @@ export const DEMO_UUID = "2b21e89f-ef5d-4175-bbdf-03e8649bcb76";
 export const GROWTH_WORKFLOW = "workflows/dexhonsa/miris-growth-series-v2";
 export const PORTAL_URL = "https://app.miris.com";
 
-/* Viewer keys the presenters scoped to series grown in advance, one per line.
-   Offered under "I already have a series" at step 1.2, so anyone whose fal
-   account is blocked or whose run failed is streaming in a minute. Public by
-   design: a viewer key ships in every published lab anyway. Empty hides the
-   buttons. */
-export const FALLBACK_KEYS: { label: string; key: string }[] = [];
 export const FAL_KEYS_URL = "https://fal.ai/dashboard/keys";
 
 /* The dossier's closed vocabulary. A status outside this set would break the
