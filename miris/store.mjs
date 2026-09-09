@@ -12,15 +12,9 @@ export const DEFAULT_DATA = {
   hatchedAt: 0,
   // Whether miris/specimens.zip is on disk and matches the current series.
   zipReady: false,
-  // The fal queue request behind the series in flight: { id, statusUrl,
-  // responseUrl }, or null. Kept on disk so a reload, or a restarted dev
-  // server, finds the same run and keeps watching it.
-  run: null,
-  // What the queue last said about it: "queued", "running", or "".
-  runState: "",
-  queuePosition: 0,
-  // Why the last run stopped short, in a sentence for the form. Cleared by
-  // the next press of Grow the series.
+  // Why the last run stopped short, in a sentence for the form. Written by the
+  // dev server so it survives the page that pressed the button; cleared by the
+  // next press of Grow the series.
   runError: "",
   // Which capsule the dossier and the uuid form are pointed at, 0-5.
   active: 0,

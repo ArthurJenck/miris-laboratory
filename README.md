@@ -90,15 +90,15 @@ The whole run is one fal workflow, `workflows/dexhonsa/miris-growth-series-v2`.
 The image renders cost cents. Each mesh is about $1.40 and four to five
 minutes on fal's `meshy/v7/image-to-3d`; the six renders run in series, each
 one editing the last so the creature stays the same creature, and each mesh
-starts the moment its render lands. Wall clock is about twelve minutes.
+starts the moment its render lands. Wall clock is about twelve minutes and
+the tray keeps a stage list and a running total while it works.
 
-The run goes through fal's queue, and the dev server polls it every five
-seconds. Nothing streams: inside a WebContainer (bolt.new, StackBlitz) Node's
-fetch only hands a response over once it is complete, so a streamed run showed
-nothing for twelve minutes and could be lost with the connection. The tray
-shows the queue's state and the clock while it waits, then all six stages when
-the output lands. The request id lives in `miris/data.json`, so a reload or a
-restarted dev server picks the same run back up instead of losing it.
+The tray fills in because the run is streamed from fal and each stage is
+written to `miris/data.json` as its event arrives. That needs a real Node
+process: inside a WebContainer (bolt.new, StackBlitz) fetch hands a response
+over only once it is complete, so nothing lands until the end. Run the dev
+server from your own machine. Restarting it mid-run loses the run, and the
+form says so.
 
 The workshop's dev server reads `FAL_KEY` from `.env.local` on every request,
 so there is nothing to restart when you add it.

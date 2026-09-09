@@ -4,8 +4,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "test": "node --test \"tests/**/*.test.mjs\""
+    "preview": "vite preview"
   },
   "dependencies": {
     "@miris-inc/three": "^0.0.8-7db43c1",

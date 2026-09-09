@@ -489,16 +489,6 @@ a:hover { text-decoration: underline; }
   border-radius: inherit;
   transition: width 700ms var(--ease-in, ease);
 }
-/* Until the output map lands there is nothing to measure, so the fill runs
-   the rail instead of standing at zero, which read as a stalled run. */
-.mw-prog-fill[data-indeterminate] {
-  width: 30%;
-  animation: mw-prog-run 1.8s var(--ease-in, ease) infinite;
-}
-@keyframes mw-prog-run {
-  from { transform: translateX(-100%); }
-  to { transform: translateX(333%); }
-}
 .mw-prog-read {
   margin: 0;
   font: 400 12px/1 var(--mono);
@@ -535,7 +525,6 @@ a:hover { text-decoration: underline; }
 @media (prefers-reduced-motion: reduce) {
   .mw-stage[data-active] .mw-pips i:not([data-on]) { animation: none; opacity: 0.7; }
   .mw-prog-fill { transition: none; }
-  .mw-prog-fill[data-indeterminate] { animation: none; width: 100%; opacity: 0.35; }
 }
 
 /* ── the build block, inline in step 1.4 ──────────────── */
