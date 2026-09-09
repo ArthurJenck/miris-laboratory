@@ -3,8 +3,8 @@ import { extend, type ThreeElement } from '@react-three/fiber'
 import { useEffect, useMemo, useState } from 'react'
 import { CanvasTexture, SRGBColorSpace } from 'three'
 import {
-    Fn,
     float,
+    Fn,
     hash,
     step,
     texture,
