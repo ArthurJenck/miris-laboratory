@@ -160,6 +160,16 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
   streams: inFile(PROOF.streams, "Nothing is streaming into the capsules yet. Replace the specimen line with the version that holds a stream, or take the chapter's finished code."),
   screens: inFile(PROOF.screens, "No Screen inside the Specimens yet. Replace the specimen line with the version that holds one, or take the chapter's finished code."),
 
+  async key() {
+    const viewerKey = readViewerKey(await readFile(STAGE, "utf8"));
+    if (!viewerKey) return "No viewer key in app/stage.tsx yet. Paste the key you tagged workshop into the viewerKey line near the top.";
+    if (viewerKey === VIEWER_KEY) return "That is still the workshop's demo viewer key, which cannot read your assets. Paste the one you made.";
+    // data.json follows the file, so the readout and the tray agree with it.
+    const stored = await readData(MIRIS_DIR);
+    if (stored.viewerKey !== viewerKey) await writeData(MIRIS_DIR, { viewerKey });
+    return null;
+  },
+
   async ids() {
     // What streams is what the check reads: the ids in app/specimens.json and
     // the key in app/stage.tsx, however they got there.

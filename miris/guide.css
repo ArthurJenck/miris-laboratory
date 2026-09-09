@@ -1249,3 +1249,8 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 /* The chapter's title is the biggest thing in the pane: it says where you are. */
 .mw-pane-head .mw-pane-title { font: var(--fw-medium) 28px/1.15 var(--sans); letter-spacing: -0.025em; text-transform: none; color: var(--text-primary); margin: 0; }
 .mw-pane-head { margin: 4px 0 14px; }
+
+/* Names in the copy set as code, and the one line under a code block that says
+   where it goes. */
+.mw-now p code, .mw-snip-where code { font-family: var(--mono); font-size: 0.92em; color: var(--mono-000); background: #ffffff12; padding: 1px 5px; border-radius: 3px; white-space: nowrap; }
+.mw-snip-where { margin: 8px 0 0; color: var(--mono-400); }

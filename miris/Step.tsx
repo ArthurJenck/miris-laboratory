@@ -66,6 +66,10 @@ function RenderPathBadge() {
 
 const withNoun = (text: string, noun: string) => text.replaceAll("{noun}", noun);
 
+/** Backticks in the curriculum's copy become inline code, so a name reads as a name. */
+const rich = (text: string) =>
+  text.split(/(`[^`]+`)/g).map((part, i) => (part.startsWith("`") && part.endsWith("`") ? <code key={i}>{part.slice(1, -1)}</code> : part));
+
 /** The main step a substep belongs to, as people say it: "3.5" is step 3. */
 const chapterOf = (subNum: string) => Number(subNum.split(".")[0]);
 
@@ -190,13 +194,14 @@ export default function StepPane({
             </div>
 
             <h3 className="mw-now-title">{withNoun(sub.title, track.noun)}</h3>
-            <p className="c14">{withNoun(sub.body, track.noun)}</p>
+            <p className="c14">{rich(withNoun(sub.body, track.noun))}</p>
             {sub.renderPath && <RenderPathBadge />}
             {sub.code && (
               <pre className="k14">
                 <Code code={sub.code} />
               </pre>
             )}
+            {sub.code && sub.where && !sub.fill && <p className="c14 mw-snip-where">{rich(sub.where)}</p>}
 
             {sub.link && (
               <a
@@ -221,6 +226,7 @@ export default function StepPane({
                   </>
                 )}
                 <Snippet code={dedent(PARTS[sub.fill as keyof typeof PARTS] ?? "")} />
+                {sub.where && <p className="c14 mw-snip-where">{rich(sub.where)}</p>}
               </>
             )}
 

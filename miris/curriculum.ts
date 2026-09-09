@@ -24,6 +24,8 @@ export interface Sub {
   check?: string;
   /** Renders the html-in-canvas path badge. */
   renderPath?: boolean;
+  /** Where the code goes, shown right under it. Backticks become code. */
+  where?: string;
 }
 
 export interface Step {
@@ -63,7 +65,7 @@ export const STEPS: Step[] = [
         num: "1.4",
         title: "Create .env.local",
         body:
-          "Make a file called .env.local at the top of the project, beside package.json, and paste your key into it as the one line below. Save it and press Done; the server reads the file on every request, so there is nothing to restart.",
+          "Make a file called `.env.local` at the top of the project, beside `package.json`, and paste your key into it as the one line below. Save it and press Done; the server reads the file on every request, so there is nothing to restart.",
         code: "FAL_KEY=your-key-here",
         check: "falKey",
       },
@@ -85,7 +87,8 @@ export const STEPS: Step[] = [
         num: "2.1",
         title: "Set up React Three Fiber",
         body:
-          "Put these lines under the imports at the top of app/stage.tsx. extend registers the SDK's MirisStream as a tag React Three Fiber can render, mirisStream, and the declaration tells TypeScript what props that tag takes.",
+          "`extend` registers the SDK's `MirisStream` as a tag React Three Fiber can render, `<mirisStream>`, and the declaration tells TypeScript what props that tag takes.",
+        where: "Under the imports at the top of `app/stage.tsx`.",
         fill: "setup",
         check: "setup",
       },
@@ -93,7 +96,8 @@ export const STEPS: Step[] = [
         num: "2.2",
         title: "Add the room",
         body:
-          "Add Room inside Scene in app/stage.tsx. It gives you the deck, the walls, the ceiling and the fog.",
+          "`Room` gives you the deck, the walls, the ceiling and the fog.",
+        where: "Inside `<Scene>`.",
         fill: "room",
         check: "room",
       },
@@ -101,7 +105,8 @@ export const STEPS: Step[] = [
         num: "2.3",
         title: "Add the platform",
         body:
-          "Add Platform after Room. It is the raised ring you are standing on, with its lit edges and the division's label.",
+          "`Platform` is the raised ring you are standing on, with its lit edges and the division's label.",
+        where: "Inside `<Scene>`, after `<Room />`.",
         fill: "platform",
         check: "platform",
       },
@@ -109,7 +114,8 @@ export const STEPS: Step[] = [
         num: "2.4",
         title: "Add the walkway",
         body:
-          "Add Walkway after Platform. It is the straight path from the platform to the far wall.",
+          "`Walkway` is the straight path from the platform to the far wall.",
+        where: "After `<Platform />`.",
         fill: "walkway",
         check: "walkway",
       },
@@ -117,7 +123,8 @@ export const STEPS: Step[] = [
         num: "2.5",
         title: "Add the door",
         body:
-          "Add Door after Walkway. It stands at the end of the path, straight ahead of you: drag to look around the room.",
+          "`Door` stands at the end of the path, straight ahead of you: drag to look around the room.",
+        where: "After `<Walkway />`.",
         fill: "door",
         check: "door",
       },
@@ -131,28 +138,32 @@ export const STEPS: Step[] = [
         num: "3.1",
         title: "Upload your meshes",
         body:
-          "Download the archive from the tray, then sign in at app.miris.com and upload all six .glb files. Wait for processing to finish before the next step.",
+          "Download the archive from the tray, then sign in at app.miris.com and upload all six `.glb` files. Wait for processing to finish before the next step.",
         link: { href: PORTAL_URL, label: "Open Miris" },
       },
       {
         num: "3.2",
         title: "Create a viewer key",
         body:
-          "In the portal, create a viewer key and give it the tag workshop. The tag is how the key knows which assets it may read; the next step puts the same tag on your six meshes. Copy the key somewhere handy: it goes into your file in step 3.6.",
+          "Open the Miris portal, click Settings, then Viewer Keys. Give the key a name, set an expiry date, add the tag `workshop`, and click Create. The tag is how the key knows which assets it may read; the next step puts the same tag on your six meshes. Copy the key it shows you and paste it into `app/stage.tsx` as the line below, then press Done.",
+        code: `const viewerKey = "paste-your-viewer-key-here";`,
+        where: "Near the top of `app/stage.tsx`, in place of the empty `viewerKey`.",
         link: { href: PORTAL_URL, label: "Open Miris" },
+        check: "key",
       },
       {
         num: "3.3",
         title: "Tag your assets",
         body:
-          "Back in the assets list, tick the six meshes you uploaded. Press Edit Tags, then Add Tags, type workshop, and press Add Tags to Asset. The key and the assets now share a tag, so the key can read exactly these six.",
+          "Back in the assets list, tick the six meshes you uploaded. Press Edit Tags, then Add Tags, type `workshop`, and press Add Tags to Asset. The key and the assets now share a tag, so the key can read exactly these six.",
         link: { href: PORTAL_URL, label: "Open Miris" },
       },
       {
         num: "3.4",
         title: "Add the specimens",
         body:
-          "Your meshes exist now, so the room can have somewhere to put them. Add the specimen map after Door, inside Scene. It walks app/specimens.json and places one Specimen per entry around the ring: a capsule, and the pedestal in front of it. Nothing stands in the glass yet.",
+          "Your meshes exist now, so the room can have somewhere to put them. The map walks `app/specimens.json` and places one `Specimen` per entry around the ring: a capsule, and the pedestal in front of it. Nothing stands in the glass yet.",
+        where: "Inside `<Scene>`, after `<Door />`.",
         fill: "specimens",
         check: "specimens",
       },
@@ -160,7 +171,8 @@ export const STEPS: Step[] = [
         num: "3.5",
         title: "Connect the streams",
         body:
-          "Replace the specimen line with this version. Inside each Specimen goes a stream: the SDK's tag, given the entry's asset id and your viewer key, and the entry's scale. Both id and key are still empty, so the tubes stay dark until the next step.",
+          "Inside each `Specimen` goes a stream: the SDK's tag, given the entry's asset id and your viewer key, and the entry's `scale`. Both id and key are still empty, so the tubes stay dark until the next step.",
+        where: "In place of the specimen line from 3.4.",
         fill: "streams",
         check: "streams",
       },
@@ -168,7 +180,7 @@ export const STEPS: Step[] = [
         num: "3.6",
         title: "Fill in your ids",
         body:
-          "Open each of your six assets in the portal and copy its id into app/specimens.json, in growth order, egg first. Paste your viewer key into viewerKey at the top of app/stage.tsx. Save, and the glass fills.",
+          "Open each of your six assets in the portal and copy its id into `app/specimens.json`, in growth order, egg first. Save, and the glass fills.",
         code: `{ "uuid": "9b1c2d3e-...", "scale": 1 }`,
         check: "ids",
       },
@@ -176,7 +188,7 @@ export const STEPS: Step[] = [
         num: "3.7",
         title: "Fit each creature to its tube",
         body:
-          "Each creature arrives at its own size. In app/specimens.json, set each entry's scale until it fits its glass: small for the egg and the hatchling, larger as the life cycle goes on, so the row reads as growth from left to right. Save, and the page reloads.",
+          "Each creature arrives at its own size. In `app/specimens.json`, set each entry's `scale` until it fits its glass: small for the egg and the hatchling, larger as the life cycle goes on, so the row reads as growth from left to right. Save, and the page reloads.",
         code: `{ "uuid": "9b1c2d3e-...", "scale": 0.4 }`,
       },
     ],
@@ -189,7 +201,8 @@ export const STEPS: Step[] = [
         num: "4.1",
         title: "Write the file in HTML",
         body:
-          "Replace the empty fileMarkup near the top of app/stage.tsx. It builds the specimen's file as plain HTML from its dossier, styled by miris/lab.css.",
+          "It builds the specimen's file as plain HTML from its dossier, styled by `miris/lab.css`.",
+        where: "In place of the empty `fileMarkup`, near the top of `app/stage.tsx`.",
         fill: "markup",
         check: "markup",
       },
@@ -198,7 +211,8 @@ export const STEPS: Step[] = [
         title: "Draw it into a canvas",
         renderPath: true,
         body:
-          "Replace the placeholder File above Stage with this. It puts your HTML inside a canvas, asks the browser to draw it in whenever it paints, and wears the canvas as a texture. Nothing shows until the next step puts it on a screen.",
+          "It puts your HTML inside a canvas, asks the browser to draw it in whenever it paints, and wears the canvas as a texture. Nothing shows until the next step puts it on a screen.",
+        where: "In place of the placeholder `File`, above `Stage`.",
         fill: "file",
         check: "file",
       },
@@ -206,7 +220,8 @@ export const STEPS: Step[] = [
         num: "4.3",
         title: "Put it on the screen",
         body:
-          "Replace the specimen line with this version. Screen goes inside each Specimen, with your File inside it. Click a tube to walk up to the creature, click a screen to read its file, and press Escape to come back.",
+          "`Screen` goes inside each `Specimen`, with your `File` inside it. Click a tube to walk up to the creature, click a screen to read its file, and press Escape to come back.",
+        where: "In place of the specimen line from 3.5.",
         fill: "screens",
         check: "screens",
       },
@@ -220,7 +235,8 @@ export const STEPS: Step[] = [
         num: "5.1",
         title: "Add the readout",
         body:
-          "Add this line after Scene, inside the fragment. It adds the header, the specimen count, and brackets around whatever your pointer is over.",
+          "It adds the header, the specimen count, and brackets around whatever your pointer is over.",
+        where: "After `</Scene>`, inside the fragment.",
         fill: "hud",
         check: "hud",
       },
@@ -228,7 +244,8 @@ export const STEPS: Step[] = [
         num: "5.2",
         title: "Add the screen effect",
         body:
-          "Add this line under Readout. Nothing changes until the next step gives it a shader.",
+          "Nothing changes until the next step gives it a shader.",
+        where: "After `<Readout />`.",
         fill: "effect",
         check: "overlay",
       },
@@ -236,7 +253,8 @@ export const STEPS: Step[] = [
         num: "5.3",
         title: "Write the glitch shader",
         body:
-          "Replace the null glitch at the top of Stage with this. It gives the selected screen scanlines, a blue phosphor tint, a faint flicker and the occasional signal tear.",
+          "It gives the selected screen scanlines, a blue phosphor tint, a faint flicker and the occasional signal tear.",
+        where: "In place of `const glitch = null`, at the top of `Stage`.",
         fill: "field",
         check: "field",
       },
@@ -250,7 +268,8 @@ export const STEPS: Step[] = [
         num: "6.1",
         title: "Add the controls",
         body:
-          "Add this line under ScreenFx. It puts a toolbar at the bottom of the room: a dropdown that lists your six specimens, arrows to step between them, a button back to the overview and one that opens the selected file. On a phone there is nothing to hover and not much to click, so this is how anyone else gets round your room.",
+          "A toolbar at the bottom of the room: a dropdown that lists your six specimens, arrows to step between them, a button back to the overview and one that opens the selected file. On a phone there is nothing to hover and not much to click, so this is how anyone else gets round your room.",
+        where: "After `<ScreenFx />`.",
         fill: "controls",
         check: "controls",
       },
