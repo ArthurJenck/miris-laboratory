@@ -335,7 +335,7 @@ function WorkshopGuide() {
             alt=""
             aria-hidden="true"
             style={{ ["--focal-strip" as string]: track.focalStrip } as React.CSSProperties}
-            /* Dropped by WebContainer in bolt; the strip keeps its own ground. */
+            /* If the image fails to load, the strip keeps its own ground. */
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}

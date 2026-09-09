@@ -12,6 +12,10 @@ export const DEFAULT_DATA = {
   hatchedAt: 0,
   // Whether miris/specimens.zip is on disk and matches the current series.
   zipReady: false,
+  // Why the last run stopped short, in a sentence for the form. Written by the
+  // dev server so it survives the page that pressed the button; cleared by the
+  // next press of Grow the series.
+  runError: "",
   // Which capsule the dossier and the uuid form are pointed at, 0-5.
   active: 0,
   // Whether the growth tray is folded to its handle. Persisted because every

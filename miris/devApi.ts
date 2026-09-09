@@ -300,6 +300,27 @@ const isGlb = (buf: Buffer) => buf.length > 12 && buf.toString("ascii", 0, 4) ==
 const stageFile = (i: number, stage: string) =>
   `${String(i + 1).padStart(2, "0")}-${stage.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "stage"}.glb`;
 
+/* Whether this process is in the middle of a growth run. On the global rather
+   than the module: Vite re-evaluates this file when the config changes, in the
+   same process, while the old handler keeps streaming and writing data.json.
+   A module variable would read false in the new copy and retire a live run. */
+const inFlight = () => Boolean((globalThis as any).__mirisRunInFlight);
+const setInFlight = (v: boolean) => {
+  (globalThis as any).__mirisRunInFlight = v;
+};
+const reason = (e: unknown) => (e as Error)?.message ?? String(e);
+
+/** On start: a run marked in flight with no process behind it cannot resume,
+ *  the stream was the run. Retire it with a sentence, or the tray says
+ *  "growing" forever. */
+async function retireLostRun(mode: string) {
+  if (inFlight() || offline(mode)) return;
+  const data = await readData(MIRIS_DIR);
+  if (Number(data.hatchedAt) > 0 && !data.zipReady) {
+    await writeData(MIRIS_DIR, { hatchedAt: 0, runError: "The previous run was interrupted when the dev server stopped. Press Grow the series again." });
+  }
+}
+
 type Reply = { status: number; body: unknown };
 const ok = (body: unknown): Reply => ({ status: 200, body });
 const fail = (error: string, status = 400): Reply => ({ status, body: { error } });
@@ -450,9 +471,12 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
          returns, so the tray can show a run has started while it is being paid
          for. Cleared again if the run falls over, or the app would think it was
          still growing forever. */
-      await writeData(MIRIS_DIR, { concept, hatchedAt: Date.now(), zipReady: false });
+      await writeData(MIRIS_DIR, { concept, hatchedAt: Date.now(), zipReady: false, runError: "" });
+      setInFlight(true);
+      // The reason is written to the file as well as returned: the page that
+      // pressed the button is often long gone by the time a run falls over.
       const abandon = async (e: unknown) => {
-        await writeData(MIRIS_DIR, { hatchedAt: 0 });
+        await writeData(MIRIS_DIR, { hatchedAt: 0, runError: reason(e) });
         throw e;
       };
 
@@ -510,8 +534,9 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
         await takePlan(output?.plan);
         const grown: Plan | null = plan;
         if (!grown) {
-          await writeData(MIRIS_DIR, { hatchedAt: 0 });
-          return fail("The workflow did not return a usable growth plan. Press the button again.", 502);
+          const why = "The workflow did not return a usable growth plan. Press the button again.";
+          await writeData(MIRIS_DIR, { hatchedAt: 0, runError: why });
+          return fail(why, 502);
         }
         await takeDossiers(output?.dossiers);
         for (let i = 0; i < STAGES; i++) {
@@ -538,8 +563,10 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       } catch (e) {
         // Any failure past this point leaves a run marked as in flight, and
         // the tray would grow forever. Clear the marker, then rethrow.
-        await writeData(MIRIS_DIR, { hatchedAt: 0 });
+        await writeData(MIRIS_DIR, { hatchedAt: 0, runError: reason(e) });
         throw e;
+      } finally {
+        setInFlight(false);
       }
     }
 
@@ -577,7 +604,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
 
     case "unseed": {
       if (!offline(mode)) return fail("Seeding is offline only. Put MIRIS_OFFLINE=1 in .env.local.");
-      await writeData(MIRIS_DIR, { concept: "", specimens: emptyBank(), zipReady: false, hatchedAt: 0, active: 0 });
+      await writeData(MIRIS_DIR, { concept: "", specimens: emptyBank(), zipReady: false, hatchedAt: 0, active: 0, runError: "" });
       await writeFile(SPECIMENS, specimensJson(EMPTY_SPECIMENS));
       return ok({ ok: true });
     }
@@ -633,7 +660,7 @@ export function mirisDevApi(mode: string): Plugin {
      * <mirisStream> leaves the SDK's own scene objects behind (measured two
      * SparkRenderers in one scene, splats drawn twice, the model smearing as
      * the camera moves), and scoping the reload to "only when a stream was
-     * mounted" still ghosted in Bolt on the stream's FIRST mount, through an
+     * mounted" still ghosted in early hosted runs on the stream's FIRST mount, through an
      * HMR path localhost never reproduced. A fresh boot is the only state
      * this SDK provably cannot double. The reload is cheap because everything
      * durable lives in data.json: the tray, its fold state, and an in-flight
@@ -652,6 +679,7 @@ export function mirisDevApi(mode: string): Plugin {
 
     configureServer(server) {
       auditProofs();
+      retireLostRun(mode).catch((e) => console.warn(`[miris] could not check the growth run: ${reason(e)}`));
       server.middlewares.use("/api/miris", async (req, res, next) => {
         try {
           if (req.method === "GET") {

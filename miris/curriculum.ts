@@ -1,4 +1,4 @@
-import { FAL_CREDITS_URL, FAL_KEYS_URL, FAL_URL, PORTAL_URL } from "./config";
+import { FAL_CREDITS_URL, FAL_KEYS_URL, FAL_URL, PORTAL_URL, VERCEL_URL } from "./config";
 
 export interface Sub {
   num: string;
@@ -281,9 +281,17 @@ export const STEPS: Step[] = [
     subs: [
       {
         num: "7.1",
+        title: "Create a Vercel account",
+        body:
+          "Sign up at vercel.com, or sign in if you already have an account. The free Hobby plan is enough. Press Done once you are in.",
+        link: { href: VERCEL_URL, label: "Open Vercel" },
+      },
+      {
+        num: "7.2",
         title: "Publish it",
         body:
-          "Press Publish in Bolt, wait for your link, and send it to someone. Open it on a phone, pick a specimen from the dropdown, read its file, then press Finish.",
+          "Leave the dev server running, open a second terminal in the project folder, and run this. The first run opens a browser tab to log in, then builds the laboratory on Vercel and prints a link. Your six ids, your dossiers and your scoped viewer key are frozen into the build; there is no server behind the page, so nothing on it can spend your fal key. Send the link to someone, open it on a phone, pick a specimen from the dropdown, read its file, then press Finish.",
+        code: "npx vercel --prod --yes",
       },
     ],
   },

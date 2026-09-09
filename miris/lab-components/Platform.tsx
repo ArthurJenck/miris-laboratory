@@ -11,25 +11,49 @@ export default function Platform() {
       <Deck />
       <Edges />
       <Markings />
-      <Plaque />
     </group>
   );
 }
 
 // A low cylinder wearing the walkway texture, with a lighter ring on top to walk on.
 function Deck() {
-  const walk = useMemo(() => { const t = walkwayTexture(); t.repeat.set(6, 6); return t; }, []);
-  const wear = useMemo(() => { const t = wearMap(); t.repeat.set(7, 7); return t; }, []);
-  useEffect(() => () => { walk.dispose(); wear.dispose(); }, [walk, wear]);
+  const walk = useMemo(() => {
+    const t = walkwayTexture();
+    t.repeat.set(6, 6);
+    return t;
+  }, []);
+  const wear = useMemo(() => {
+    const t = wearMap();
+    t.repeat.set(7, 7);
+    return t;
+  }, []);
+  useEffect(
+    () => () => {
+      walk.dispose();
+      wear.dispose();
+    },
+    [walk, wear],
+  );
   return (
     <>
       <mesh position={[0, 0.015, 0]}>
         <cylinderGeometry args={[3.8, 3.86, 0.07, 96]} />
-        <meshStandardMaterial color="#34434d" map={walk} roughnessMap={wear} metalness={0.5} roughness={0.6} />
+        <meshStandardMaterial
+          color="#34434d"
+          map={walk}
+          roughnessMap={wear}
+          metalness={0.5}
+          roughness={0.6}
+        />
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.054, 0]}>
         <ringGeometry args={[2.62, 3.73, 96]} />
-        <meshStandardMaterial color="#a1b0b5" map={walk} roughness={0.65} metalness={0.45} />
+        <meshStandardMaterial
+          color="#a1b0b5"
+          map={walk}
+          roughness={0.65}
+          metalness={0.45}
+        />
       </mesh>
     </>
   );

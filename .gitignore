@@ -1,6 +1,7 @@
 node_modules/
-.next/
 dist/
+# The Vercel CLI's project link, written by step 7.2. Per machine, not per repo.
+.vercel/
 .env.local
 .DS_Store
 public/models/

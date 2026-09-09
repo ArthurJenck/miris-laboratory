@@ -1,8 +1,8 @@
 import { CanvasTexture, RepeatWrapping, SRGBColorSpace, TextureLoader, type Texture } from "three";
 
-/* Surfaces are drawn here rather than shipped as image files. WebContainer
-   drops binaries on import, so a laboratory that depended on a texture folder
-   would arrive bare in bolt. A canvas costs nothing and always survives. */
+/* Surfaces are drawn here rather than shipped as image files. A canvas costs
+   nothing to load, cannot 404, and keeps the starter free of a texture folder
+   that every clone would carry. */
 
 const make = (size: number, draw: (c: CanvasRenderingContext2D, s: number) => void): Texture => {
   const canvas = document.createElement("canvas");
@@ -120,8 +120,8 @@ export const wearMap = () =>
 /* The deck is a real scan, CGAxis "Green Sci-Fi Floor 8766", downscaled to 2K
    colour and normal and 1K for the rest. The procedural deck below stayed dark
    and featureless from anywhere but the middle of the room; this one has
-   grooves for the normal map to catch the light in. Loaded rather than drawn,
-   which binaries surviving the bolt import made possible. */
+   grooves for the normal map to catch the light in. Loaded rather than drawn:
+   a normal map is the one surface a canvas cannot cheaply fake. */
 const loader = new TextureLoader();
 const tile = (url: string, repeat: number, srgb = false): Texture => {
   const t = loader.load(url);

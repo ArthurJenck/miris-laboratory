@@ -54,6 +54,7 @@ export function useHatch(track: Track) {
      ten to twenty seconds of a paid run. hatchedAt is written the moment the
      run starts. */
   const running = busy || (Number(data?.hatchedAt) > 0 && !data?.zipReady);
+  const runError: string = String(data?.runError ?? "");
 
   // While anything is in flight the file is the only source of truth, because
   // the request that started it dies with the page.
@@ -105,7 +106,7 @@ export function useHatch(track: Track) {
     setError("");
   };
 
-  return { track, concept, setConcept, data, stages, named, drawn, done, running, elapsed, error, hatch, roll, small, setSmall, refresh: read };
+  return { track, concept, setConcept, data, stages, named, drawn, done, running, runError, elapsed, error, hatch, roll, small, setSmall, refresh: read };
 }
 
 export type HatchState = ReturnType<typeof useHatch>;
@@ -115,9 +116,12 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, 
 /** Step 1.5's card. One sentence describes the creature; the six bodies that
  *  grow out of it are the workflow's business, not the attendee's. */
 export function ConceptField({ hatch }: { hatch: HatchState }) {
-  const { track, concept, setConcept, running, error, done } = hatch;
+  const { track, concept, setConcept, running, error, runError, done } = hatch;
   const [again, setAgain] = useState(false);
   if (running) return <p className="mw-note">Growing the series, in the tray to the left.</p>;
+  // The press's own reply, or the reason the file recorded after the page
+  // that pressed had moved on.
+  const problem = error || runError;
 
   /* Once six are grown the form does not come back on its own. It did, with
      the same red button, and a second press is another twelve dollars. */
@@ -160,7 +164,7 @@ export function ConceptField({ hatch }: { hatch: HatchState }) {
       <button className="btn btn-primary btn-sm" disabled={!concept.trim()} onClick={hatch.hatch}>
         Grow the series
       </button>
-      {error && <p className="mw-error">{error}</p>}
+      {problem && <p className="mw-error">{problem}</p>}
     </div>
   );
 }
