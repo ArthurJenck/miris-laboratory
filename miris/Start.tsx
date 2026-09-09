@@ -102,7 +102,10 @@ export default function Start({ onChoose, note }: { onChoose: (id: string) => vo
         <LaboratoryReel />
       </div>
       <footer className="mw-welcome-footer">
-        <p>A world from start to stream.</p>
+        <div className="mw-welcome-credits">
+          <p>A world from start to stream.</p>
+          <p>Authors and presenters <span>Dex Honsa <i aria-hidden="true">/</i> Marcus McLean</span></p>
+        </div>
         <ol aria-label="Workshop chapters">{STEPS.map(step => <li key={step.num}><span>{step.num}</span>{step.title}</li>)}</ol>
       </footer>
     </main>
