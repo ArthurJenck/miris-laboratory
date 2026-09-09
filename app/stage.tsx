@@ -1,6 +1,16 @@
 import { MirisStream } from '@miris-inc/three'
 import { extend, type ThreeElement } from '@react-three/fiber'
-import { Door, Platform, Room, Scene, Specimen, Walkway } from '../miris'
+import { useEffect, useState } from 'react'
+import { CanvasTexture, SRGBColorSpace } from 'three'
+import {
+    Door,
+    Platform,
+    Room,
+    Scene,
+    Screen,
+    Specimen,
+    Walkway,
+} from '../miris'
 import specimens from './specimens.json' with { type: 'json' }
 
 extend({ MirisStream })
@@ -48,8 +58,46 @@ const fileMarkup = (dossier: any) => `
     <footer class="mw-d-terminal">BIOLOGICAL RECORD / READ ONLY <span>TERMINAL ${String(dossier.index + 1).padStart(2, '0')} / 06</span></footer>
   </div>`
 
+// Lay the file out as real HTML inside a canvas, draw it in whenever it
+// paints, and wear that canvas as the texture of a plane.
 function File({ dossier }: any) {
-    return null
+    const [texture, setTexture] = useState<CanvasTexture | null>(null)
+
+    useEffect(() => {
+        const canvas = document.createElement('canvas')
+        canvas.setAttribute('layoutsubtree', '')
+        canvas.width = 1280
+        canvas.height = 800
+        // On the page but under the room: only what the browser paints can be drawn.
+        canvas.style.cssText =
+            'position: fixed; top: 0; left: 0; z-index: -1; pointer-events: none'
+        canvas.innerHTML = fileMarkup(dossier)
+        document.body.append(canvas)
+
+        const painted = new CanvasTexture(canvas)
+        painted.colorSpace = SRGBColorSpace
+        canvas.onpaint = () => {
+            const context = canvas.getContext('2d')!
+            context.setTransform(2, 0, 0, 2, 0, 0)
+            context.drawElementImage(canvas.firstElementChild!, 0, 0)
+            painted.needsUpdate = true
+        }
+        canvas.requestPaint?.()
+        setTexture(painted)
+
+        return () => {
+            canvas.remove()
+            painted.dispose()
+        }
+    }, [dossier])
+
+    if (!texture) return null
+    return (
+        <mesh>
+            <planeGeometry args={[1.6, 1]} />
+            <meshBasicMaterial map={texture} toneMapped={false} />
+        </mesh>
+    )
 }
 
 // Your file. Each step adds a few lines to it.
@@ -69,6 +117,9 @@ export default function Stage() {
                             args={[{ uuid: specimen.uuid, viewerKey }]}
                             scale={specimen.scale}
                         />
+                        <Screen>
+                            <File />
+                        </Screen>
                     </Specimen>
                 ))}
             </Scene>
