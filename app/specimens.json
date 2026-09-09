@@ -1,27 +1,27 @@
 [
     {
         "uuid": "f9d51acd-ac6f-4082-a801-f45545b4d8b4",
-        "scale": 1,
+        "scale": 0.2,
         "life_stage": 1
     },
     {
         "uuid": "611073b5-eaa6-488a-b1ec-2fea1c9acf53",
-        "scale": 1,
+        "scale": 0.3,
         "life_stage": 2
     },
     {
         "uuid": "15c8eb99-3e6a-4bf2-a059-f891477f009d",
-        "scale": 1,
+        "scale": 0.4,
         "life_stage": 3
     },
     {
         "uuid": "cb595d28-a427-4db4-90a6-44ec093d55c1",
-        "scale": 1,
+        "scale": 0.5,
         "life_stage": 4
     },
     {
         "uuid": "a981f5fd-823d-4753-8106-7d98196cd1e3",
-        "scale": 1,
+        "scale": 0.7,
         "life_stage": 5
     },
     {

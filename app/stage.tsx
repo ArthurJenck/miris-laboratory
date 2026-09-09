@@ -5,6 +5,7 @@ import { CanvasTexture, SRGBColorSpace } from 'three'
 import {
     Door,
     Platform,
+    Readout,
     Room,
     Scene,
     Screen,
@@ -123,6 +124,7 @@ export default function Stage() {
                     </Specimen>
                 ))}
             </Scene>
+            <Readout />
         </>
     )
 }

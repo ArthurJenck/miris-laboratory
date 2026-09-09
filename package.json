@@ -1,25 +1,25 @@
 {
-  "name": "miris-laboratory",
-  "private": true,
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@miris-inc/three": "^0.0.8-7db43c1",
-    "@react-three/drei": "^10.7.8",
-    "@react-three/fiber": "^9.7.0",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "three": "0.185.0"
-  },
-  "devDependencies": {
-    "@types/node": "^20.14.0",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
-    "@vitejs/plugin-react": "^4.3.4",
-    "typescript": "^5.5.0",
-    "vite": "^6.0.7"
-  }
+    "name": "miris-laboratory",
+    "private": true,
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc --noEmit && vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@miris-inc/three": "^0.0.8-7db43c1",
+        "@react-three/drei": "^10.7.8",
+        "@react-three/fiber": "^9.7.0",
+        "react": "^19.2.8",
+        "react-dom": "^19.2.8",
+        "three": "0.185.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.14.0",
+        "@types/react": "^19.2.18",
+        "@types/react-dom": "^19.2.5",
+        "@vitejs/plugin-react": "^4.3.4",
+        "typescript": "^5.5.0",
+        "vite": "^6.0.7"
+    }
 }
