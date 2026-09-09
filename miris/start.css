@@ -5,9 +5,6 @@
   view-transition-name: chooser;
 }
 .mw-welcome-header { min-height: 100px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-bottom: 1px solid #26333c; }
-.mw-welcome-header img { object-fit: contain; object-position: left; }
-.mw-welcome-header > span { color: #a3b1bb; font-size: 13px; }
-.mw-welcome-header i { color: #506370; margin: 0 12px; font-style: normal; }
 .mw-welcome-main { flex: 1; display: grid; grid-template-columns: minmax(270px, 0.8fr) minmax(0, 1.6fr); align-items: center; gap: clamp(28px, 4vw, 76px); padding: 64px 0; }
 .mw-welcome-intro { max-width: 450px; }
 .mw-welcome-location { color: #a4dcff; margin: 0 0 24px; font-size: 14px; }
@@ -17,26 +14,13 @@
 .mw-welcome-enter:hover:not(:disabled) { background: #d8eeff; }
 .mw-welcome-enter:disabled { opacity: 0.65; cursor: wait; }
 .mw-welcome-enter > span { font-size: 24px; line-height: 1; }
-.mw-welcome-detail { color: #8b9daa; font-size: 12px; margin: 15px 0 0; }
 .mw-welcome-note { color: #b4dff6; font-size: 13px; margin: 18px 0 0; }
 .mw-reel { margin: 0; min-width: 0; }
 .mw-reel-picture { position: relative; overflow: hidden; aspect-ratio: 16 / 11; background: #101e29; border: 1px solid #344450; }
 .mw-reel-picture > img, .mw-reel-picture > video { position: absolute; width: 100%; height: 100%; object-fit: cover; inset: 0; }
-.mw-reel-controls { position: absolute; bottom: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 52px 24px 22px; background: linear-gradient(transparent, #030c13e8); color: #e0edf5; }
-.mw-reel-controls > span { font-size: 13px; }
-.mw-reel-controls button { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; background: #0a1926cc; color: #eef5f8; border: 1px solid #91adbf80; border-radius: 2px; padding: 8px 12px; font: 500 12px "Geist", sans-serif; cursor: pointer; }
-.mw-reel-controls button:hover { background: #244358; }
-.mw-reel-controls svg { fill: currentColor; }
 .mw-welcome :focus-visible { outline: 2px solid #d0ecff; outline-offset: 5px; }
 .mw-reel-progress { position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #526b7a50; }
 .mw-reel-progress i { display: block; height: 100%; background: #b4dff6; }
-.mw-reel figcaption { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 20px; margin-top: 16px; font-size: 12px; color: #8b9daa; }
-.mw-reel figcaption > span:first-child { color: #d8e7f0; }
-.mw-welcome-footer { border-top: 1px solid #26333c; padding: 26px 0 32px; }
-.mw-welcome-footer > p { margin: 0 0 18px; color: #8b9daa; font-size: 12px; }
-.mw-welcome-footer ol { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px 26px; list-style: none; padding: 0; margin: 0; }
-.mw-welcome-footer li { color: #d5e0e7; font-size: 13px; display: flex; align-items: center; gap: 12px; }
-.mw-welcome-footer li > span { font: 11px "Geist Mono", monospace; color: #82a3b9; }
 @media (min-width: 1600px) { .mw-reel-picture { aspect-ratio: 16 / 10; } }
 @media (max-width: 960px) {
   .mw-welcome-main { grid-template-columns: 1fr; padding: 40px 0; gap: 36px; }
@@ -47,17 +31,11 @@
   .mw-welcome-header { min-height: 78px; }
 }
 @media (max-width: 540px) {
-  .mw-welcome-header > span { max-width: 150px; text-align: right; font-size: 11px; }
-  .mw-welcome-header i { margin: 0 4px; }
   .mw-welcome-location { margin-bottom: 20px; }
   .mw-welcome h1 { font-size: 52px; }
   .mw-welcome-enter { width: 100%; }
-  .mw-welcome-detail { max-width: none; }
   .mw-reel { margin-inline: -24px; }
   .mw-reel-picture { border-inline: 0; }
-  .mw-reel figcaption { margin-inline: 24px; }
-  .mw-reel-controls { padding: 36px 16px 14px; }
-  .mw-welcome-footer ol { display: grid; grid-template-columns: 1fr 1fr; }
 }
 @media (prefers-reduced-motion: reduce) { .mw-welcome-enter { transition: none; } }
 
@@ -65,5 +43,4 @@
   .mw-welcome-header { min-height: 78px; }
   .mw-welcome-main { padding-block: 30px; }
   .mw-reel-picture { aspect-ratio: 16 / 9; }
-  .mw-welcome-footer { padding-block: 18px 22px; }
 }
