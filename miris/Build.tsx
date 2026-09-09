@@ -178,26 +178,16 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
   const { stages, drawn, done, running, elapsed, data, small, setSmall } = hatch;
   const box = useRef<HTMLElement>(null);
 
-  /* Popover manners: Escape and a click outside put it away. Bound only while
-     it is open, so the collapsed handle keeps its own click. */
+  /* Escape folds it. A click outside used to as well, and that read as the tray
+     vanishing the moment anyone touched the room; now only its own fold button
+     and Escape put it away. */
   useEffect(() => {
     if (small) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setSmall(true);
     };
-    const onDown = (e: MouseEvent) => {
-      const t = e.target as HTMLElement | null;
-      if (box.current?.contains(t as Node)) return;
-      // The guide and the dev bar are their own surfaces, not "outside".
-      if (t?.closest?.(".mw-panel, .mw-tab, .mw-dev")) return;
-      setSmall(true);
-    };
     window.addEventListener("keydown", onKey);
-    window.addEventListener("mousedown", onDown);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("mousedown", onDown);
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [small, setSmall]);
 
   // Present as soon as there is a run, even before it has named anything.

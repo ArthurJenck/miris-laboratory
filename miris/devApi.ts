@@ -335,7 +335,13 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       body: JSON.stringify(input),
     });
     if (res.status === 400 || res.status === 422) throw new Error(`fal rejected the run: ${(await res.text()).slice(0, 300)}`);
-    if (!res.ok || !res.body) return falRun(GROWTH_WORKFLOW, input);
+    if (!res.ok || !res.body) {
+      // Said out loud, because a queued run reports nothing until the end and
+      // that looks like a tray that has stopped working.
+      console.warn(`[miris] fal would not stream the run (${res.status}); queued instead, so the tray fills in only when it finishes.`);
+      return falRun(GROWTH_WORKFLOW, input);
+    }
+    console.log("[miris] growth run streaming from fal");
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -361,6 +367,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
         if (event?.type === "completion" && typeof event.node_id === "string") await onNode(event.node_id, event.output);
         else if (event?.type === "output") output = event.output;
         else if (event?.type === "error") throw new Error(String(event.message ?? event.error ?? "the workflow reported an error"));
+        else console.log(`[miris] fal event ${String(event?.type)}${event?.node_id ? ` ${event.node_id}` : ""}`);
       }
     }
     if (!output) throw new Error("The stream from fal ended before the workflow finished. Press the button again.");
