@@ -38,7 +38,7 @@ test('File lands by name, once, and leaves the rest of the parts block alone', (
 
 test('clearing a step puts back the step before it and nothing else', () => {
   const complete = completedStage(starter, curriculum);
-  assert.match(readMarker(clearLesson(complete, 'platform'), 'scene'), /<Floor/);
+  assert.match(readMarker(clearLesson(complete, 'platform'), 'scene'), /<Room/);
   assert.doesNotMatch(readMarker(clearLesson(complete, 'platform'), 'scene'), /<Platform/);
   assert.match(readMarker(clearLesson(complete, 'file'), 'parts'), /return null/);
   assert.doesNotMatch(readMarker(clearLesson(complete, 'file'), 'parts'), /drawElementImage/);

@@ -1,7 +1,7 @@
 /* The code each step adds to app/stage.tsx, and where it goes. */
 
 // Inside <Scene>: one line per part of the room.
-const FLOOR = `        <Floor />`;
+const ROOM = `        <Room />`;
 const PLATFORM = `        <Platform />`;
 const WALKWAY = `        <Walkway />`;
 const DOOR = `        <Door />`;
@@ -122,16 +122,16 @@ export const EMPTY_SPECIMENS = Array.from({ length: 6 }, () => ({ uuid: "", scal
 const stack = (...lines) => lines.join("\n");
 
 /* What Fill writes. The scene and hud markers are shared by several steps, so
-   those snippets are cumulative: filling the platform writes the floor too,
+   those snippets are cumulative: filling the platform writes the room too,
    and each version of the specimen map replaces the one before it. */
 export const SNIPPETS = {
-  floor: FLOOR,
-  platform: stack(FLOOR, PLATFORM),
-  walkway: stack(FLOOR, PLATFORM, WALKWAY),
-  door: stack(FLOOR, PLATFORM, WALKWAY, DOOR),
-  specimens: stack(FLOOR, PLATFORM, WALKWAY, DOOR, SPECIMENS),
-  streams: stack(FLOOR, PLATFORM, WALKWAY, DOOR, STREAMS),
-  screens: stack(FLOOR, PLATFORM, WALKWAY, DOOR, SCREENS),
+  room: ROOM,
+  platform: stack(ROOM, PLATFORM),
+  walkway: stack(ROOM, PLATFORM, WALKWAY),
+  door: stack(ROOM, PLATFORM, WALKWAY, DOOR),
+  specimens: stack(ROOM, PLATFORM, WALKWAY, DOOR, SPECIMENS),
+  streams: stack(ROOM, PLATFORM, WALKWAY, DOOR, STREAMS),
+  screens: stack(ROOM, PLATFORM, WALKWAY, DOOR, SCREENS),
   file: FILE,
   markup: MARKUP,
   field: FIELD,
@@ -142,7 +142,7 @@ export const SNIPPETS = {
 
 /* What each step actually adds: the part the card shows. */
 export const PARTS = {
-  floor: FLOOR,
+  room: ROOM,
   platform: PLATFORM,
   walkway: WALKWAY,
   door: DOOR,
@@ -167,11 +167,11 @@ export const EMPTY_BLOCKS = {
 };
 
 /* Clearing a step puts its block back to the step before it, not to empty, so
-   a clear at 2.2 does not take 2.1's floor with it. null means there is
+   a clear at 2.2 does not take 2.1's room with it. null means there is
    nothing before it and the block returns to its empty state. */
 export const CLEARS_TO = {
-  floor: null,
-  platform: "floor",
+  room: null,
+  platform: "room",
   walkway: "platform",
   door: "walkway",
   specimens: "door",
@@ -186,7 +186,7 @@ export const CLEARS_TO = {
 };
 
 export const MARKER_FOR = {
-  floor: "scene",
+  room: "scene",
   platform: "scene",
   walkway: "scene",
   door: "scene",

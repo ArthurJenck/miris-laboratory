@@ -37,11 +37,14 @@ export interface StepPaneProps {
   busy: string;
   /** What the last Done click found wrong, keyed by substep number. */
   problems: Record<string, string>;
-  /** Owned by Guide so the tray outlives step 1.2. */
+  /** Owned by Guide so the tray outlives step 1.4. */
   hatch: HatchState;
   /** The substep whose card is open. Usually the progress pointer, but a
    *  finished substep can be opened to re-read it. */
   openSubNum: string;
+  /** Shows the paste-it-for-me and clear buttons under each snippet. The
+   *  wand in the guide's header turns it on. */
+  assist: boolean;
   actions: StepActions;
 }
 
@@ -114,6 +117,7 @@ export default function StepPane({
   problems,
   hatch,
   openSubNum,
+  assist,
   actions,
 }: StepPaneProps) {
   // Browsing ahead via the rail shows a step that holds no current substep. The
@@ -206,18 +210,20 @@ export default function StepPane({
             {sub.fill && (
               <>
                 <Snippet code={dedent(PARTS[sub.fill as keyof typeof PARTS] ?? "")} />
-                <div className="mw-row mw-autorow">
-                  <button
-                    className="btn btn-ghost btn-sm"
-                    disabled={busy === sub.num}
-                    onClick={() => actions.fill(sub.fill!, sub.num)}
-                  >
-                    {busy === sub.num ? "Writing" : "Or paste it for me"}
-                  </button>
-                  <button className="btn btn-ghost btn-sm" onClick={() => actions.clear(sub.fill!)}>
-                    Clear block
-                  </button>
-                </div>
+                {assist && (
+                  <div className="mw-row mw-autorow">
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      disabled={busy === sub.num}
+                      onClick={() => actions.fill(sub.fill!, sub.num)}
+                    >
+                      {busy === sub.num ? "Writing" : "Or paste it for me"}
+                    </button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => actions.clear(sub.fill!)}>
+                      Clear block
+                    </button>
+                  </div>
+                )}
               </>
             )}
 

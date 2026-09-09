@@ -141,7 +141,6 @@ a:hover { text-decoration: underline; }
 
 .btn-sm { --btn-h: 32px; font-size: 14px; line-height: 20px; }
 
-
 /* --sans and --mono are this file's own aliases, not kit tokens, and 34 rules
    below need them. */
 /* .mw-tray is portalled to body, so it inherits none of the panel's context and
@@ -205,6 +204,25 @@ a:hover { text-decoration: underline; }
 }
 .mw-hide:hover { color: var(--mono-200); }
 
+/* The wand: a switch, so it keeps its pressed state in colour rather than
+   in a label. Dim like the mark when off; the track's accent when on. */
+.mw-assist {
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 6px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  color: var(--mono-600);
+  cursor: pointer;
+  padding: 0;
+}
+.mw-assist:hover { color: var(--mono-200); }
+.mw-assist[aria-pressed="true"] { color: var(--accent); border-color: var(--mono-800); }
+
 .mw-tab {
   position: fixed;
   top: 16px;
@@ -267,8 +285,6 @@ a:hover { text-decoration: underline; }
   color: var(--mono-600);
 }
 
-
-
 /* Closed by default. The explanations are the longest thing in a card and the
    step above them is what the attendee came to do, so the reasoning is offered
    rather than imposed. A details element rather than state: keyboard and
@@ -302,7 +318,6 @@ a:hover { text-decoration: underline; }
 /* ── controls ─────────────────────────────────────────── */
 
 .mw-row { display: flex; gap: 8px; align-items: center; margin: 2px 0 10px; flex-wrap: wrap; }
-
 
 .mw-build textarea,
 .mw-tray textarea {
@@ -553,7 +568,7 @@ a:hover { text-decoration: underline; }
   .mw-prog-fill { transition: none; }
 }
 
-/* ── the build block, inline in step 1.2 ──────────────── */
+/* ── the build block, inline in step 1.4 ──────────────── */
 
 /* Was a modal. It is the step's own work, so it belongs in the step, and the
    card around it already supplies the heading, the guidance and the accent. */
@@ -586,7 +601,6 @@ a:hover { text-decoration: underline; }
 .mw-build img { width: 100%; border-radius: var(--radius-s); display: block; margin: 12px 0; }
 .mw-build .mw-dim { opacity: 0.3; }
 .mw-build .mw-row { justify-content: flex-start; margin-top: 14px; }
-
 
 .mw-note { color: var(--mono-400); font-size: 13px; margin: 10px 0 0; }
 .mw-elapsed {
@@ -658,7 +672,6 @@ a:hover { text-decoration: underline; }
   outline: 2px solid var(--mono-400);
   outline-offset: 2px;
 }
-
 
 /* ── split: step rail beside the focused pane ─────────────────
    The rail is .mw-steprail, NOT .mw-rail: that class is already the track
@@ -1174,7 +1187,6 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 .mw-path[data-failed] { color: var(--mono-200); border-color: var(--mono-700); }
 
 /* Which of the six capsules a step is about to write into. */
-.mw-capsules { display: flex; gap: 6px; margin: 10px 0 0; }
 .mw-cap {
   flex: 1; padding: 7px 0; background: none; cursor: pointer; color: var(--mono-500);
   border: 1px solid var(--mono-700); border-radius: 4px;
@@ -1182,12 +1194,6 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 }
 .mw-cap.is-full { color: var(--mono-200); border-color: var(--mono-600); }
 .mw-cap.is-active { border-color: var(--track); color: var(--track); }
-.mw-capsule { display: grid; gap: 8px; }
-.mw-capsule input {
-  width: 100%; box-sizing: border-box; padding: 8px 10px;
-  background: var(--mono-800); border: 1px solid var(--mono-700); border-radius: 4px;
-  color: var(--mono-000); font-family: ui-monospace, Menlo, monospace; font-size: 12px;
-}
 
 /* A subdued ground while the sidebar image loads. */
 .mw-bar { background: linear-gradient(90deg, #061016 0%, #0a1a22 50%, #061016 100%); }
@@ -1246,13 +1252,6 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 /* What the key found, before it is committed. Shown rather than assumed: a
    silent mis-order would put the adult in capsule one and read as a bad
    upload, which is a worse ten minutes than one glance. */
-.mw-found { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; background: var(--mono-800); border: 1px solid var(--mono-800); }
-.mw-found li {
-  display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: center;
-  padding: 8px 11px; background: var(--surface-raised); font-size: 13px; color: var(--mono-200);
-}
-.mw-found-n { font-family: ui-monospace, Menlo, monospace; font-size: 11px; color: var(--mono-600); font-variant-numeric: tabular-nums; }
-.mw-found-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mw-link {
   align-self: flex-start; padding: 0; border: 0; background: none; cursor: pointer;
   font: inherit; font-size: 13px; color: var(--mono-500); text-decoration: underline;
@@ -1260,12 +1259,6 @@ html[data-vt="out"]::view-transition-old(chooser) { animation: none; }
 }
 .mw-link:hover { color: var(--mono-200); }
 .mw-link:disabled { opacity: 0.5; cursor: default; }
-
-/* ── the workshop's own series, under "I already have a series" ── */
-.mw-fallbacks { display: flex; flex-direction: column; gap: 6px; }
-.mw-fallbacks .l12 { color: var(--mono-500); }
-.mw-fallbacks .mw-row { flex-wrap: wrap; gap: 6px; margin: 0; justify-content: flex-start; }
-
 
 /* ── the closing pane ───────────────────────────────────── */
 .mw-finished > .l12 { color: var(--accent); }

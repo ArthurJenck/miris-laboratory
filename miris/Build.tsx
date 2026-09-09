@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { FALLBACK_KEYS, STAGES } from "./config";
+import { STAGES } from "./config";
 import type { Track } from "./tracks";
 
-/* The state lives above the steps, in Guide. It used to live inside step 1.2's
+/* The state lives above the steps, in Guide. It used to live inside step 1.4's
  * card, which unmounted the moment anyone advanced: the room is built while the
  * series grows, so the twelve minute job lost its entire UI at exactly the
  * point the curriculum sends attendees on to the next step. */
@@ -112,59 +112,21 @@ export type HatchState = ReturnType<typeof useHatch>;
 
 const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-/** Step 1.2's card. One sentence describes the creature; the six bodies that
+/** Step 1.4's card. One sentence describes the creature; the six bodies that
  *  grow out of it are the workflow's business, not the attendee's. */
 export function ConceptField({ hatch }: { hatch: HatchState }) {
-  const { track, concept, setConcept, running, error, data, refresh, done } = hatch;
-  const [skip, setSkip] = useState(false);
+  const { track, concept, setConcept, running, error, done } = hatch;
   const [again, setAgain] = useState(false);
-  const [preset, setPreset] = useState("");
   if (running) return <p className="mw-note">Growing the series, in the tray to the left.</p>;
 
   /* Once six are grown the form does not come back on its own. It did, with
      the same red button, and a second press is another twelve dollars. */
-  if (done >= STAGES && !again && !skip)
+  if (done >= STAGES && !again)
     return (
       <div className="mw-build">
         <p className="mw-note">All six stages are grown. The archive is in the tray, to the left of this panel.</p>
         <button className="mw-link" onClick={() => setAgain(true)}>
           Grow a different {track.noun} instead
-        </button>
-      </div>
-    );
-
-  /* Growing costs about twelve minutes and twelve dollars. Anyone who has
-     already uploaded a series, running the workshop a second time or
-     rehearsing the half that comes after, should not have to buy another. */
-  if (skip)
-    return (
-      <div className="mw-build">
-        <p className="mw-note">
-          Paste the viewer key you scoped to six assets you have already uploaded. The capsules fill from it, and
-          the rest of this step is done.
-        </p>
-        {/* Series the presenters grew in advance. For anyone whose fal account
-            is blocked, whose run failed, or who arrived late: one press and the
-            capsules fill. Hidden when the list in config is empty. */}
-        {FALLBACK_KEYS.length > 0 && (
-          <div className="mw-fallbacks">
-            <span className="l12">Or take one of the workshop's</span>
-            <div className="mw-row">
-              {FALLBACK_KEYS.map((f) => (
-                <button
-                  key={f.key}
-                  className={`btn btn-sm ${preset === f.key ? "btn-secondary" : "btn-ghost"}`}
-                  onClick={() => setPreset(f.key)}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        <CapsuleAuto key={preset} data={data} onDone={refresh} preset={preset} />
-        <button className="mw-link" onClick={() => setSkip(false)}>
-          Grow a new one instead
         </button>
       </div>
     );
@@ -199,9 +161,6 @@ export function ConceptField({ hatch }: { hatch: HatchState }) {
         Grow the series
       </button>
       {error && <p className="mw-error">{error}</p>}
-      <button className="mw-link" onClick={() => setSkip(true)}>
-        I already have a series
-      </button>
     </div>
   );
 }
@@ -370,188 +329,3 @@ export function DevBar({ hatch }: { hatch: HatchState }) {
     </div>
   );
 }
-
-/* The archive names its meshes 01-egg through 06-adult, so a leading number is
-   the growth order. Only a leading one counts: matching any digit anywhere put
-   "HL2 Ammo Crate" first, ahead of six correctly numbered specimens, because
-   of the 2 in HL2. Anything unnumbered sorts after rather than being dropped,
-   so a renamed asset still lands somewhere the attendee can see it. */
-const INDEXED = /^\s*(\d+)\s*[-_. ]/;
-const orderOf = (name: string) => {
-  const m = String(name).match(INDEXED);
-  return m ? Number(m[1]) : Number.MAX_SAFE_INTEGER;
-};
-
-/** Step 3.5. A scoped key already knows which assets it can read, so asking
- *  for six uuids as well was asking the attendee to retype what the key could
- *  answer for itself. Paste the key, look at what it found, seal all six. */
-export function CapsuleAuto({ data, onDone, preset = "" }: { data: any; onDone: () => void; preset?: string }) {
-  // A preset is one of the workshop's own keys: it goes straight to the lookup
-  // so the picker is one press, and the found list still shows before sealing.
-  const [key, setKey] = useState(preset || data?.viewerKey || "");
-  const [found, setFound] = useState<any[] | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const [manual, setManual] = useState(false);
-  const [again, setAgain] = useState(!!preset);
-
-  const find = async () => {
-    setBusy(true);
-    setError("");
-    setFound(null);
-    let scene: any;
-    try {
-      const { MirisScene } = await import("@miris-inc/three");
-      scene = new (MirisScene as any)({ viewerKey: key.trim() });
-      if (scene.ready) await scene.ready;
-      const assets = await scene.fetchAssets();
-      if (!assets?.length) throw new Error("That key cannot see any assets. Check it is the key you scoped, and that the uploads finished.");
-      setFound([...assets].sort((a: any, b: any) => orderOf(a.name) - orderOf(b.name) || String(a.name).localeCompare(String(b.name))));
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-    } finally {
-      scene?.dispose();
-      setBusy(false);
-    }
-  };
-
-  useEffect(() => {
-    if (preset) void find();
-    // Once per preset: the component is keyed on it, so a new one remounts.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preset]);
-
-  const seal = async () => {
-    setBusy(true);
-    setError("");
-    try {
-      const res = await fetch("/api/miris", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "adopt",
-          viewerKey: key.trim(),
-          uuids: found!.slice(0, STAGES).map((a) => a.uuid),
-          names: found!.slice(0, STAGES).map((a) => a.name),
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error ?? `request failed: ${res.status}`);
-      onDone();
-      location.reload();
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-      setBusy(false);
-    }
-  };
-
-  if (manual) return <CapsuleForm data={data} onDone={onDone} />;
-
-  /* Sealing reloads the page, so the form came back blank as if nothing had
-     happened. Say what is in the glass, and keep the way back. */
-  const sealed = (data?.specimens ?? []).filter((s: any) => s?.uuid);
-  if (!found && !again && sealed.length >= STAGES)
-    return (
-      <div className="mw-build mw-capsule">
-        <p className="mw-note">
-          All {STAGES} capsules are sealed, {String(sealed[0]?.stage || "egg").toLowerCase()} first. The glass fills as each
-          stream arrives.
-        </p>
-        <button className="mw-link" onClick={() => setAgain(true)}>
-          Use a different key
-        </button>
-      </div>
-    );
-
-  const take = found?.slice(0, STAGES) ?? [];
-  const numbered = found?.filter((a) => INDEXED.test(String(a.name))).length ?? 0;
-  return (
-    <div className="mw-build mw-capsule">
-      <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="scoped viewer key" spellCheck={false} />
-
-      {!found && (
-        <button className="btn btn-primary btn-sm" disabled={busy || !key.trim()} onClick={find}>
-          {busy ? "Looking" : "Find my specimens"}
-        </button>
-      )}
-
-      {found && (
-        <>
-          <ol className="mw-found">
-            {take.map((a, i) => (
-              <li key={a.uuid}>
-                <span className="mw-found-n">{String(i + 1).padStart(2, "0")}</span>
-                <span className="mw-found-name">{a.name}</span>
-              </li>
-            ))}
-          </ol>
-          <p className={numbered === 0 ? "mw-error" : "mw-note"}>
-            {numbered === 0
-              ? `None of the ${found.length} assets this key reads are numbered, so this order is alphabetical and almost certainly wrong. Check you pasted the key scoped to your six.`
-              : found.length > STAGES
-                ? `That key reads ${found.length} assets. The ${numbered} numbered ones lead, and the first ${STAGES} go in.`
-                : found.length < STAGES
-                  ? `That key reads ${found.length}. The rest of the capsules stay empty until more finish processing.`
-                  : "In growth order, one per capsule."}
-          </p>
-          <div className="mw-row">
-            <button className="btn btn-primary btn-sm" disabled={busy} onClick={seal}>
-              {busy ? "Sealing" : `Seal ${take.length === 1 ? "the capsule" : `all ${take.length}`}`}
-            </button>
-            <button className="mw-link" onClick={() => setFound(null)} disabled={busy}>
-              Look again
-            </button>
-          </div>
-        </>
-      )}
-
-      {error && <p className="mw-error">{error}</p>}
-      {!found && (
-        <button className="mw-link" onClick={() => setManual(true)}>
-          Enter them by hand
-        </button>
-      )}
-    </div>
-  );
-}
-
-export function CapsuleForm({ data, onDone }: { data: any; onDone: () => void }) {
-  const i = data?.active ?? 0;
-  const slot = data?.specimens?.[i];
-  const [uuid, setUuid] = useState(slot?.uuid ?? "");
-  const [key, setKey] = useState(data?.viewerKey ?? "");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  const save = async () => {
-    setBusy(true);
-    setError("");
-    try {
-      const res = await fetch("/api/miris", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "capsule", index: i, uuid: uuid.trim(), viewerKey: key.trim() }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error ?? `request failed: ${res.status}`);
-      onDone();
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <div className="mw-build mw-capsule">
-      <p className="l12">Capsule {slot?.id ?? "01"}</p>
-      <input value={uuid} onChange={(e) => setUuid(e.target.value)} placeholder="asset uuid" spellCheck={false} />
-      <input value={key} onChange={(e) => setKey(e.target.value)} placeholder="scoped viewer key" spellCheck={false} />
-      <button className="btn btn-primary btn-sm" disabled={busy || !uuid.trim()} onClick={save}>
-        {busy ? "Sealing" : "Seal the capsule"}
-      </button>
-      {error && <p className="mw-error">{error}</p>}
-    </div>
-  );
-}
-

@@ -15,8 +15,11 @@ function LaboratoryReel() {
 
   useEffect(() => {
     const motion = matchMedia("(prefers-reduced-motion: reduce)");
-    const connection = (navigator as Navigator & { connection?: EventTarget & { saveData?: boolean } }).connection;
-    const update = () => setPreferences({ reduced: motion.matches, saveData: connection?.saveData === true });
+    const connection = (
+      navigator as Navigator & { connection?: EventTarget & { saveData?: boolean } }
+    ).connection;
+    const update = () =>
+      setPreferences({ reduced: motion.matches, saveData: connection?.saveData === true });
     const visibility = () => setVisible(!document.hidden);
     update();
     visibility();
@@ -69,7 +72,13 @@ function LaboratoryReel() {
   );
 }
 
-export default function Start({ onChoose, note }: { onChoose: (id: string) => void | Promise<void>; note?: string }) {
+export default function Start({
+  onChoose,
+  note,
+}: {
+  onChoose: (id: string) => void | Promise<void>;
+  note?: string;
+}) {
   const [entering, setEntering] = useState(false);
   const [error, setError] = useState("");
   const enter = async () => {
@@ -94,8 +103,8 @@ export default function Start({ onChoose, note }: { onChoose: (id: string) => vo
           <p className="mw-welcome-location">Welcome to Sublevel 7</p>
           <h1 id="mw-welcome-title">Build a living laboratory.</h1>
           <p className="mw-welcome-description">
-            Start with an empty scene. Build the laboratory in code, connect six life stages through Miris, then add
-            an HTML screen and a TSL shader.
+            Start with an empty scene. Build the laboratory in code, connect six life stages through
+            Miris, then add an HTML screen and a TSL shader.
           </p>
           <button type="button" className="mw-welcome-enter" onClick={enter} disabled={entering}>
             {entering ? "Opening the laboratory…" : "Enter the laboratory"}

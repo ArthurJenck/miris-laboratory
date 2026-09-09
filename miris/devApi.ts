@@ -29,12 +29,12 @@ const FIXTURES = join(MIRIS_DIR, "fixtures.json");
 
 /* What each step's snippet must leave behind for its check to believe it. Kept
    in one table, and audited against the snippets when the server starts,
-   because these drifted apart once: the floor check went looking for a
+   because these drifted apart once: the room check went looking for a
    gridHelper the snippet had stopped emitting, so pressing Fill and then Done
    told the attendee they had not done a step they had just done. A check that
    blames the person for the repo's own drift is worse than no check. */
 const PROOF = {
-  floor: "<Floor",
+  room: "<Room",
   platform: "<Platform",
   walkway: "<Walkway",
   door: "<Door",
@@ -51,7 +51,7 @@ const PROOF = {
 
 /** Which snippet each proof has to appear in. */
 const PROOF_IN: Record<keyof typeof PROOF, keyof typeof SNIPPETS> = {
-  floor: "floor",
+  room: "room",
   platform: "platform",
   walkway: "walkway",
   door: "door",
@@ -150,8 +150,8 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     return "Nothing grown yet. Describe your creature and press Grow the series.";
   },
 
-  floor: inBlock("scene", PROOF.floor, "The scene block in app/stage.tsx has no floor in it yet. Add the line between the miris:scene comments, or let the step do it."),
-  platform: inBlock("scene", PROOF.platform, "No platform in the scene block yet. Add it under the floor, or let the step do it."),
+  room: inBlock("scene", PROOF.room, "The scene block in app/stage.tsx has no room in it yet. Add the line between the miris:scene comments, or let the step do it."),
+  platform: inBlock("scene", PROOF.platform, "No platform in the scene block yet. Add it under the room, or let the step do it."),
   walkway: inBlock("scene", PROOF.walkway, "No walkway in the scene block yet. Add it under the platform, or let the step do it."),
   door: inBlock("scene", PROOF.door, "No door in the scene block yet. Add it under the walkway, or let the step do it."),
   specimens: inBlock("scene", PROOF.specimens, "No specimens in the scene block yet. Add the map under the door, or let the step do it."),
@@ -412,23 +412,6 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
       return ok({ done: !problem, problem });
     }
 
-    case "capsule": {
-      const stored = await readData(MIRIS_DIR);
-      const bank = normaliseBank(stored.specimens as any[]);
-      const i = Number(body?.index);
-      if (!Number.isInteger(i) || i < 0 || i >= bank.length) return fail(`No such capsule: ${body?.index}`);
-      const uuid = String(body?.uuid ?? "").trim();
-      if (!UUID_RE.test(uuid)) return fail(`That uuid does not look like one: "${uuid}". Copy just the id from the asset page.`);
-      bank[i] = { ...bank[i], uuid, status: "live" };
-      const patch: Record<string, unknown> = { specimens: bank };
-      // One key reads every capsule, so it lives beside the bank, not inside it.
-      const key = String(body?.viewerKey ?? "").trim();
-      if (key) patch.viewerKey = key;
-      await writeData(MIRIS_DIR, patch);
-      await writeStageSpecimens(key || (stored.viewerKey as string) || undefined, bank);
-      return ok({ ok: true, index: i });
-    }
-
     case "hatch": {
       const stored = await readData(MIRIS_DIR);
       const track = TRACKS.find((t) => t.id === stored.track);
@@ -546,88 +529,6 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
         await writeData(MIRIS_DIR, { hatchedAt: 0 });
         throw e;
       }
-    }
-
-    /* Skip the generation. Assets already uploaded, with a key already scoped
-       to them, is the state the twelve minutes exist to reach, so anyone
-       rehearsing what comes after should be able to start from it. Unlike
-       seeding this is not offline only: the capsules stream the real assets,
-       nothing is replayed. */
-    case "adopt": {
-      const key = String(body?.viewerKey ?? "").trim();
-      if (!key) return fail("Paste the viewer key you scoped to your assets.");
-      if (key === VIEWER_KEY) return fail("That is the workshop's demo key, which cannot read your assets.");
-      const given = Array.isArray(body?.uuids)
-        ? body.uuids.map((u: any) => String(u).trim()).filter(Boolean)
-        : [];
-      // The asset's own name, so a series that is not the recorded one still
-      // gets its own labels: "01-egg" reads as "egg".
-      const names = Array.isArray(body?.names) ? body.names.map((n: any) => String(n)) : [];
-      const nameAt = (i: number) =>
-        String(names[i] ?? "")
-          .replace(/\.[a-z0-9]+$/i, "")
-          .replace(/^\s*\d+\s*[-_. ]\s*/, "")
-          .replace(/[-_]+/g, " ")
-          .trim();
-      const bad = given.find((u: string) => !UUID_RE.test(u));
-      if (bad) return fail(`That does not look like a uuid: "${bad}". Copy just the id from the asset page.`);
-
-      const fx = await readFixtures().catch(() => null as any);
-      const stored = await readData(MIRIS_DIR);
-      const bank = normaliseBank(stored.specimens as any[]);
-      bank.forEach((slot, i) => {
-        // Fewer ids than capsules cycles them, so one asset can fill the room
-        // while only some of the six have been uploaded.
-        const uuid = given.length ? given[i % given.length] : slot.uuid || DEMO_UUID;
-        /* Only borrow the recording's stage names, prompts and files when this
-           really is the recorded specimen. Matching by position alone put the
-           crustacean's paperwork on whatever anyone else had uploaded. */
-        const f = fx?.stages?.[i];
-        const same = !!f && String(f.uuid || "").trim() === uuid;
-        /* A capsule given a different asset is a different specimen: its old
-           name and file go with the old one rather than sitting on top of the
-           new one. */
-        const swapped = String(slot.uuid || "") !== uuid;
-        const keep = <T,>(v: T) => (swapped ? undefined : v);
-        bank[i] = {
-          ...slot,
-          stage: keep(slot.stage) || (same ? f!.stage : "") || nameAt(i) || `Stage ${i + 1}`,
-          prompt: keep(slot.prompt) || (same ? f!.prompt : "") || "",
-          dossier: keep(slot.dossier) || (same ? f!.dossier : null) || null,
-          uuid,
-          status: "live",
-          modelStartedAt: 0,
-          // The archive is not what was skipped, the generating of it was.
-          glb: slot.glb || `adopted:${String(i + 1).padStart(2, "0")}`,
-        };
-      });
-      await writeData(MIRIS_DIR, {
-        track: stored.track || TRACKS[0].id,
-        concept: stored.concept || fx?.concept || "",
-        specimens: bank,
-        viewerKey: key,
-        zipReady: true,
-        hatchedAt: Date.now(),
-      });
-      await writeStageSpecimens(key, bank);
-
-      /* Remembered, so a later seed brings the same assets back, but only when
-         these are the assets the recording already describes or it has none
-         yet. Writing any adopted uuid back put someone else's ids next to the
-         recorded stage names and dossiers, and the next adopt then believed
-         they matched. */
-      const claimable =
-        !!fx &&
-        fx.stages.every((st: any, i: number) => {
-          const had = String(st.uuid || "").trim();
-          return !had || had === bank[i].uuid;
-        });
-      if (fx && claimable) {
-        fx.viewerKey = key;
-        fx.stages = fx.stages.map((st: any, i: number) => ({ ...st, uuid: bank[i].uuid }));
-        await writeFile(FIXTURES, JSON.stringify(fx, null, 2) + "\n");
-      }
-      return ok({ adopted: bank.length, distinct: new Set(bank.map((b) => b.uuid)).size });
     }
 
     /* The whole run in one press: six stages named, six dossiers written, six

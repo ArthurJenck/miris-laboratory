@@ -78,6 +78,16 @@ function WorkshopGuide() {
   const [viewing, setViewing] = useState("");
   // Start over asks once; the answer is a second click, not a dialog.
   const [confirmReset, setConfirmReset] = useState(false);
+  // Whether each step also offers to write its code for you. Off by default so
+  // the room is typed in, remembered per browser for anyone who wants the help.
+  const [assist, setAssist] = useState(() => {
+    try { return localStorage.getItem("mw-assist") === "1"; } catch { return false; }
+  });
+  const toggleAssist = () => {
+    const next = !assist;
+    setAssist(next);
+    try { localStorage.setItem("mw-assist", next ? "1" : "0"); } catch {}
+  };
   // What the last Done click found wrong, keyed by substep so browsing the rail
   // does not carry one step's complaint onto another.
   const [problems, setProblems] = useState<Record<string, string>>({});
@@ -171,7 +181,7 @@ function WorkshopGuide() {
   const trackVars = { ["--track" as string]: track.accent } as React.CSSProperties;
 
   // Above the steps, so the tray survives an advance: the mesh takes four to
-  // six minutes and later steps send attendees away from 1.2 while it runs.
+  // six minutes and later steps send attendees away from 1.4 while it runs.
   const hatch = useHatch(track);
 
   // Swapping between the chooser and the panel is a view transition: the
@@ -334,6 +344,18 @@ function WorkshopGuide() {
         <header className="mw-head">
           <b className="b14">Spatial streaming</b>
           <img className="mw-mark" src="/kit/assets/miris-logo-white.svg" alt="Miris" />
+          <button
+            className="mw-assist"
+            onClick={toggleAssist}
+            aria-pressed={assist}
+            aria-label={assist ? "Hide the paste-it-for-me buttons" : "Show the paste-it-for-me buttons"}
+            title={assist ? "Steps offer to write their code. Click to type it yourself." : "Steps are typed in. Click to let them write the code for you."}
+          >
+            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2.5 13.5 9.5 6.5" />
+              <path d="M11.5 1.5v2.4M11.5 6.9v2.4M9.1 4.7h-2.4M14.7 4.7h-2.4" />
+            </svg>
+          </button>
           <button className="mw-hide" onClick={() => setOpen(false)} aria-label="Hide the guide">
             ×
           </button>
@@ -403,6 +425,7 @@ function WorkshopGuide() {
                 problems={problems}
                 hatch={hatch}
                 openSubNum={openSubNum}
+                assist={assist}
                 actions={actions}
               />
             )}

@@ -22,9 +22,9 @@ changing your code or saved specimens.
 Five minutes now saves twenty in the room.
 
 1. **A fal.ai account with billing on.** The series is generated on your own
-   key, and a key without a card behind it stops at step 1.2. Sign up at
-   fal.ai, add a payment method, and create a key at fal.ai/dashboard/keys.
-   You will paste it in step 1.1.
+   key, and a key without a card behind it stops at step 1.4. Sign up at
+   fal.ai, add a payment method, redeem the coupon FAL-MIRIS on the Billing
+   page, and create a key at fal.ai/dashboard/keys. You will paste it in step 1.3.
 2. **A Miris account.** Sign up at app.miris.com. You upload six files to it
    in step 3.1, and the signup is quicker done at home than on conference wifi.
 3. **Chrome, with one flag on.** Step 4.2 draws live HTML into the scene with
@@ -36,16 +36,15 @@ Five minutes now saves twenty in the room.
 5. **Node 20 or newer** if you run it locally. In Bolt nothing to install.
 
 Total spend on your fal key is about twelve dollars: six images at a few cents
-each and six meshes at about $1.40 apiece. If you would rather not spend it,
-the guide has an **I already have a series** path at step 1.2 that fills the
-capsules from a series the presenters grew in advance.
+each and six meshes at about $1.40 apiece. Every attendee grows their own
+series; there is no way past step 1.4 without one.
 
 ## What happens, in order
 
 | Step | You | Running in the background |
 |---|---|---|
-| 01 Set up | Paste your fal key. Describe a creature. | The series grows: about twelve minutes. |
-| 02 Build the room | Add the floor, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
+| 01 Set up | Make a fal account, create a key, put it in .env.local. Describe a creature. | The series grows: about twelve minutes. |
+| 02 Build the room | Add the room, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
 | 03 Add the streams | Download the archive, upload six files, tag them and a viewer key, add the six specimens and their streams, paste the ids, fit each creature. | Portal processing. |
 | 04 The specimen file | Write HTML for the specimen's file, draw it into a canvas, put it on the screen. | |
 | 05 The readout | Add the HUD, write a TSL field on a second canvas. | |
@@ -61,7 +60,7 @@ React, Vite, React Three Fiber and drei. Not Next: the App Router cannot run
 in WebContainer, which is where most attendees run this.
 
 - `app/stage.tsx` is your file. It imports the room's parts by their plain
-  names from `../miris` (`Scene`, `Floor`, `Platform`, `Walkway`, `Door`,
+  names from `../miris` (`Scene`, `Room`, `Platform`, `Walkway`, `Door`,
   `Specimen`, `Screen`, `Readout`, `ScreenFx`, `Controls`) and composes them; the camera, lights, controls and
   renderer settings live inside `Scene`, so the file carries none of it. The
   viewer key is one constant at the top, and the six specimens (asset id and
@@ -108,16 +107,6 @@ never overwrite a paid run.
 
 Offline is never inferred from a missing key: "FAL_KEY is not set" is a
 sentence attendees are meant to see.
-
-### The fallback series
-
-`FALLBACK_KEYS` in `miris/config.ts` is a list of viewer keys, each scoped to a
-six-stage series you grew and uploaded in advance. They show up as buttons
-under **I already have a series** at step 1.2. Anyone whose fal account is
-blocked, whose run failed, or who arrived late picks one and is streaming
-inside a minute. Viewer keys are public by design, so committing them is fine;
-what matters is that each is scoped to exactly its six assets. Grow three or
-four before the day. An empty list hides the buttons.
 
 ### The SDK is vendored, and the pin is not negotiable
 

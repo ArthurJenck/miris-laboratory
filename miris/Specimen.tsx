@@ -3,12 +3,12 @@ import { useFrame } from "@react-three/fiber";
 import { Children, isValidElement, memo, type ReactNode, useMemo, useRef, useSyncExternalStore } from "react";
 import { DoubleSide, Group, type Texture } from "three";
 import { FloorGlow, LightShaft, Pulse } from "./CapsuleFx";
-import { Label, Ring, blue, enamel, radial, steel } from "./hardware";
+import { Label, Ring, blue, enamel, radial, steel } from "./lab-components/hardware";
 import { getSelected, getSelectedPart, subscribeLab } from "./labState";
 import { CAPSULES, GLASS, GLASS_CENTRE, GLASS_TOP, HEAD, SCREEN, capsulePlacement, pedestalPlacement } from "./layout";
 import { getScreenOutput, setScreenSource } from "./ScreenFx";
 import { SpecimenContext } from "./specimenContext";
-import StaticInstances from "./StaticInstances";
+import StaticInstances from "./lab-components/StaticInstances";
 import useLab from "./useLab";
 
 /* One capsule is a glass tube standing on the ring, with a cap at each end,
