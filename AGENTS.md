@@ -188,7 +188,7 @@ added, so the guard adds those two getters and starts the controller then.
 Worth filing against the SDK; if it starts the controller itself, the guard
 can go.
 
-The readout's slider (`miris/budget.ts`, step 5.2) pins the budget by hand.
+The readout's slider (`miris/budget.ts`) pins the budget by hand; no step asks for it, it is there for anyone curious.
 Pinning has to stop the controller first, because it re-applies its own
 number every 250ms tick and would win; Release calls `_startAdaptiveBudget`
 again, which builds a new controller at its default 250k rather than resuming. Frame time in

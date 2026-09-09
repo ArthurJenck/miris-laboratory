@@ -232,14 +232,6 @@ export const STEPS: Step[] = [
       },
       {
         num: "5.2",
-        title: "Read the budget",
-        body:
-          "The readout shows how many splats are drawn, the current budget, and the frame time. Pin the budget at 40k, compare it with a higher one, then press Release to let the controller take over again.",
-        explain:
-          "The adaptive controller raises and lowers the total splat budget from the frame time, and the engine spends that budget where the camera is looking. Pinning the slider switches the controller off until you release it.",
-      },
-      {
-        num: "5.3",
         title: "Add the screen effect",
         body:
           "Add this line under Readout in the miris:hud block. Nothing changes until the next step gives it a shader.",
@@ -249,7 +241,7 @@ export const STEPS: Step[] = [
           "TSL cannot run in the same canvas as the streams, so ScreenFx draws the effect in a hidden canvas of its own and copies it onto the selected pedestal screen. The other screens keep their plain texture, so the copy costs one screen, not six.",
       },
       {
-        num: "5.4",
+        num: "5.3",
         title: "Write the glitch shader",
         body:
           "Replace the null glitch in the miris:field block with this. It gives the selected screen scanlines, a blue phosphor tint, a faint flicker and the occasional signal tear.",

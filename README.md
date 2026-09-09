@@ -48,7 +48,7 @@ capsules from a series the presenters grew in advance.
 | 02 Build the room | Add the floor, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
 | 03 Add the streams | Download the archive, upload six files, tag them and a viewer key, add the six specimens and their streams, paste the ids, fit each creature. | Portal processing. |
 | 04 The specimen file | Write HTML for the specimen's file, draw it into a canvas, put it on the screen. | |
-| 05 The readout | Add the HUD, read the streaming budget, write a TSL field on a second canvas. | |
+| 05 The readout | Add the HUD, write a TSL field on a second canvas. | |
 | 06 Ship it | Publish, send the link. | |
 
 The room is built while the meshes grow, which is the only reason two hours is

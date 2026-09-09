@@ -177,7 +177,7 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
 
   async field() {
     const src = await readFile(STAGE, "utf8");
-    if (!readMarker(src, "hud").includes(PROOF.overlay)) return "No ScreenFx yet. Step 5.3 puts it there.";
+    if (!readMarker(src, "hud").includes(PROOF.overlay)) return "No ScreenFx yet. Step 5.2 puts it there.";
     return readMarker(src, "field").includes(PROOF.field)
       ? null
       : "The effect is mounted but the glitch is still null. Write the TSL, or let the step do it.";
