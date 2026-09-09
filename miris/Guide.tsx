@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import HatchTray, { DevBar, useHatch } from "./Build";
-import { STEPS, type Sub } from "./curriculum";
+import { STEPS, type Step, type Sub } from "./curriculum";
 import { transition } from "./transition";
 import { nextSub, stepOfSub } from "./progress";
 import Rail from "./Rail";
@@ -55,7 +55,7 @@ function WorkshopGuide() {
      screens, where the panel is a bottom sheet instead. */
   useEffect(() => {
     const root = document.documentElement;
-    const apply = () => root.style.setProperty("--mw-side", open && !absent && window.innerWidth > 720 ? "408px" : "0px");
+    const apply = () => root.style.setProperty("--mw-side", open && !absent && window.innerWidth > 720 ? "480px" : "0px");
     apply();
     window.addEventListener("resize", apply);
     return () => window.removeEventListener("resize", apply);
@@ -78,16 +78,9 @@ function WorkshopGuide() {
   const [viewing, setViewing] = useState("");
   // Start over asks once; the answer is a second click, not a dialog.
   const [confirmReset, setConfirmReset] = useState(false);
-  // Whether each step also offers to write its code for you. Off by default so
-  // the room is typed in, remembered per browser for anyone who wants the help.
-  const [assist, setAssist] = useState(() => {
-    try { return localStorage.getItem("mw-assist") === "1"; } catch { return false; }
-  });
-  const toggleAssist = () => {
-    const next = !assist;
-    setAssist(next);
-    try { localStorage.setItem("mw-assist", next ? "1" : "0"); } catch {}
-  };
+  // Which chapter's finished code is about to replace the file, while the
+  // modal asks. Null when it is not asking.
+  const [confirmSnapshot, setConfirmSnapshot] = useState<Step | null>(null);
   // What the last Done click found wrong, keyed by substep so browsing the rail
   // does not carry one step's complaint onto another.
   const [problems, setProblems] = useState<Record<string, string>>({});
@@ -145,35 +138,18 @@ function WorkshopGuide() {
     return readApi(res);
   };
 
-  const fill = async (snippetId: string, num: string) => {
-    setBusy(num);
-    setNote("");
+  const applySnapshot = async () => {
+    const step = confirmSnapshot;
+    setConfirmSnapshot(null);
+    if (!step) return;
+    setNote("Replacing app/stage.tsx");
     try {
-      const r = await post({ action: "fill", snippetId });
+      const r = await post({ action: "snapshot", chapter: step.num });
       if (!r.ok) return setNote(r.problem!);
-      setNote("Written into app/stage.tsx");
-      await post({ action: "save", patch: { step: num } });
+      setNote(`app/stage.tsx now holds the finished code through chapter ${step.num}.`);
       await load();
     } catch (e) {
       setNote(`Could not write the file: ${(e as Error).message}`);
-    } finally {
-      // Without the finally, a dev server mid-recompile leaves this button
-      // disabled and reading "Writing" until a page reload.
-      setBusy("");
-    }
-  };
-
-  const clear = async (snippetId: string) => {
-    try {
-      const r = await post({ action: "clear", snippetId });
-      if (!r.ok) return setNote(r.problem!);
-      setNote(
-        r.data.back
-          ? "Cleared this step. The steps before it are still in place."
-          : "Cleared the block.",
-      );
-    } catch (e) {
-      setNote(`Could not clear the block: ${(e as Error).message}`);
     }
   };
 
@@ -276,8 +252,7 @@ function WorkshopGuide() {
     : progressStep;
 
   const actions: StepActions = {
-    fill,
-    clear,
+    snapshot: (stepNum: string) => setConfirmSnapshot(STEPS.find((step) => step.num === stepNum) ?? null),
     done,
     view: (subNum: string) => transition(() => setViewing(subNum)),
     // Undo is the pointer moving back, so the reopened substep becomes current
@@ -344,18 +319,6 @@ function WorkshopGuide() {
         <header className="mw-head">
           <b className="b14">Spatial streaming</b>
           <img className="mw-mark" src="/kit/assets/miris-logo-white.svg" alt="Miris" />
-          <button
-            className="mw-assist"
-            onClick={toggleAssist}
-            aria-pressed={assist}
-            aria-label={assist ? "Hide the paste-it-for-me buttons" : "Show the paste-it-for-me buttons"}
-            title={assist ? "Steps offer to write their code. Click to type it yourself." : "Steps are typed in. Click to let them write the code for you."}
-          >
-            <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2.5 13.5 9.5 6.5" />
-              <path d="M11.5 1.5v2.4M11.5 6.9v2.4M9.1 4.7h-2.4M14.7 4.7h-2.4" />
-            </svg>
-          </button>
           <button className="mw-hide" onClick={() => setOpen(false)} aria-label="Hide the guide">
             ×
           </button>
@@ -400,6 +363,27 @@ function WorkshopGuide() {
         )}
 
 
+        {confirmSnapshot && (
+          <div className="mw-modal" role="dialog" aria-modal="true" aria-labelledby="mw-modal-title">
+            <div className="mw-modal-card">
+              <h3 id="mw-modal-title">Replace all of your code?</h3>
+              <p>
+                This replaces everything in app/stage.tsx with the finished code for chapters 1 to {confirmSnapshot.num},{" "}
+                {confirmSnapshot.title}. Your viewer key and specimens.json are kept; anything else you have written in
+                the file is not.
+              </p>
+              <div className="mw-row">
+                <button className="btn btn-primary btn-sm" onClick={applySnapshot}>
+                  Replace my code
+                </button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setConfirmSnapshot(null)}>
+                  Keep mine
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mw-split">
           <Rail
             progressStepNum={progressStep.num}
@@ -425,7 +409,6 @@ function WorkshopGuide() {
                 problems={problems}
                 hatch={hatch}
                 openSubNum={openSubNum}
-                assist={assist}
                 actions={actions}
               />
             )}

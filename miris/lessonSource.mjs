@@ -1,8 +1,8 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import ts from 'typescript';
-import { readMarker, replaceMarker } from './markers.mjs';
-import { SNIPPETS, MARKER_FOR, CLEARS_TO, EMPTY_BLOCKS, EMPTY_SPECIMENS, PART_NAME, PLACEHOLDERS } from './snippets.mjs';
+import { readMarker, replaceMarker, stripMarkers } from './markers.mjs';
+import { SNIPPETS, MARKER_FOR, EMPTY_SPECIMENS, IMPORTS, PART_NAME } from './snippets.mjs';
 
 // The curriculum determines the reference build order; the dev API uses the same edits.
 export function lessonsFrom(curriculum) {
@@ -31,18 +31,52 @@ function withPart(source, name, body) {
   return replaceMarker(source, 'parts', next.trim());
 }
 
-export function applyLesson(source, id) {
-  if (!Object.hasOwn(SNIPPETS, id)) throw new Error(`Unknown lesson: ${id}`);
-  if (PART_NAME[id]) return withPart(source, PART_NAME[id], SNIPPETS[id]);
-  return replaceMarker(source, MARKER_FOR[id], SNIPPETS[id]);
+/** Adds import statements to the imports block, one statement per module:
+ *  named imports are merged and deduplicated, a default import and any import
+ *  attributes are kept, packages come before relative paths. Idempotent. */
+export function withImports(source, statements) {
+  if (!statements.length) return source;
+  const block = readMarker(source, 'imports');
+  const parsed = ts.createSourceFile('imports.ts', `${block}\n${statements.join('\n')}`, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
+  const modules = new Map();
+  for (const statement of parsed.statements) {
+    if (!ts.isImportDeclaration(statement)) continue;
+    const specifier = statement.moduleSpecifier.text;
+    const entry = modules.get(specifier) ?? { defaultName: '', names: new Map(), attributes: '' };
+    const clause = statement.importClause;
+    if (clause?.name) entry.defaultName = clause.name.text;
+    if (clause?.namedBindings && ts.isNamedImports(clause.namedBindings)) {
+      for (const element of clause.namedBindings.elements) {
+        const name = element.getText(parsed).replace(/^type\s+/, '');
+        if (!entry.names.has(name)) entry.names.set(name, element.isTypeOnly);
+      }
+    }
+    const attributes = statement.attributes ?? statement.assertClause;
+    if (attributes) entry.attributes = ` ${attributes.getText(parsed)}`;
+    modules.set(specifier, entry);
+  }
+  const line = ([specifier, entry]) => {
+    const parts = [];
+    if (entry.defaultName) parts.push(entry.defaultName);
+    if (entry.names.size) parts.push(`{ ${[...entry.names].map(([name, typeOnly]) => (typeOnly ? `type ${name}` : name)).join(', ')} }`);
+    return `import ${parts.join(', ')} from "${specifier}"${entry.attributes};`;
+  };
+  const ordered = [...modules].sort(([a], [b]) => Number(a.startsWith('.')) - Number(b.startsWith('.')));
+  return replaceMarker(source, 'imports', ordered.map(line).join('\n'));
 }
 
-export function clearLesson(source, id) {
-  const marker = MARKER_FOR[id];
-  if (!marker) throw new Error(`Unknown lesson: ${id}`);
-  if (PART_NAME[id]) return withPart(source, PART_NAME[id], PLACEHOLDERS[id]);
-  const back = CLEARS_TO[id];
-  return replaceMarker(source, marker, back ? SNIPPETS[back] : EMPTY_BLOCKS[marker]);
+export function applyLesson(source, id) {
+  if (!Object.hasOwn(SNIPPETS, id)) throw new Error(`Unknown lesson: ${id}`);
+  const next = PART_NAME[id] ? withPart(source, PART_NAME[id], SNIPPETS[id]) : replaceMarker(source, MARKER_FOR[id], SNIPPETS[id]);
+  return withImports(next, IMPORTS[id] ?? []);
+}
+
+/** The stage as it stands at the end of chapter `chapter`: the starter with
+ *  every lesson up to there applied, the attendee's own viewer key kept, and
+ *  no marker comments, which the attendee's file never carries. */
+export function chapterSnapshot(starter, curriculum, chapter, viewerKey = '') {
+  const lessons = lessonsFrom(curriculum).filter(lesson => Number(lesson.num.split('.')[0]) <= Number(chapter));
+  return stripMarkers(withViewerKey(lessons.reduce((stage, lesson) => applyLesson(stage, lesson.fill), starter), viewerKey));
 }
 
 export function completedStage(starter, curriculum) {
@@ -93,7 +127,7 @@ export const specimensJson = list => JSON.stringify(list, null, 2) + '\n';
 export function referenceStage(starter, curriculum, fixtures) {
   const entries = (fixtures.stages ?? []).map(stage => ({ uuid: stage.uuid || '', scale: stage.scale ?? 1 }));
   return {
-    stage: withViewerKey(completedStage(starter, curriculum), fixtures.viewerKey || ''),
+    stage: stripMarkers(withViewerKey(completedStage(starter, curriculum), fixtures.viewerKey || '')),
     specimens: specimensJson(mergeSpecimens(EMPTY_SPECIMENS, entries)),
   };
 }
@@ -114,3 +148,6 @@ export async function writeReference(root) {
     if ((await readFile(path, 'utf8').catch(() => '')) !== next) await writeFile(path, next);
   }
 }
+
+/** The file a fresh clone starts from: the template without its markers. */
+export const starterStage = (template) => stripMarkers(template);

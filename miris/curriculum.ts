@@ -7,9 +7,10 @@ export interface Sub {
   title: string;
   body: string;
   code?: string;
-  /** A snippet id from miris/snippets.mjs. Typed loosely on purpose: the
-   *  snippets live in a plain .mjs file, so there is no exported union to
-   *  narrow against. */
+  /** A snippet id from miris/snippets.mjs: the card shows its import lines and
+   *  its code, and the chapter's Use the finished code button writes every
+   *  lesson through that chapter. Typed loosely on purpose: the snippets live
+   *  in a plain .mjs file, so there is no exported union to narrow against. */
   fill?: string;
   /** Renders an outbound link as a button, for steps that send you somewhere
    *  else to fetch something. Opens in a new tab: losing the guide mid-step
@@ -78,13 +79,13 @@ export const STEPS: Step[] = [
   },
   {
     num: "02",
-    title: "Set up the scene",
+    title: "Scene setup",
     subs: [
       {
         num: "2.1",
         title: "Set up React Three Fiber",
         body:
-          "Put these lines in the miris:setup block at the top of app/stage.tsx. extend registers the SDK's MirisStream as a tag React Three Fiber can render, mirisStream, and the declaration tells TypeScript what props that tag takes.",
+          "Put these lines under the imports at the top of app/stage.tsx. extend registers the SDK's MirisStream as a tag React Three Fiber can render, mirisStream, and the declaration tells TypeScript what props that tag takes.",
         fill: "setup",
         check: "setup",
       },
@@ -92,7 +93,7 @@ export const STEPS: Step[] = [
         num: "2.2",
         title: "Add the room",
         body:
-          "Add Room between the miris:scene comments in app/stage.tsx. It gives you the deck, the walls, the ceiling and the fog.",
+          "Add Room inside Scene in app/stage.tsx. It gives you the deck, the walls, the ceiling and the fog.",
         fill: "room",
         check: "room",
       },
@@ -151,7 +152,7 @@ export const STEPS: Step[] = [
         num: "3.4",
         title: "Add the specimens",
         body:
-          "Your meshes exist now, so the room can have somewhere to put them. Add the specimen map after Door in the miris:scene block. It walks app/specimens.json and places one Specimen per entry around the ring: a capsule, and the pedestal in front of it. Nothing stands in the glass yet.",
+          "Your meshes exist now, so the room can have somewhere to put them. Add the specimen map after Door, inside Scene. It walks app/specimens.json and places one Specimen per entry around the ring: a capsule, and the pedestal in front of it. Nothing stands in the glass yet.",
         fill: "specimens",
         check: "specimens",
       },
@@ -188,7 +189,7 @@ export const STEPS: Step[] = [
         num: "4.1",
         title: "Write the file in HTML",
         body:
-          "Replace the empty fileMarkup in the miris:markup block at the top of app/stage.tsx. It builds the specimen's file as plain HTML from its dossier, styled by miris/lab.css.",
+          "Replace the empty fileMarkup near the top of app/stage.tsx. It builds the specimen's file as plain HTML from its dossier, styled by miris/lab.css.",
         fill: "markup",
         check: "markup",
       },
@@ -197,7 +198,7 @@ export const STEPS: Step[] = [
         title: "Draw it into a canvas",
         renderPath: true,
         body:
-          "Replace the placeholder File in the miris:parts block with this. It puts your HTML inside a canvas, asks the browser to draw it in whenever it paints, and wears the canvas as a texture. Nothing shows until the next step puts it on a screen.",
+          "Replace the placeholder File above Stage with this. It puts your HTML inside a canvas, asks the browser to draw it in whenever it paints, and wears the canvas as a texture. Nothing shows until the next step puts it on a screen.",
         fill: "file",
         check: "file",
       },
@@ -219,7 +220,7 @@ export const STEPS: Step[] = [
         num: "5.1",
         title: "Add the readout",
         body:
-          "Add this line in the miris:hud block, after Scene. It adds the header, the specimen count, and brackets around whatever your pointer is over.",
+          "Add this line after Scene, inside the fragment. It adds the header, the specimen count, and brackets around whatever your pointer is over.",
         fill: "hud",
         check: "hud",
       },
@@ -227,7 +228,7 @@ export const STEPS: Step[] = [
         num: "5.2",
         title: "Add the screen effect",
         body:
-          "Add this line under Readout in the miris:hud block. Nothing changes until the next step gives it a shader.",
+          "Add this line under Readout. Nothing changes until the next step gives it a shader.",
         fill: "effect",
         check: "overlay",
       },
@@ -235,7 +236,7 @@ export const STEPS: Step[] = [
         num: "5.3",
         title: "Write the glitch shader",
         body:
-          "Replace the null glitch in the miris:field block with this. It gives the selected screen scanlines, a blue phosphor tint, a faint flicker and the occasional signal tear.",
+          "Replace the null glitch at the top of Stage with this. It gives the selected screen scanlines, a blue phosphor tint, a faint flicker and the occasional signal tear.",
         fill: "field",
         check: "field",
       },
@@ -249,7 +250,7 @@ export const STEPS: Step[] = [
         num: "6.1",
         title: "Add the controls",
         body:
-          "Add this line under ScreenFx in the miris:hud block. It puts a toolbar at the bottom of the room: a dropdown that lists your six specimens, arrows to step between them, a button back to the overview and one that opens the selected file. On a phone there is nothing to hover and not much to click, so this is how anyone else gets round your room.",
+          "Add this line under ScreenFx. It puts a toolbar at the bottom of the room: a dropdown that lists your six specimens, arrows to step between them, a button back to the overview and one that opens the selected file. On a phone there is nothing to hover and not much to click, so this is how anyone else gets round your room.",
         fill: "controls",
         check: "controls",
       },

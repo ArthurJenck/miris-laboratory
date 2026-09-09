@@ -2,10 +2,9 @@ import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { loadEnv, type Plugin } from "vite";
-import { applyLesson, clearLesson, mergeSpecimens, readViewerKey, specimensJson, withViewerKey, writeReference } from "./lessonSource.mjs";
-import { readMarker } from "./markers.mjs";
+import { chapterSnapshot, mergeSpecimens, readViewerKey, specimensJson, starterStage, withViewerKey, writeReference } from "./lessonSource.mjs";
 import { readData, writeData } from "./store.mjs";
-import { CLEARS_TO, EMPTY_SPECIMENS, MARKER_FOR, SNIPPETS } from "./snippets.mjs";
+import { EMPTY_SPECIMENS, SNIPPETS } from "./snippets.mjs";
 import { emptyBank, normaliseBank } from "./specimens.mjs";
 import { zipSync } from "./zip.mjs";
 import { tinyGlb } from "./tinyGlb.mjs";
@@ -41,14 +40,14 @@ const PROOF = {
   walkway: "<Walkway",
   door: "<Door",
   specimens: "<Specimen",
-  streams: "mirisStream",
-  screens: "<Screen",
-  hud: "Readout",
-  overlay: "ScreenFx",
+  streams: "<mirisStream",
+  screens: "<Screen>",
+  hud: "<Readout",
+  overlay: "<ScreenFx",
+  controls: "<Controls",
   field: "Fn(",
   markup: "mw-dossier",
   file: "drawElementImage",
-  controls: "<Controls",
 };
 
 /** Which snippet each proof has to appear in. */
@@ -128,11 +127,10 @@ async function followStage(viewerKey: string, entries: { uuid?: string }[]) {
   if (changed) await writeData(MIRIS_DIR, { specimens: bank, viewerKey });
 }
 
-/** A check that passes once `proof` appears in the attendee's `marker` block. */
-const inBlock = (marker: string, proof: string, problem: string) => async () => {
-  const block = readMarker(await readFile(STAGE, "utf8"), marker);
-  return block.includes(proof) ? null : problem;
-};
+/** A check that passes once `proof` appears in app/stage.tsx. The proofs are
+ *  shaped like the JSX or the call the step adds, so an import line alone
+ *  cannot satisfy one. */
+const inFile = (proof: string, problem: string) => async () => ((await readFile(STAGE, "utf8")).includes(proof) ? null : problem);
 
 const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
   async falKey(mode) {
@@ -153,14 +151,14 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     return "Nothing grown yet. Describe your creature and press Grow the series.";
   },
 
-  setup: inBlock("setup", PROOF.setup, "The miris:setup block at the top of app/stage.tsx is still empty. Add the extend call and the declaration, or let the step do it."),
-  room: inBlock("scene", PROOF.room, "The scene block in app/stage.tsx has no room in it yet. Add the line between the miris:scene comments, or let the step do it."),
-  platform: inBlock("scene", PROOF.platform, "No platform in the scene block yet. Add it under the room, or let the step do it."),
-  walkway: inBlock("scene", PROOF.walkway, "No walkway in the scene block yet. Add it under the platform, or let the step do it."),
-  door: inBlock("scene", PROOF.door, "No door in the scene block yet. Add it under the walkway, or let the step do it."),
-  specimens: inBlock("scene", PROOF.specimens, "No specimens in the scene block yet. Add the map under the door, or let the step do it."),
-  streams: inBlock("scene", PROOF.streams, "Nothing is streaming into the capsules yet. Replace the specimen line with the version that holds a stream, or let the step do it."),
-  screens: inBlock("scene", PROOF.screens, "No Screen inside the Specimens yet. Replace the specimen line with the version that holds one, or let the step do it."),
+  setup: inFile(PROOF.setup, "The extend call is not in app/stage.tsx yet. Add it and the declaration under the imports, or take the chapter's finished code."),
+  room: inFile(PROOF.room, "No Room inside Scene yet. Add the line, or take the chapter's finished code."),
+  platform: inFile(PROOF.platform, "No Platform yet. Add it under Room, or take the chapter's finished code."),
+  walkway: inFile(PROOF.walkway, "No Walkway yet. Add it under Platform, or take the chapter's finished code."),
+  door: inFile(PROOF.door, "No Door yet. Add it under Walkway, or take the chapter's finished code."),
+  specimens: inFile(PROOF.specimens, "No Specimens yet. Add the map under Door, or take the chapter's finished code."),
+  streams: inFile(PROOF.streams, "Nothing is streaming into the capsules yet. Replace the specimen line with the version that holds a stream, or take the chapter's finished code."),
+  screens: inFile(PROOF.screens, "No Screen inside the Specimens yet. Replace the specimen line with the version that holds one, or take the chapter's finished code."),
 
   async ids() {
     // What streams is what the check reads: the ids in app/specimens.json and
@@ -178,20 +176,18 @@ const CHECKS: Record<string, (mode: string) => Promise<string | null>> = {
     return null;
   },
 
-  hud: inBlock("hud", PROOF.hud, "No Readout in the miris:hud block yet. Add the line, or let the step do it."),
-  controls: inBlock("hud", PROOF.controls, "No Controls in the hud block yet. Add the line under ScreenFx, or let the step do it."),
-  overlay: inBlock("hud", PROOF.overlay, "No ScreenFx in the miris:hud block yet. Add the line under Readout, or let the step do it."),
+  hud: inFile(PROOF.hud, "No Readout yet. Add the line after Scene, or take the chapter's finished code."),
+  controls: inFile(PROOF.controls, "No Controls yet. Add the line under ScreenFx, or take the chapter's finished code."),
+  overlay: inFile(PROOF.overlay, "No ScreenFx yet. Add the line under Readout, or take the chapter's finished code."),
 
   async field() {
     const src = await readFile(STAGE, "utf8");
-    if (!readMarker(src, "hud").includes(PROOF.overlay)) return "No ScreenFx yet. Step 5.2 puts it there.";
-    return readMarker(src, "field").includes(PROOF.field)
-      ? null
-      : "The effect is mounted but the glitch is still null. Write the TSL, or let the step do it.";
+    if (!src.includes(PROOF.overlay)) return "No ScreenFx yet. Step 5.2 puts it there.";
+    return src.includes(PROOF.field) ? null : "The effect is mounted but the glitch is still null. Write the TSL, or take the chapter's finished code.";
   },
 
-  file: inBlock("parts", PROOF.file, "File does not draw anything yet. Replace the placeholder in the miris:parts block, or let the step do it."),
-  markup: inBlock("markup", PROOF.markup, "No file markup yet. Replace the empty fileMarkup in the miris:markup block at the top of app/stage.tsx, or let the step do it."),
+  file: inFile(PROOF.file, "File does not draw anything yet. Replace the placeholder above Stage, or take the chapter's finished code."),
+  markup: inFile(PROOF.markup, "No file markup yet. Replace the empty fileMarkup near the top of app/stage.tsx, or take the chapter's finished code."),
 };
 
 const clamp = (n: unknown, lo: number, hi: number, fallback: number) => {
@@ -372,26 +368,21 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
   }
 
   switch (action) {
-    case "fill": {
-      const snippet = SNIPPETS[body.snippetId as keyof typeof SNIPPETS];
-      const marker = MARKER_FOR[body.snippetId as keyof typeof MARKER_FOR];
-      if (!snippet) return fail(`unknown snippet: ${body.snippetId}`);
-      const source = await readFile(STAGE, "utf8");
-      await writeFile(STAGE, applyLesson(source, body.snippetId));
-      return ok({ ok: true, marker });
-    }
-
-    case "clear": {
-      const id = String(body.snippetId ?? "");
-      const marker = MARKER_FOR[id as keyof typeof MARKER_FOR];
-      if (!marker) return fail(`unknown snippet: ${id}`);
-
-      // One step back, not the whole marker.
-      const back = CLEARS_TO[id as keyof typeof CLEARS_TO];
-      const source = await readFile(STAGE, "utf8");
-      const next = clearLesson(source, id);
-      await writeFile(STAGE, next);
-      return ok({ ok: true, marker, back: back ?? null });
+    /* The finished code through the end of one chapter, in place of whatever the
+       attendee has. Code only: the viewer key in the file is kept, and
+       specimens.json is not touched. */
+    case "snapshot": {
+      const chapter = String(body?.chapter ?? "").trim();
+      if (!/^\d{1,2}$/.test(chapter)) return fail(`No such chapter: ${chapter}`);
+      const [template, curriculum, current, stored] = await Promise.all([
+        readFile(TEMPLATE, "utf8"),
+        readFile(join(MIRIS_DIR, "curriculum.ts"), "utf8"),
+        readFile(STAGE, "utf8"),
+        readData(MIRIS_DIR),
+      ]);
+      const viewerKey = readViewerKey(current) || String(stored.viewerKey ?? "");
+      await writeFile(STAGE, chapterSnapshot(template, curriculum, chapter, viewerKey));
+      return ok({ ok: true, chapter });
     }
 
     case "save":
@@ -401,7 +392,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
        pointer to 1.1. The series, its uuids and the viewer key stay, so nothing
        has to be grown or uploaded again. */
     case "reset": {
-      await writeFile(STAGE, await readFile(TEMPLATE, "utf8"));
+      await writeFile(STAGE, starterStage(await readFile(TEMPLATE, "utf8")));
       const stored = await readData(MIRIS_DIR);
       await writeStageSpecimens(stored.viewerKey, normaliseBank(stored.specimens as any[]));
       return ok(await writeData(MIRIS_DIR, { step: "1.1", sub: "1.1", active: 0, finished: false }));

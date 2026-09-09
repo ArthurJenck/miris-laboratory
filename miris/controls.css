@@ -79,7 +79,7 @@ body:has(.mw-controls) .mw-hud-bl { display: none; }
 }
 
 /* Between a phone and a wide desk the corner readouts would run under the
-   toolbar: a tablet on its own, or a laptop with the guide taking 408px. */
+   toolbar: a tablet on its own, or a laptop with the guide taking 480px. */
 @media (min-width: 721px) and (max-width: 1000px) {
   body:has(.mw-controls) .mw-hud-br { bottom: 176px; }
   body:has(.mw-controls) .mw-hud-budget { bottom: 198px; }

@@ -4,13 +4,13 @@ import type { Track } from "./tracks";
 import { ConceptField, type HatchState } from "./Build";
 import Chevron from "./Chevron";
 import Code from "./highlight";
-import { PARTS } from "./snippets.mjs";
+import { IMPORTS, PARTS } from "./snippets.mjs";
 import { subName } from "./transition";
 import { indexOfSub, nextSub, subState } from "./progress";
 
 export interface StepActions {
-  fill: (snippetId: string, num: string) => void | Promise<void>;
-  clear: (snippetId: string) => void | Promise<void>;
+  /** Asks before replacing app/stage.tsx with the finished code through this chapter. */
+  snapshot: (stepNum: string) => void;
   /** Re-reads data.json, for the parts of a step that write it themselves. */
   reload: () => void;
   /** Verifies the substep actually happened, then moves the progress pointer
@@ -42,9 +42,6 @@ export interface StepPaneProps {
   /** The substep whose card is open. Usually the progress pointer, but a
    *  finished substep can be opened to re-read it. */
   openSubNum: string;
-  /** Shows the paste-it-for-me and clear buttons under each snippet. The
-   *  wand in the guide's header turns it on. */
-  assist: boolean;
   actions: StepActions;
 }
 
@@ -69,8 +66,11 @@ function RenderPathBadge() {
 
 const withNoun = (text: string, noun: string) => text.replaceAll("{noun}", noun);
 
+/** The main step a substep belongs to, as people say it: "3.5" is step 3. */
+const chapterOf = (subNum: string) => Number(subNum.split(".")[0]);
+
 /* The snippets carry the indentation they need inside the marker block, which
-   is six columns of it. Kept for the file, dropped for a 408px panel. */
+   is six columns of it. Kept for the file, dropped for a 480px panel. */
 const dedent = (code: string) => {
   if (!code) return "";
   const lines = code.replace(/\n+$/, "").split("\n");
@@ -80,7 +80,7 @@ const dedent = (code: string) => {
   return lines.map((l) => l.slice(indent)).join("\n");
 };
 
-/** The code the step adds, to be typed in rather than pressed for. */
+/** Code the step adds, to be typed in; a chapter's finished code is the only shortcut. */
 function Snippet({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -117,7 +117,6 @@ export default function StepPane({
   problems,
   hatch,
   openSubNum,
-  assist,
   actions,
 }: StepPaneProps) {
   // Browsing ahead via the rail shows a step that holds no current substep. The
@@ -133,7 +132,12 @@ export default function StepPane({
 
   return (
     <div className="mw-pane">
-      <h2 className="t20 mw-pane-title">{step.title}</h2>
+      <div className="mw-pane-head">
+        <h2 className="t20 mw-pane-title">{step.title}</h2>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => actions.snapshot(step.num)}>
+          Use the finished code
+        </button>
+      </div>
 
       {step.subs.map((sub: Sub) => {
         const state = subState(sub.num, currentSubNum);
@@ -209,24 +213,16 @@ export default function StepPane({
 
             {sub.fill && (
               <>
-                <Snippet code={dedent(PARTS[sub.fill as keyof typeof PARTS] ?? "")} />
-                {assist && (
-                  <div className="mw-row mw-autorow">
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      disabled={busy === sub.num}
-                      onClick={() => actions.fill(sub.fill!, sub.num)}
-                    >
-                      {busy === sub.num ? "Writing" : "Or paste it for me"}
-                    </button>
-                    <button className="btn btn-ghost btn-sm" onClick={() => actions.clear(sub.fill!)}>
-                      Clear block
-                    </button>
-                  </div>
+                {(IMPORTS[sub.fill as keyof typeof IMPORTS] ?? []).length > 0 && (
+                  <>
+                    <p className="l12 mw-snip-head">Import</p>
+                    <Snippet code={IMPORTS[sub.fill as keyof typeof IMPORTS].join("\n")} />
+                    <p className="l12 mw-snip-head">Then add</p>
+                  </>
                 )}
+                <Snippet code={dedent(PARTS[sub.fill as keyof typeof PARTS] ?? "")} />
               </>
             )}
-
 
             {problems[sub.num] && (
               <p className="mw-snag c14" role="status">
@@ -242,7 +238,7 @@ export default function StepPane({
                   </button>
                 )}
                 <button className="btn btn-ghost btn-sm" onClick={() => actions.view("")}>
-                  Back to {currentSubNum}
+                  Back to step {chapterOf(currentSubNum)}
                 </button>
               </div>
             ) : upNext ? (
@@ -266,7 +262,7 @@ export default function StepPane({
 
       {!isProgressStep && (
         <button className="btn btn-ghost btn-sm mw-next" onClick={actions.backToProgress}>
-          Back to step {currentSubNum}
+          Back to step {chapterOf(currentSubNum)}
         </button>
       )}
     </div>

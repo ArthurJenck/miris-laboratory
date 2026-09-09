@@ -171,6 +171,7 @@ export const PARTS = {
 
 /* A block with nothing in it yet. */
 export const EMPTY_BLOCKS = {
+  imports: `import { Scene } from "../miris";`,
   setup: "",
   scene: "",
   hud: "",
@@ -179,24 +180,24 @@ export const EMPTY_BLOCKS = {
   parts: PLACEHOLDERS.file,
 };
 
-/* Clearing a step puts its block back to the step before it, not to empty, so
-   a clear at 2.3 does not take 2.2's room with it. null means there is
-   nothing before it and the block returns to its empty state. */
-export const CLEARS_TO = {
-  setup: null,
-  room: null,
-  platform: "room",
-  walkway: "platform",
-  door: "walkway",
-  specimens: "door",
-  streams: "specimens",
-  screens: "streams",
-  file: null,
-  markup: null,
-  field: null,
-  hud: null,
-  effect: "hud",
-  controls: "effect",
+/* The import lines each lesson needs, exactly as the attendee types them. The
+   applier merges them into the imports block one statement per module, so the
+   finished file reads as it would had someone written it by hand. */
+export const IMPORTS = {
+  setup: ['import { extend, type ThreeElement } from "@react-three/fiber";', 'import { MirisStream } from "@miris-inc/three";'],
+  room: ['import { Room } from "../miris";'],
+  platform: ['import { Platform } from "../miris";'],
+  walkway: ['import { Walkway } from "../miris";'],
+  door: ['import { Door } from "../miris";'],
+  specimens: ['import { Specimen } from "../miris";', 'import specimens from "./specimens.json" with { type: "json" };'],
+  streams: [],
+  screens: ['import { Screen } from "../miris";'],
+  markup: [],
+  file: ['import { useEffect, useState } from "react";', 'import { CanvasTexture, SRGBColorSpace } from "three";'],
+  hud: ['import { Readout } from "../miris";'],
+  effect: ['import { ScreenFx } from "../miris";'],
+  field: ['import { useMemo } from "react";', 'import { Fn, float, hash, step, texture, time, uv, vec2, vec3, vec4 } from "three/tsl";', 'import { screenTexture } from "../miris";'],
+  controls: ['import { Controls } from "../miris";'],
 };
 
 export const MARKER_FOR = {

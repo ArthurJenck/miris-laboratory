@@ -1,6 +1,6 @@
 // Markers in plain code take // form, since a JSX comment there is a syntax
 // error. Everything inside the returned JSX keeps the JSX comment form.
-const JS_MARKERS = new Set(["setup", "field", "markup", "parts"]);
+const JS_MARKERS = new Set(["imports", "setup", "field", "markup", "parts"]);
 export const start = (m) => (JS_MARKERS.has(m) ? `// miris:${m}-start` : `{/* miris:${m}-start */}`);
 export const end = (m) => (JS_MARKERS.has(m) ? `// miris:${m}-end` : `{/* miris:${m}-end */}`);
 
@@ -26,3 +26,15 @@ export function readMarker(source, marker) {
   return source.slice(a + start(marker).length, b);
 }
 
+/** The same source with every marker comment removed and the blank lines they
+ *  leave tidied: what the attendee's file and the reference actually look like.
+ *  The markers stay in the template, where the generator needs them. */
+export function stripMarkers(source) {
+  return source
+    .split("\n")
+    .filter((line) => !/^\s*(\/\/ miris:[a-z]+-(start|end)|\{\/\* miris:[a-z]+-(start|end) \*\/\})\s*$/.test(line))
+    .join("\n")
+    .replace(/\n[ \t]*\n([ \t]*\n)+/g, "\n\n")
+    .replace(/(<Scene>)\n[ \t]*\n/g, "$1\n")
+    .replace(/\n[ \t]*\n([ \t]*<\/(Scene|>)>?)/g, (m, close) => `\n${close}`);
+}

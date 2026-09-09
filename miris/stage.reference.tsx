@@ -1,12 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { CanvasTexture, SRGBColorSpace } from "three";
-import { Fn, float, hash, step, texture, time, uv, vec2, vec3, vec4 } from "three/tsl";
 import { extend, type ThreeElement } from "@react-three/fiber";
 import { MirisStream } from "@miris-inc/three";
-import { Scene, Room, Platform, Walkway, Door, Specimen, Screen, Readout, ScreenFx, Controls, screenTexture } from "../miris";
+import { useEffect, useState, useMemo } from "react";
+import { CanvasTexture, SRGBColorSpace } from "three";
+import { Fn, float, hash, step, texture, time, uv, vec2, vec3, vec4 } from "three/tsl";
+import { Scene, Room, Platform, Walkway, Door, Specimen, Screen, Readout, ScreenFx, screenTexture, Controls } from "../miris";
 import specimens from "./specimens.json" with { type: "json" };
 
-// miris:setup-start
 extend({ MirisStream });
 
 declare module "@react-three/fiber" {
@@ -14,12 +13,10 @@ declare module "@react-three/fiber" {
     mirisStream: ThreeElement<typeof MirisStream>;
   }
 }
-// miris:setup-end
 
 // The viewer key you scoped to your six assets. Every stream reads through it.
 const viewerKey = "EtE0iRieHOo_fauIBuMJIr0YR4-OyWtA6Z3jUd55Msc";
 
-// miris:markup-start
 // The file is HTML. The browser lays it out with the lab's own CSS; the next
 // step draws it into a canvas, and that canvas becomes a texture on a plane.
 const fileMarkup = (dossier: any) => `
@@ -45,9 +42,7 @@ const fileMarkup = (dossier: any) => `
     </div>
     <footer class="mw-d-terminal">BIOLOGICAL RECORD / READ ONLY <span>TERMINAL ${String(dossier.index + 1).padStart(2, "0")} / 06</span></footer>
   </div>`;
-// miris:markup-end
 
-// miris:parts-start
 // Lay the file out as real HTML inside a canvas, draw it in whenever it
 // paints, and wear that canvas as the texture of a plane.
 function File({ dossier }: any) {
@@ -88,11 +83,9 @@ function File({ dossier }: any) {
     </mesh>
   );
 }
-// miris:parts-end
 
-// Your file. Each step's code goes between the miris: comments.
+// Your file. Each step adds a few lines to it.
 export default function Stage() {
-  // miris:field-start
   const glitch = useMemo(() => Fn(() => {
     const point = uv();
     const tick = time.mul(0.55).floor();
@@ -108,12 +101,10 @@ export default function Stage() {
     const glow = texture(screenTexture, shifted.add(vec2(0.0015, 0))).g.mul(0.08);
     return vec4(vec3(0.48, 0.78, 1).mul(phosphor.add(glow)).mul(scan).mul(flicker).mul(edge), float(1));
   })(), []);
-  // miris:field-end
 
   return (
     <>
       <Scene>
-        {/* miris:scene-start */}
         <Room />
         <Platform />
         <Walkway />
@@ -126,14 +117,11 @@ export default function Stage() {
             </Screen>
           </Specimen>
         ))}
-        {/* miris:scene-end */}
       </Scene>
 
-      {/* miris:hud-start */}
       <Readout />
       <ScreenFx node={glitch} />
       <Controls />
-      {/* miris:hud-end */}
     </>
   );
 }

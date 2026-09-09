@@ -44,7 +44,7 @@ series; there is no way past step 1.5 without one.
 | Step | You | Running in the background |
 |---|---|---|
 | 01 Set up | Make a fal account, create a key, put it in .env.local. Describe a creature. | The series grows: about twelve minutes. |
-| 02 Set up the scene | Register the stream tag, then add the room, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
+| 02 Scene setup | Register the stream tag, then add the room, platform, walkway and door. | Still growing. Make your Miris account if you have not. |
 | 03 Add the streams | Download the archive, upload six files, tag them and a viewer key, add the six specimens and their streams, paste the ids, fit each creature. | Portal processing. |
 | 04 The specimen file | Write HTML for the specimen's file, draw it into a canvas, put it on the screen. | |
 | 05 The readout | Add the HUD, write a TSL field on a second canvas. | |
@@ -61,15 +61,16 @@ in WebContainer, which is where most attendees run this.
 
 - `app/stage.tsx` is your file. It imports the room's parts by their plain
   names from `../miris` (`Scene`, `Room`, `Platform`, `Walkway`, `Door`,
-  `Specimen`, `Screen`, `Readout`, `ScreenFx`, `Controls`) and composes them; the camera, lights, controls and
-  renderer settings live inside `Scene`, so the file carries none of it. The
-  viewer key is one constant at the top, and the six specimens (asset id and
-  scale) are `app/specimens.json`, imported beside it; step 3.6 fills both in
-  by hand. Its lesson blocks start empty or with the small placeholders needed
-  to compile.
-  It ships with `miris:` markers and the guide writes between them when you
-  press **Or paste it for me**. Everything outside the markers is yours and is
-  never touched.
+  `Specimen`, `Screen`, `Readout`, `Controls`) and composes them; the camera,
+  lights, controls and renderer settings live inside `Scene`, so the file
+  carries none of it. The viewer key is one constant at the top, and the six
+  specimens (asset id and scale) are `app/specimens.json`, imported beside it;
+  step 3.6 fills both in by hand. Its lesson blocks start empty or with the
+  small placeholders needed to compile, and its only import is `Scene`: every
+  other import is typed in with the step that first needs it. Each chapter has
+  a **Use the finished code** button that, after asking, replaces the whole
+  file with the finished code through the end of that chapter, keeping your
+  viewer key.
 - `app/main.tsx` is one line: it mounts your stage inside `Workshop`, which
   adds the guide and hosts the reference view. Production hides the guide, so
   no closing edit is required.
@@ -126,7 +127,7 @@ version the SDK was built against; the SDK bundles its own copy too, so the
 console warns about multiple instances, which is expected.
 
 Three small components in `miris/` exist to make the SDK behave inside an
-ordinary three.js scene, and `AGENTS.md` records what each one fixes:
+ordinary three.js scene:
 `HdrGuard` (everything that is not a splat went dark), `BudgetGuard` (the
 adaptive budget does not start itself), `GlassOrder` (glass and splats cannot
 be depth sorted against each other). If the SDK fixes these, the guards go.
@@ -176,4 +177,4 @@ compiles shows up as a build error.
 
 Browser verification lives outside this repo so a fork carries no Playwright:
 see `verify-stage.mjs` and `measure-seat.mjs` in the sibling `miris-atelier`
-checkout. `AGENTS.md` carries the measurement method for frame costs.
+checkout.

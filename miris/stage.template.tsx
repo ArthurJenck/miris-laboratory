@@ -1,10 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import { CanvasTexture, SRGBColorSpace } from "three";
-import { Fn, float, hash, step, texture, time, uv, vec2, vec3, vec4 } from "three/tsl";
-import { extend, type ThreeElement } from "@react-three/fiber";
-import { MirisStream } from "@miris-inc/three";
-import { Scene, Room, Platform, Walkway, Door, Specimen, Screen, Readout, ScreenFx, Controls, screenTexture } from "../miris";
-import specimens from "./specimens.json" with { type: "json" };
+// miris:imports-start
+import { Scene } from "../miris";
+// miris:imports-end
 
 // miris:setup-start
 
@@ -23,7 +19,7 @@ function File({ dossier }: any) {
 }
 // miris:parts-end
 
-// Your file. Each step's code goes between the miris: comments.
+// Your file. Each step adds a few lines to it.
 export default function Stage() {
   // miris:field-start
   const glitch = null;
