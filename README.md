@@ -69,13 +69,14 @@ page can reach a fal key or rewrite a file.
   `Specimen`, `Screen`, `Readout`, `Controls`) and composes them; the camera,
   lights, controls and renderer settings live inside `Scene`, so the file
   carries none of it. The viewer key is one constant at the top, and the six
-  specimens (asset id and scale) are `app/specimens.json`, imported beside it;
-  step 3.6 fills both in by hand. Its lesson blocks start empty or with the
+  specimens (asset id, scale, and `life_stage` from 1 to 6 in growth order) are
+  `app/specimens.json`, imported beside it; step 3.6 fills the ids and key in
+  by hand. Its lesson blocks start empty or with the
   small placeholders needed to compile, and its only import is `Scene`: every
   other import is typed in with the step that first needs it. Each chapter has
   a **Use the finished code** button that, after asking, replaces the whole
   file with the finished code through the end of that chapter, keeping your
-  viewer key.
+  viewer key, and marks the code steps it covers as done.
 - `app/main.tsx` is one line: it mounts your stage inside `Workshop`, which
   adds the guide and hosts the reference view. Production hides the guide, so
   no closing edit is required.

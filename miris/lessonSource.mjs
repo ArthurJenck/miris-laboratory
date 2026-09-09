@@ -108,7 +108,10 @@ export function readViewerKey(source) {
 }
 
 /** app/specimens.json with the given ids and scales laid over it, slot by slot.
- *  Only the values named change, so a scale tuned by hand survives a reseal. */
+ *  Only the values named change, so a scale tuned by hand survives a reseal.
+ *  life_stage is the slot's position in growth order, 1 to 6, and is filled in
+ *  wherever a slot lacks it so a file written before the field existed gains it
+ *  on its next write. */
 export function mergeSpecimens(current, entries) {
   const list = Array.isArray(current) ? current.map(each => ({ ...each })) : [];
   entries.forEach((entry, i) => {
@@ -117,6 +120,7 @@ export function mergeSpecimens(current, entries) {
     if (entry.uuid !== undefined) list[i].uuid = entry.uuid;
     if (entry.scale !== undefined) list[i].scale = entry.scale;
   });
+  list.forEach((slot, i) => { slot.life_stage ??= i + 1; });
   return list;
 }
 

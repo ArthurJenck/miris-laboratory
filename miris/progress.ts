@@ -33,3 +33,15 @@ export const subState = (subNum: string, currentNum: string): SubState => {
   if (a === b) return "here";
   return "ahead";
 };
+
+/** Where the pointer lands after a chapter's finished code is written: the
+ *  substep after the last `fill` in chapters up to and including this one.
+ *  Substeps without code, pasting ids or tuning scales, stay open, because the
+ *  finished code does not do them. Undefined when nothing that far has code,
+ *  which is chapter 01. */
+export const subAfterFills = (stepNum: string): Sub | undefined => {
+  const chapters = STEPS.slice(0, STEPS.findIndex((s) => s.num === stepNum) + 1);
+  const filled = chapters.flatMap((s) => s.subs).filter((s) => s.fill);
+  const last = filled[filled.length - 1];
+  return last ? nextSub(last.num) : undefined;
+};

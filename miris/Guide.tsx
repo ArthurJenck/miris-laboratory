@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import HatchTray, { DevBar, useHatch } from "./Build";
 import { STEPS, type Step, type Sub } from "./curriculum";
 import { transition } from "./transition";
-import { nextSub, stepOfSub } from "./progress";
+import { indexOfSub, nextSub, stepOfSub, subAfterFills } from "./progress";
 import Rail from "./Rail";
 import StepPane, { type StepActions } from "./Step";
 import { trackById } from "./tracks";
@@ -146,7 +146,21 @@ function WorkshopGuide() {
     try {
       const r = await post({ action: "snapshot", chapter: step.num });
       if (!r.ok) return setNote(r.problem!);
-      setNote(`app/stage.tsx now holds the finished code through chapter ${step.num}.`);
+      // The code steps the file now satisfies are crossed off by moving the
+      // pointer past them. Forward only: taking chapter 2's code from 5.1
+      // must not reopen chapters 3 and 4.
+      const landing = subAfterFills(step.num);
+      const ahead = landing && indexOfSub(landing.num) > indexOfSub(data.step ?? "1.1");
+      if (ahead) {
+        const moved = await post({ action: "save", patch: { step: landing.num } });
+        if (!moved.ok) return setNote(moved.problem!);
+      }
+      setNote(
+        ahead
+          ? `app/stage.tsx now holds the finished code through chapter ${step.num}. You are on ${landing.num}.`
+          : `app/stage.tsx now holds the finished code through chapter ${step.num}.`,
+      );
+      setViewing("");
       await load();
     } catch (e) {
       setNote(`Could not write the file: ${(e as Error).message}`);
@@ -371,6 +385,7 @@ function WorkshopGuide() {
                 This replaces everything in app/stage.tsx with the finished code for chapters 1 to {confirmSnapshot.num},{" "}
                 {confirmSnapshot.title}. Your viewer key and specimens.json are kept; anything else you have written in
                 the file is not.
+                {subAfterFills(confirmSnapshot.num) && ` The code steps it covers are marked done, and you carry on from ${subAfterFills(confirmSnapshot.num)!.num}.`}
               </p>
               <div className="mw-row">
                 <button className="btn btn-primary btn-sm" onClick={applySnapshot}>

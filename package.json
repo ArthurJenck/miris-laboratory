@@ -1,5 +1,5 @@
 {
-  "name": "miris-workshop-starter",
+  "name": "miris-laboratory",
   "private": true,
   "scripts": {
     "dev": "vite",

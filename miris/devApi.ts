@@ -89,7 +89,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
  * happen elsewhere entirely, signing up or deploying, have no entry: the Done
  * button just moves them on rather than pretending to know. */
 /** app/specimens.json as it is on disk; the empty six if it is missing or broken. */
-async function readSpecimensFile(): Promise<{ uuid?: string; scale?: number }[]> {
+async function readSpecimensFile(): Promise<{ uuid?: string; scale?: number; life_stage?: number }[]> {
   try {
     const parsed = JSON.parse(await readFile(SPECIMENS, "utf8"));
     return Array.isArray(parsed) ? parsed : EMPTY_SPECIMENS;

@@ -132,8 +132,9 @@ export const PLACEHOLDERS = {
 }`,
 };
 
-/* app/specimens.json as the starter ships it: six slots, no ids, life size. */
-export const EMPTY_SPECIMENS = Array.from({ length: 6 }, () => ({ uuid: "", scale: 1 }));
+/* app/specimens.json as the starter ships it: six slots, no ids, life size,
+   numbered 1 to 6 in growth order. */
+export const EMPTY_SPECIMENS = Array.from({ length: 6 }, (_, i) => ({ uuid: "", scale: 1, life_stage: i + 1 }));
 
 const stack = (...lines) => lines.join("\n");
 
