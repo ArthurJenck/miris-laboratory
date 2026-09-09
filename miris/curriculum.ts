@@ -42,7 +42,7 @@ export const STEPS: Step[] = [
         num: "1.1",
         title: "Add your fal key",
         body:
-          "Sign in at fal.ai, create an API key, and paste it into a file called .env.local at the top of the project. Save it and press Done; the server reads the key on every request, so there is nothing to restart.",
+          "Sign in at fal.ai and redeem the coupon code FAL-MIRIS on the Billing page of the dashboard; it seeds your account with the credits this workshop spends. Then create an API key and paste it into a file called .env.local at the top of the project. Save it and press Done; the server reads the key on every request, so there is nothing to restart.",
         code: "FAL_KEY=your-key-here",
         link: { href: FAL_KEYS_URL, label: "Open fal keys" },
         check: "falKey",
