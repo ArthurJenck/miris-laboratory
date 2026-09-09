@@ -5,7 +5,8 @@ import { loadEnv, type Plugin } from "vite";
 import { chapterSnapshot, mergeSpecimens, readViewerKey, specimensJson, starterStage, withViewerKey, writeReference } from "./lessonSource.mjs";
 import { readData, writeData } from "./store.mjs";
 import { EMPTY_SPECIMENS, SNIPPETS } from "./snippets.mjs";
-import { emptyBank, normaliseBank } from "./specimens.mjs";
+import { emptyBank, emptySpecimen, normaliseBank } from "./specimens.mjs";
+import { pollRun, runPatch, submitRun } from "./growthQueue.mjs";
 import { zipSync } from "./zip.mjs";
 import { tinyGlb } from "./tinyGlb.mjs";
 import { DEMO_UUID, GROWTH_WORKFLOW, STAGES, STATUSES, STAT_LABELS, VIEWER_KEY } from "./config";
@@ -290,90 +291,119 @@ const isGlb = (buf: Buffer) => buf.length > 12 && buf.toString("ascii", 0, 4) ==
 const stageFile = (i: number, stage: string) =>
   `${String(i + 1).padStart(2, "0")}-${stage.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "stage"}.glb`;
 
+type Run = { id: string; statusUrl: string; responseUrl: string };
+
+/* Each slot is patched on its own, read-modify-write inside the store's queue,
+   so two patches landing together cannot clobber one another. */
+const patchSlot = async (i: number, patch: Record<string, unknown>) => {
+  const fresh = await readData(MIRIS_DIR);
+  const bank = normaliseBank(fresh.specimens as any[]);
+  bank[i] = { ...bank[i], ...patch };
+  await writeData(MIRIS_DIR, { specimens: bank });
+};
+
+/** Turns the workflow's output map into six named, rendered, built stages and
+ *  the archive. Throws with a sentence for the attendee when the map is short
+ *  of what six capsules need. */
+async function settleRun(output: any) {
+  const plan = parsePlanText(output?.plan);
+  if (!plan) throw new Error("The workflow did not return a usable growth plan. Press the button again.");
+  const fresh = await readData(MIRIS_DIR);
+  const bank = normaliseBank(fresh.specimens as any[]);
+  plan.stages.forEach((st, i) => {
+    bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "named", imageUrl: "", glb: "", dossier: null };
+  });
+  await writeData(MIRIS_DIR, { clade: plan.clade, development: plan.development, anatomy: plan.anatomy, specimens: bank });
+
+  const dossiers = parseDossiers(output?.dossiers);
+  for (let i = 0; i < dossiers.length; i++) if (dossiers[i]) await patchSlot(i, { dossier: dossiers[i] });
+
+  const glbs: string[] = [];
+  for (let i = 0; i < STAGES; i++) {
+    // The node reports `images`, and the output map hands that array on as `image_N`.
+    const images = output?.[`image_${i + 1}`];
+    const url = Array.isArray(images) ? images[0]?.url : images;
+    if (typeof url === "string" && url) await patchSlot(i, { imageUrl: url, status: "building" });
+    const glb = findGlb(output?.[`model_${i + 1}`]);
+    if (!glb) throw new Error(`fal returned no glb for ${plan.stages[i].stage}. Press the button again.`);
+    glbs[i] = glb;
+    await patchSlot(i, { glb, status: "ready", modelStartedAt: 0 });
+  }
+
+  const files = await Promise.all(
+    plan.stages.map(async (st, i) => {
+      const r = await fetch(glbs[i]);
+      if (!r.ok) throw new Error(`could not fetch ${stageFile(i, st.stage)}: ${r.status}`);
+      const data = Buffer.from(await r.arrayBuffer());
+      // Checked here rather than trusted: a mis-typed mesh only shows up as a
+      // failed upload in the portal, long after the workshop.
+      if (!isGlb(data)) throw new Error(`${stageFile(i, st.stage)} came back as ${data.toString("ascii", 0, 4)}, not glTF. Press the button again.`);
+      return { name: stageFile(i, st.stage), data };
+    }),
+  );
+  await writeFile(ZIP, zipSync(files));
+  await writeData(MIRIS_DIR, { zipReady: true });
+}
+
+const POLL_MS = 5000;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+let watching = false;
+
+/** Follows the run in data.json until it is settled or has failed. One watcher
+ *  per process; a second call while one is looping is a no-op. Every request
+ *  it makes is short, which is the whole point: see growthQueue.mjs. */
+async function watchRun(mode: string) {
+  if (watching) return;
+  watching = true;
+  try {
+    for (;;) {
+      const data = await readData(MIRIS_DIR);
+      const run = data.run as Run | null;
+      if (!run) return;
+      const key = falKey(mode);
+      if (!key) {
+        // The key left .env.local mid-run. Nothing to do but wait for it back.
+        await sleep(POLL_MS);
+        continue;
+      }
+      const result = await pollRun(fetch, run, key);
+      const { patch, settle, output } = runPatch(result);
+      if (settle) {
+        try {
+          await settleRun(output);
+          await writeData(MIRIS_DIR, { run: null, runState: "", queuePosition: 0 });
+        } catch (e) {
+          // Whatever did land stays in the tray; only the in-flight marker is
+          // cleared, so the form comes back with the reason.
+          await writeData(MIRIS_DIR, { run: null, runState: "", queuePosition: 0, hatchedAt: 0, runError: (e as Error).message });
+        }
+        return;
+      }
+      if (Object.keys(patch).length) await writeData(MIRIS_DIR, patch);
+      await sleep(POLL_MS);
+    }
+  } catch (e) {
+    console.warn(`[miris] stopped watching the growth run: ${(e as Error).message}`);
+  } finally {
+    watching = false;
+  }
+}
+
+/** On start: pick a queued run back up, or retire one the old streaming code
+ *  left marked in flight with nothing to resume. */
+async function resumeRun(mode: string) {
+  const data = await readData(MIRIS_DIR);
+  if (data.run) return watchRun(mode);
+  if (Number(data.hatchedAt) > 0 && !data.zipReady && !offline(mode)) {
+    await writeData(MIRIS_DIR, { hatchedAt: 0, runError: "The previous run was lost when the dev server stopped. Press Grow the series again." });
+  }
+}
+
 type Reply = { status: number; body: unknown };
 const ok = (body: unknown): Reply => ({ status: 200, body });
 const fail = (error: string, status = 400): Reply => ({ status, body: { error } });
 
 async function handle(action: string, body: any, mode: string): Promise<Reply> {
-  const falHeaders = () => ({
-    Authorization: `Key ${falKey(mode)}`,
-    "Content-Type": "application/json",
-  });
-
-  async function falRun(model: string, input: unknown) {
-    const submit = await fetch(`https://queue.fal.run/${model}`, {
-      method: "POST",
-      headers: falHeaders(),
-      body: JSON.stringify(input),
-    });
-    if (!submit.ok) throw new Error(`fal submit ${submit.status}: ${await submit.text()}`);
-    const job = await submit.json();
-
-    for (let i = 0; i < 300; i++) {
-      await new Promise((r) => setTimeout(r, 5000));
-      const poll = await fetch(job.status_url, { headers: falHeaders() });
-      if (!poll.ok) throw new Error(`fal status ${poll.status}: ${(await poll.text()).slice(0, 200)}`);
-      const status = await poll.json();
-      if (status.status === "FAILED" || status.status === "ERROR") throw new Error("fal reported failure");
-      if (status.status === "COMPLETED") {
-        const done = await fetch(job.response_url, { headers: falHeaders() });
-        if (!done.ok) throw new Error(`fal result ${done.status}: ${(await done.text()).slice(0, 200)}`);
-        return done.json();
-      }
-    }
-    throw new Error("fal timed out after 25 minutes");
-  }
-
-  /** Runs the growth workflow, calling `onNode` as each node finishes, and
-   *  resolves with the workflow's output map. Streams from fal.run; if no
-   *  stream can be opened it queues the same run instead, and the map arrives
-   *  all at once at the end. Never resubmits: a run costs real money. */
-  async function runWorkflow(input: unknown, onNode: (node: string, output: any) => Promise<void>) {
-    const res = await fetch(`https://fal.run/${GROWTH_WORKFLOW}/stream`, {
-      method: "POST",
-      headers: { ...falHeaders(), Accept: "text/event-stream" },
-      body: JSON.stringify(input),
-    });
-    if (res.status === 400 || res.status === 422) throw new Error(`fal rejected the run: ${(await res.text()).slice(0, 300)}`);
-    if (!res.ok || !res.body) {
-      // Said out loud, because a queued run reports nothing until the end and
-      // that looks like a tray that has stopped working.
-      console.warn(`[miris] fal would not stream the run (${res.status}); queued instead, so the tray fills in only when it finishes.`);
-      return falRun(GROWTH_WORKFLOW, input);
-    }
-    console.log("[miris] growth run streaming from fal");
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let output: unknown = null;
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      // fal separates events with CRLF; searching for a bare \n\n dropped every one.
-      let gap: RegExpExecArray | null;
-      while ((gap = /\r?\n\r?\n/.exec(buffer))) {
-        const lines = buffer.slice(0, gap.index).split(/\r?\n/);
-        buffer = buffer.slice(gap.index + gap[0].length);
-        const data = lines.filter((l) => l.startsWith("data:")).map((l) => l.slice(5).trim()).join("\n");
-        if (!data) continue;
-        let event: any;
-        try {
-          event = JSON.parse(data);
-        } catch {
-          continue;
-        }
-        if (event?.type === "completion" && typeof event.node_id === "string") await onNode(event.node_id, event.output);
-        else if (event?.type === "output") output = event.output;
-        else if (event?.type === "error") throw new Error(String(event.message ?? event.error ?? "the workflow reported an error"));
-        else console.log(`[miris] fal event ${String(event?.type)}${event?.node_id ? ` ${event.node_id}` : ""}`);
-      }
-    }
-    if (!output) throw new Error("The stream from fal ended before the workflow finished. Press the button again.");
-    return output;
-  }
-
   switch (action) {
     /* The finished code through the end of one chapter, in place of whatever the
        attendee has. Code only: the viewer key in the file is kept, and
@@ -436,101 +466,26 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
 
       if (!falKey(mode)) return fail("FAL_KEY is not set in .env.local");
 
-      /* The run is written to disk before the workflow is called, not after it
-         returns, so the tray can show a run has started while it is being paid
-         for. Cleared again if the run falls over, or the app would think it was
-         still growing forever. */
-      await writeData(MIRIS_DIR, { concept, hatchedAt: Date.now(), zipReady: false });
-      const abandon = async (e: unknown) => {
-        await writeData(MIRIS_DIR, { hatchedAt: 0 });
-        throw e;
-      };
-
+      /* Written before the queue is asked, so the tray shows a run the moment it
+         is paid for. The six slots are emptied now rather than when the plan
+         lands: through the queue nothing lands until the very end, and the old
+         series would otherwise sit in the tray reading "6 built" for twelve
+         minutes. The uuids stay, as they always did, so the stage file keeps
+         streaming whatever it streamed. */
+      const bank = normaliseBank(stored.specimens as any[]).map((s) => ({ ...emptySpecimen(s.id), uuid: s.uuid }));
+      await writeData(MIRIS_DIR, { concept, hatchedAt: Date.now(), zipReady: false, specimens: bank, run: null, runState: "", queuePosition: 0, runError: "" });
+      let run: Run;
       try {
-        /* Each slot is patched on its own, read-modify-write inside the store's
-           queue, so nodes finishing together cannot clobber one another. */
-        const patchSlot = async (i: number, patch: Record<string, unknown>) => {
-          const fresh = await readData(MIRIS_DIR);
-          const bank = normaliseBank(fresh.specimens as any[]);
-          bank[i] = { ...bank[i], ...patch };
-          await writeData(MIRIS_DIR, { specimens: bank });
-        };
-
-        let plan: Plan | null = null;
-        const glbs: string[] = [];
-        const takePlan = async (raw: unknown) => {
-          const parsed = parsePlanText(raw);
-          if (!parsed || plan) return;
-          plan = parsed;
-          const fresh = await readData(MIRIS_DIR);
-          const bank = normaliseBank(fresh.specimens as any[]);
-          parsed.stages.forEach((st, i) => {
-            bank[i] = { ...bank[i], stage: st.stage, prompt: st.prompt, status: "named", imageUrl: "", glb: "", dossier: null };
-          });
-          await writeData(MIRIS_DIR, { clade: parsed.clade, development: parsed.development, anatomy: parsed.anatomy, specimens: bank });
-        };
-        const takeDossiers = async (raw: unknown) => {
-          const list = parseDossiers(raw);
-          for (let i = 0; i < list.length; i++) if (list[i]) await patchSlot(i, { dossier: list[i] });
-        };
-        // The node reports `images`, and the output map hands that array on as `image_N`.
-        const takeRender = async (i: number, images: unknown) => {
-          const url = Array.isArray(images) ? images[0]?.url : images;
-          // The output map replays every render at the end; a slot whose mesh
-          // has already landed must not fall back to building.
-          if (typeof url === "string" && url && !glbs[i]) await patchSlot(i, { imageUrl: url, status: "building", modelStartedAt: Date.now() });
-        };
-        const takeMesh = async (i: number, glb: string | null) => {
-          if (!glb || glbs[i] === glb) return;
-          glbs[i] = glb;
-          await patchSlot(i, { glb, status: "ready", modelStartedAt: 0 });
-        };
-
-        /* The whole series is one fal workflow. Its nodes report as they finish,
-           so the tray fills in stage by stage; the output map at the end is the
-           record, and fills any gap the events left. */
-        const output: any = await runWorkflow({ concept }, async (node, out) => {
-          const slot = /^(render|mesh)(\d)$/.exec(node);
-          if (node === "plan") await takePlan(out?.output);
-          else if (node === "dossiers") await takeDossiers(out?.output);
-          else if (slot?.[1] === "render") await takeRender(Number(slot[2]) - 1, out?.images);
-          else if (slot?.[1] === "mesh") await takeMesh(Number(slot[2]) - 1, findGlb(out));
-        }).catch(abandon);
-
-        await takePlan(output?.plan);
-        const grown: Plan | null = plan;
-        if (!grown) {
-          await writeData(MIRIS_DIR, { hatchedAt: 0 });
-          return fail("The workflow did not return a usable growth plan. Press the button again.", 502);
-        }
-        await takeDossiers(output?.dossiers);
-        for (let i = 0; i < STAGES; i++) {
-          await takeRender(i, output?.[`image_${i + 1}`]);
-          await takeMesh(i, findGlb(output?.[`model_${i + 1}`]));
-        }
-        const missing = grown.stages.findIndex((_, i) => !glbs[i]);
-        if (missing !== -1) throw new Error(`fal returned no glb for ${grown.stages[missing].stage}. Press the button again.`);
-
-        const files = await Promise.all(
-          grown.stages.map(async (st, i) => {
-            const r = await fetch(glbs[i]);
-            if (!r.ok) throw new Error(`could not fetch ${stageFile(i, st.stage)}: ${r.status}`);
-            const data = Buffer.from(await r.arrayBuffer());
-            // Checked here rather than trusted: a mis-typed mesh only shows up
-            // as a failed upload in the portal, long after the workshop.
-            if (!isGlb(data)) throw new Error(`${stageFile(i, st.stage)} came back as ${data.toString("ascii", 0, 4)}, not glTF. Press the button again.`);
-            return { name: stageFile(i, st.stage), data };
-          }),
-        );
-        await writeFile(ZIP, zipSync(files));
-        await writeData(MIRIS_DIR, { zipReady: true });
-        return ok({ stages: grown.stages.map((st) => st.stage), files: files.map((f) => f.name) });
+        run = await submitRun(fetch, { workflow: GROWTH_WORKFLOW, key: falKey(mode), input: { concept } });
       } catch (e) {
-        // Any failure past this point leaves a run marked as in flight, and
-        // the tray would grow forever. Clear the marker, then rethrow.
         await writeData(MIRIS_DIR, { hatchedAt: 0 });
-        throw e;
+        return fail((e as Error).message, 502);
       }
+      /* The handle is what survives: a reload, a folded tray, even a restarted
+         dev server all find the same run here and carry on watching it. */
+      await writeData(MIRIS_DIR, { run, runState: "queued" });
+      void watchRun(mode);
+      return ok({ queued: true, id: run.id });
     }
 
     /* The whole run in one press: six stages named, six dossiers written, six
@@ -567,7 +522,7 @@ async function handle(action: string, body: any, mode: string): Promise<Reply> {
 
     case "unseed": {
       if (!offline(mode)) return fail("Seeding is offline only. Put MIRIS_OFFLINE=1 in .env.local.");
-      await writeData(MIRIS_DIR, { concept: "", specimens: emptyBank(), zipReady: false, hatchedAt: 0, active: 0 });
+      await writeData(MIRIS_DIR, { concept: "", specimens: emptyBank(), zipReady: false, hatchedAt: 0, active: 0, run: null, runState: "", queuePosition: 0, runError: "" });
       await writeFile(SPECIMENS, specimensJson(EMPTY_SPECIMENS));
       return ok({ ok: true });
     }
@@ -642,6 +597,7 @@ export function mirisDevApi(mode: string): Plugin {
 
     configureServer(server) {
       auditProofs();
+      resumeRun(mode).catch((e) => console.warn(`[miris] could not resume the growth run: ${e.message}`));
       server.middlewares.use("/api/miris", async (req, res, next) => {
         try {
           if (req.method === "GET") {

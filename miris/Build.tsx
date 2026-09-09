@@ -54,6 +54,11 @@ export function useHatch(track: Track) {
      ten to twenty seconds of a paid run. hatchedAt is written the moment the
      run starts. */
   const running = busy || (Number(data?.hatchedAt) > 0 && !data?.zipReady);
+  /* What the queue last said. Through the queue the stages land all at once at
+     the end, so mid-run this is the only progress there is to show. */
+  const runState: string = running ? String(data?.runState ?? "") : "";
+  const queuePosition = Number(data?.queuePosition) || 0;
+  const runError: string = String(data?.runError ?? "");
 
   // While anything is in flight the file is the only source of truth, because
   // the request that started it dies with the page.
@@ -105,7 +110,7 @@ export function useHatch(track: Track) {
     setError("");
   };
 
-  return { track, concept, setConcept, data, stages, named, drawn, done, running, elapsed, error, hatch, roll, small, setSmall, refresh: read };
+  return { track, concept, setConcept, data, stages, named, drawn, done, running, runState, queuePosition, runError, elapsed, error, hatch, roll, small, setSmall, refresh: read };
 }
 
 export type HatchState = ReturnType<typeof useHatch>;
@@ -115,9 +120,12 @@ const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, 
 /** Step 1.5's card. One sentence describes the creature; the six bodies that
  *  grow out of it are the workflow's business, not the attendee's. */
 export function ConceptField({ hatch }: { hatch: HatchState }) {
-  const { track, concept, setConcept, running, error, done } = hatch;
+  const { track, concept, setConcept, running, error, runError, done } = hatch;
   const [again, setAgain] = useState(false);
   if (running) return <p className="mw-note">Growing the series, in the tray to the left.</p>;
+  // The press only reports what the queue said at submit time; anything that
+  // went wrong in the twelve minutes after it comes back through the file.
+  const problem = error || runError;
 
   /* Once six are grown the form does not come back on its own. It did, with
      the same red button, and a second press is another twelve dollars. */
@@ -160,7 +168,7 @@ export function ConceptField({ hatch }: { hatch: HatchState }) {
       <button className="btn btn-primary btn-sm" disabled={!concept.trim()} onClick={hatch.hatch}>
         Grow the series
       </button>
-      {error && <p className="mw-error">{error}</p>}
+      {problem && <p className="mw-error">{problem}</p>}
     </div>
   );
 }
@@ -173,9 +181,25 @@ const STATE_LABEL: Record<string, string> = {
   live: "Streaming",
 };
 
+/** The two lines the tray leads with while a run is in flight: the headline
+ *  and the reading under the rail. Written from the queue's state and the
+ *  clock, because those are all a run reports until its output map lands. */
+export function describeRun(runState: string, queuePosition: number, elapsed: number) {
+  if (runState === "queued") {
+    return { title: "In the queue at fal", read: queuePosition > 0 ? `Position ${queuePosition}. The run starts when a machine is free.` : "Waiting for a machine to pick it up." };
+  }
+  if (runState === "running") {
+    const minutes = Math.floor(elapsed / 60);
+    if (minutes < 1) return { title: "Growing the series", read: "Planning the six stages." };
+    if (minutes < 12) return { title: "Growing the series", read: `Rendering and building. About ${12 - minutes} minute${12 - minutes === 1 ? "" : "s"} to go.` };
+    return { title: "Growing the series", read: "Taking longer than usual. It is still running; the tray fills when it lands." };
+  }
+  return { title: "Starting the run", read: "Asking fal for a machine." };
+}
+
 /** The tray: six rows, one per stage, and the archive when they all land. */
 export default function HatchTray({ hatch }: { hatch: HatchState }) {
-  const { stages, drawn, done, running, elapsed, data, small, setSmall } = hatch;
+  const { stages, drawn, done, running, runState, queuePosition, elapsed, data, small, setSmall } = hatch;
   const box = useRef<HTMLElement>(null);
 
   /* Escape folds it. A click outside used to as well, and that read as the tray
@@ -198,7 +222,11 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
      a mesh per specimen, so that is what the rail measures. */
   const jobs = STAGES * 2;
   const pct = Math.round(((drawn + done) / jobs) * 100);
-  const count = running ? "Growing the series" : `${done} of ${STAGES} grown`;
+  const live = describeRun(runState, queuePosition, elapsed);
+  const count = running ? live.title : `${done} of ${STAGES} grown`;
+  // Nothing is counted until the output map lands, so until then the rail
+  // moves rather than measures.
+  const indeterminate = running && drawn + done === 0;
 
   /* Collapsed is a pill, not an empty column. The tray is a full height fixed
      panel, so hiding only its list left 340px of nothing between the scene and
@@ -236,12 +264,10 @@ export default function HatchTray({ hatch }: { hatch: HatchState }) {
 
       {running && (
         <div className="mw-prog">
-          <div className="mw-prog-rail" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Run progress">
-            <span className="mw-prog-fill" style={{ width: `${pct}%` }} />
+          <div className="mw-prog-rail" role="progressbar" {...(indeterminate ? {} : { "aria-valuenow": pct })} aria-valuemin={0} aria-valuemax={100} aria-label="Run progress">
+            <span className="mw-prog-fill" {...(indeterminate ? { "data-indeterminate": "" } : {})} style={indeterminate ? undefined : { width: `${pct}%` }} />
           </div>
-          <p className="mw-prog-read">
-            {drawn} rendered, {done} built
-          </p>
+          <p className="mw-prog-read">{indeterminate ? live.read : `${drawn} rendered, ${done} built`}</p>
         </div>
       )}
 
